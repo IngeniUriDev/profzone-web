@@ -107,6 +107,8 @@ export const businessService = {
           image_url: business.image_url,
           latitude: business.latitude,
           longitude: business.longitude,
+          website_url: business.website_url,
+          submitted_by: business.submitted_by,
           status: 'pending'
         }])
         .select()

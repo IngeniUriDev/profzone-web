@@ -1,17 +1,21 @@
 import React, { useState } from 'react';
-import { X, Send, AlertCircle, CheckCircle2, MapPin, Globe } from 'lucide-react';
-import type { Category } from '../../types/database';
+import { X, Send, AlertCircle, CheckCircle2, MapPin, Globe, Lock, LogIn, UserCheck } from 'lucide-react';
+import type { Category, UserProfile } from '../../types/database';
 import { businessService } from '../../services/businessService';
 import { REGIONAL_MUNICIPALITIES } from '../../lib/geo';
 
 interface RegisterBusinessModalProps {
   categories: Category[];
+  currentUser: UserProfile | null;
+  onRequireAuth: () => void;
   onClose: () => void;
   onSuccess: () => void;
 }
 
 export const RegisterBusinessModal: React.FC<RegisterBusinessModalProps> = ({
   categories,
+  currentUser,
+  onRequireAuth,
   onClose,
   onSuccess
 }) => {
@@ -39,6 +43,10 @@ export const RegisterBusinessModal: React.FC<RegisterBusinessModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!currentUser) {
+      onRequireAuth();
+      return;
+    }
     if (!name.trim() || !address.trim()) return;
 
     setLoading(true);
@@ -56,7 +64,8 @@ export const RegisterBusinessModal: React.FC<RegisterBusinessModalProps> = ({
         description: description.trim() || undefined,
         image_url: imageUrl.trim() || 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=80',
         latitude: matchedMuniGeo?.lat,
-        longitude: matchedMuniGeo?.lng
+        longitude: matchedMuniGeo?.lng,
+        submitted_by: currentUser.id || currentUser.phone || currentUser.full_name
       });
       setSubmitted(true);
       onSuccess();
@@ -92,7 +101,52 @@ export const RegisterBusinessModal: React.FC<RegisterBusinessModalProps> = ({
           <X size={16} />
         </button>
 
-        {submitted ? (
+        {!currentUser ? (
+          <div style={{ textAlign: 'center', padding: '36px 12px' }}>
+            <div style={{
+              width: '64px',
+              height: '64px',
+              borderRadius: '50%',
+              background: '#e0f2fe',
+              color: '#0284c7',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 16px auto',
+              boxShadow: '0 4px 12px rgba(2, 132, 199, 0.15)'
+            }}>
+              <Lock size={30} />
+            </div>
+            <h3 style={{ fontSize: '1.3rem', fontWeight: 800, marginBottom: '8px', color: 'var(--text-main)' }}>
+              Acceso Exclusivo para Usuarios Registrados
+            </h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '24px', lineHeight: 1.6, maxWidth: '440px', margin: '0 auto 24px auto' }}>
+              Para garantizar la confianza y calidad de los negocios y profesionales recomendados en nuestra región, debes <strong>iniciar sesión o registrarte</strong> antes de dar de alta un servicio.
+            </p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={onClose}
+                style={{ padding: '8px 18px' }}
+              >
+                Volver
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => {
+                  onClose();
+                  onRequireAuth();
+                }}
+                style={{ padding: '8px 20px' }}
+              >
+                <LogIn size={16} />
+                <span>Iniciar Sesión / Registrarme</span>
+              </button>
+            </div>
+          </div>
+        ) : submitted ? (
           <div style={{ textAlign: 'center', padding: '30px 10px' }}>
             <div style={{
               width: '60px',
@@ -119,7 +173,7 @@ export const RegisterBusinessModal: React.FC<RegisterBusinessModalProps> = ({
           </div>
         ) : (
           <>
-            <div style={{ marginBottom: '18px' }}>
+            <div style={{ marginBottom: '14px' }}>
               <h2 style={{ fontSize: '1.3rem', fontWeight: 800, color: 'var(--text-main)' }}>
                 Registrar un Servicio Local
               </h2>
@@ -128,19 +182,45 @@ export const RegisterBusinessModal: React.FC<RegisterBusinessModalProps> = ({
               </p>
             </div>
 
+            {/* Distintivo de usuario conectado */}
+            <div style={{
+              background: '#f0fdf4',
+              border: '1px solid #bbf7d0',
+              borderRadius: '8px',
+              padding: '8px 12px',
+              marginBottom: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              fontSize: '0.8rem',
+              color: '#166534',
+              flexWrap: 'wrap',
+              gap: '6px'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <UserCheck size={16} color="#16a34a" />
+                <span>
+                  Registrando como: <strong>{currentUser.full_name}</strong> {currentUser.phone ? `(${currentUser.phone})` : ''}
+                </span>
+              </div>
+              <span style={{ fontSize: '0.7rem', background: '#dcfce7', color: '#15803d', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>
+                Usuario Verificado
+              </span>
+            </div>
+
             <div style={{
               background: '#f8fafc',
               border: '1px solid #e2e8f0',
               borderRadius: '8px',
-              padding: '10px 14px',
-              marginBottom: '16px',
+              padding: '8px 12px',
+              marginBottom: '14px',
               display: 'flex',
               alignItems: 'center',
-              gap: '10px',
-              fontSize: '0.8rem',
+              gap: '8px',
+              fontSize: '0.78rem',
               color: '#475569'
             }}>
-              <AlertCircle size={18} color="var(--primary)" style={{ flexShrink: 0 }} />
+              <AlertCircle size={16} color="var(--primary)" style={{ flexShrink: 0 }} />
               <span>
                 Los registros pasan por un proceso de revisión antes de ser visibles en el catálogo general.
               </span>

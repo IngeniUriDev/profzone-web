@@ -44,6 +44,16 @@ export function App() {
   const [showAdminModal, setShowAdminModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [openRegisterAfterAuth, setOpenRegisterAfterAuth] = useState(false);
+
+  const handleOpenRegister = () => {
+    if (!currentUser) {
+      setOpenRegisterAfterAuth(true);
+      setShowAuthModal(true);
+      return;
+    }
+    setShowRegisterModal(true);
+  };
 
   const loadData = async () => {
     setLoading(true);
@@ -193,7 +203,7 @@ export function App() {
   return (
     <div>
       <Navbar
-        onOpenRegister={() => setShowRegisterModal(true)}
+        onOpenRegister={handleOpenRegister}
         onOpenAdmin={() => setShowAdminModal(true)}
         onOpenAuth={() => setShowAuthModal(true)}
         onOpenFeedback={() => setShowFeedbackModal(true)}
@@ -336,7 +346,7 @@ export function App() {
                 <button
                   type="button"
                   className="btn btn-primary"
-                  onClick={() => setShowRegisterModal(true)}
+                  onClick={handleOpenRegister}
                 >
                   + Registrar un servicio aquí
                 </button>
@@ -399,6 +409,12 @@ export function App() {
       {showRegisterModal && (
         <RegisterBusinessModal
           categories={categories}
+          currentUser={currentUser}
+          onRequireAuth={() => {
+            setShowRegisterModal(false);
+            setOpenRegisterAfterAuth(true);
+            setShowAuthModal(true);
+          }}
           onClose={() => setShowRegisterModal(false)}
           onSuccess={() => {
             loadData();
@@ -417,9 +433,17 @@ export function App() {
 
       {showAuthModal && (
         <AuthModal
-          onClose={() => setShowAuthModal(false)}
+          onClose={() => {
+            setShowAuthModal(false);
+            setOpenRegisterAfterAuth(false);
+          }}
           onSuccess={(user) => {
             setCurrentUser(user);
+            setShowAuthModal(false);
+            if (openRegisterAfterAuth) {
+              setOpenRegisterAfterAuth(false);
+              setShowRegisterModal(true);
+            }
           }}
         />
       )}
