@@ -17,6 +17,7 @@ import { AuthModal } from './components/auth/AuthModal';
 import { FeedbackModal } from './components/common/FeedbackModal';
 import { SponsorBanner } from './components/common/SponsorBanner';
 import { CURRENT_SPONSOR } from './data/sponsorData';
+import { supabase, isSupabaseConfigured } from './lib/supabase';
 import { useState, useEffect, useMemo } from 'react';
 
 export function App() {
@@ -75,6 +76,29 @@ export function App() {
 
   useEffect(() => {
     loadData();
+
+    // Sincronizar sesión activa si Supabase está conectado (ej. retorno de Facebook OAuth)
+    if (isSupabaseConfigured && supabase) {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session?.user) {
+          const profile = authService.mapSupabaseUser(session.user);
+          setCurrentUser(profile);
+        }
+      });
+
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        if (session?.user) {
+          const profile = authService.mapSupabaseUser(session.user);
+          setCurrentUser(profile);
+        } else if (_event === 'SIGNED_OUT') {
+          setCurrentUser(null);
+        }
+      });
+
+      return () => {
+        subscription.unsubscribe();
+      };
+    }
   }, []);
 
   // Función para restablecer filtros e ir al inicio

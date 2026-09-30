@@ -109,5 +109,27 @@ export const authService = {
       supabase.auth.signOut().catch(console.error);
     }
     localStorage.removeItem(USER_SESSION_KEY);
+  },
+
+  mapSupabaseUser(sbUser: { id: string; email?: string; phone?: string; user_metadata?: Record<string, any>; app_metadata?: Record<string, any> }): UserProfile {
+    const meta = sbUser.user_metadata || {};
+    const email = sbUser.email || '';
+    const rawPhone = sbUser.phone || '';
+    const cleanPhone = rawPhone.replace(/\D/g, '').replace(/^52/, '');
+    const fullName = meta.full_name || meta.name || (email ? email.split('@')[0] : '') || (cleanPhone ? `Usuario (${cleanPhone.slice(-4)})` : 'Usuario Facebook');
+
+    const isAdmin = adminService.isAdmin(cleanPhone, email);
+
+    const profile: UserProfile = {
+      id: sbUser.id,
+      provider: sbUser.app_metadata?.provider === 'facebook' ? 'facebook' : 'phone',
+      full_name: fullName,
+      phone: cleanPhone || undefined,
+      avatar_url: meta.avatar_url || meta.picture,
+      role: isAdmin ? 'admin' : 'user'
+    };
+
+    localStorage.setItem(USER_SESSION_KEY, JSON.stringify(profile));
+    return profile;
   }
 };

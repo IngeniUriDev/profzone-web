@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { MapPin, PlusCircle, ShieldCheck, Sparkles, User, LogOut, MessageSquareHeart, Menu, X, ChevronDown } from 'lucide-react';
-import { isSupabaseConfigured } from '../../lib/supabase';
+import { MapPin, PlusCircle, ShieldCheck, User, LogOut, MessageSquareHeart, Menu, X, ChevronDown } from 'lucide-react';
 import type { UserProfile } from '../../types/database';
 
 interface NavbarProps {
@@ -102,22 +101,6 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* ACCIONES DE ESCRITORIO (Ocultas en pantallas móviles con .nav-desktop-actions) */}
         <div className="nav-desktop-actions">
-          {!isSupabaseConfigured && (
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              fontSize: '0.72rem',
-              background: '#fef3c7',
-              color: '#92400e',
-              padding: '3px 8px',
-              borderRadius: '16px',
-              fontWeight: 600
-            }}>
-              <Sparkles size={11} />
-              <span>Modo Demo</span>
-            </div>
-          )}
 
           {/* Botón Buzón de Sugerencias */}
           <button
