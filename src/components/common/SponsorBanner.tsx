@@ -21,12 +21,12 @@ export const SponsorBanner: React.FC<SponsorBannerProps> = ({ sponsor }) => {
       style={{
         background: 'linear-gradient(90deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)',
         color: '#f8fafc',
-        borderBottom: '1px solid rgba(56, 189, 248, 0.25)',
-        padding: '8px 16px',
+        borderTop: '1px solid rgba(56, 189, 248, 0.25)',
+        padding: '10px 16px',
         fontSize: '0.82rem',
         position: 'relative',
-        zIndex: 110,
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)'
+        zIndex: 50,
+        boxShadow: '0 -2px 8px rgba(0, 0, 0, 0.1)'
       }}
     >
       <div

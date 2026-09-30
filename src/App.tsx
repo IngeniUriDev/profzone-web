@@ -192,8 +192,6 @@ export function App() {
 
   return (
     <div>
-      <SponsorBanner sponsor={CURRENT_SPONSOR} />
-
       <Navbar
         onOpenRegister={() => setShowRegisterModal(true)}
         onOpenAdmin={() => setShowAdminModal(true)}
@@ -359,13 +357,16 @@ export function App() {
         </section>
       </main>
 
+      {/* Patrocinador Oficial al pie de página */}
+      <SponsorBanner sponsor={CURRENT_SPONSOR} />
+
       {/* Footer */}
       <footer style={{
         borderTop: '1px solid var(--border)',
         padding: '30px 20px',
         textAlign: 'center',
         background: 'var(--surface)',
-        marginTop: '60px'
+        marginTop: '30px'
       }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 700 }}>

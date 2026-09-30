@@ -34,6 +34,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       top: 0,
       zIndex: 100,
       borderBottom: '1px solid var(--border)',
+      backgroundColor: 'rgba(255, 255, 255, 0.98)',
       padding: '8px 16px',
       marginBottom: '12px'
     }}>
