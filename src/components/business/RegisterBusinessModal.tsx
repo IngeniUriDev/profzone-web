@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Send, AlertCircle, CheckCircle2, MapPin } from 'lucide-react';
+import { X, Send, AlertCircle, CheckCircle2, MapPin, Globe } from 'lucide-react';
 import type { Category } from '../../types/database';
 import { businessService } from '../../services/businessService';
 import { REGIONAL_MUNICIPALITIES } from '../../lib/geo';
@@ -23,6 +23,7 @@ export const RegisterBusinessModal: React.FC<RegisterBusinessModalProps> = ({
   const [address, setAddress] = useState('');
   const [phone, setPhone] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
+  const [websiteUrl, setWebsiteUrl] = useState('');
   const [schedule, setSchedule] = useState('');
   const [description, setDescription] = useState('');
   const [imageUrl, setImageUrl] = useState('');
@@ -50,6 +51,7 @@ export const RegisterBusinessModal: React.FC<RegisterBusinessModalProps> = ({
         address: address.trim(),
         phone: phone.trim() || undefined,
         whatsapp: whatsapp.trim() || undefined,
+        website_url: websiteUrl.trim() || undefined,
         schedule: schedule.trim() || undefined,
         description: description.trim() || undefined,
         image_url: imageUrl.trim() || 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=80',
@@ -338,6 +340,26 @@ export const RegisterBusinessModal: React.FC<RegisterBusinessModalProps> = ({
                     }}
                   />
                 </div>
+              </div>
+
+              <div>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.85rem', fontWeight: 600, marginBottom: '4px' }}>
+                  <Globe size={14} color="var(--primary)" />
+                  <span>Sitio Web / Red Social (opcional)</span>
+                </label>
+                <input
+                  type="url"
+                  placeholder="https://miexample.com o perfil de Facebook/Instagram"
+                  value={websiteUrl}
+                  onChange={(e) => setWebsiteUrl(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '9px 12px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border)',
+                    fontSize: '0.9rem'
+                  }}
+                />
               </div>
 
               <div>

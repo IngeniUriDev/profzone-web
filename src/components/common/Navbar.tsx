@@ -93,7 +93,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
               <MapPin size={12} color="var(--primary)" />
-              <span>Tianguistenco, Capulhuac, Ocoyoacac y Región</span>
+              <span>Regiones cercanas</span>
             </div>
           </div>
         </div>

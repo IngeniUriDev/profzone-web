@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, MapPin, Clock, Phone, MessageCircle, Navigation, MessageSquarePlus, Star, UserCheck, Stethoscope } from 'lucide-react';
+import { X, MapPin, Clock, Phone, MessageCircle, Navigation, MessageSquarePlus, Star, UserCheck, Stethoscope, Globe } from 'lucide-react';
 import type { Business, Review, UserProfile } from '../../types/database';
 import { StarRating } from '../common/StarRating';
 import { reviewService } from '../../services/reviewService';
@@ -69,6 +69,14 @@ export const BusinessDetailModal: React.FC<BusinessDetailModalProps> = ({
   const handlePhone = () => {
     if (!business.phone) return;
     window.open(`tel:${business.phone}`);
+  };
+
+  const handleWebsite = () => {
+    if (!business.website_url) return;
+    const url = business.website_url.startsWith('http')
+      ? business.website_url
+      : `https://${business.website_url}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   const handleOpenReviewForm = (staffId?: string) => {
@@ -217,7 +225,7 @@ export const BusinessDetailModal: React.FC<BusinessDetailModalProps> = ({
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '8px' }}>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             {business.whatsapp && (
               <button type="button" className="btn btn-whatsapp" onClick={handleWhatsApp}>
                 <MessageCircle size={16} />
@@ -228,6 +236,18 @@ export const BusinessDetailModal: React.FC<BusinessDetailModalProps> = ({
               <button type="button" className="btn btn-secondary" onClick={handlePhone}>
                 <Phone size={16} />
                 <span>Llamar</span>
+              </button>
+            )}
+            {business.website_url && (
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={handleWebsite}
+                style={{ color: 'var(--primary)', borderColor: '#bae6fd' }}
+                title="Visitar sitio web oficial o perfil"
+              >
+                <Globe size={16} />
+                <span>Sitio Web</span>
               </button>
             )}
           </div>
@@ -278,6 +298,30 @@ export const BusinessDetailModal: React.FC<BusinessDetailModalProps> = ({
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', borderTop: '1px solid var(--border)', paddingTop: '8px' }}>
                 <Clock size={16} color="#64748b" style={{ marginTop: '2px', flexShrink: 0 }} />
                 <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{business.schedule}</div>
+              </div>
+            )}
+
+            {business.website_url && (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', borderTop: '1px solid var(--border)', paddingTop: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
+                  <Globe size={16} color="var(--primary)" style={{ flexShrink: 0 }} />
+                  <a
+                    href={business.website_url.startsWith('http') ? business.website_url : `https://${business.website_url}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ color: 'var(--primary)', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'underline', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                  >
+                    {business.website_url}
+                  </a>
+                </div>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={handleWebsite}
+                  style={{ fontSize: '0.75rem', padding: '4px 8px', flexShrink: 0 }}
+                >
+                  Abrir
+                </button>
               </div>
             )}
           </div>

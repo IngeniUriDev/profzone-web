@@ -15,6 +15,8 @@ import { RegisterBusinessModal } from './components/business/RegisterBusinessMod
 import { AdminModal } from './components/admin/AdminModal';
 import { AuthModal } from './components/auth/AuthModal';
 import { FeedbackModal } from './components/common/FeedbackModal';
+import { SponsorBanner } from './components/common/SponsorBanner';
+import { CURRENT_SPONSOR } from './data/sponsorData';
 import { useState, useEffect, useMemo } from 'react';
 
 export function App() {
@@ -190,6 +192,8 @@ export function App() {
 
   return (
     <div>
+      <SponsorBanner sponsor={CURRENT_SPONSOR} />
+
       <Navbar
         onOpenRegister={() => setShowRegisterModal(true)}
         onOpenAdmin={() => setShowAdminModal(true)}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Star, MapPin, Clock, Phone, MessageCircle, Navigation2 } from 'lucide-react';
+import { Star, MapPin, Clock, Phone, MessageCircle, Navigation2, Globe } from 'lucide-react';
 import type { Business } from '../../types/database';
 
 interface BusinessCardProps {
@@ -25,6 +25,15 @@ export const BusinessCard: React.FC<BusinessCardProps> = ({
     e.stopPropagation();
     if (!business.phone) return;
     window.open(`tel:${business.phone}`);
+  };
+
+  const handleWebsite = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!business.website_url) return;
+    const url = business.website_url.startsWith('http')
+      ? business.website_url
+      : `https://${business.website_url}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -156,7 +165,11 @@ export const BusinessCard: React.FC<BusinessCardProps> = ({
         {/* Botones de Acción Inmediata */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: business.whatsapp && business.phone ? '1fr 1fr' : '1fr',
+          gridTemplateColumns: [business.whatsapp, business.phone, business.website_url].filter(Boolean).length >= 3
+            ? 'repeat(3, 1fr)'
+            : [business.whatsapp, business.phone, business.website_url].filter(Boolean).length === 2
+            ? '1fr 1fr'
+            : '1fr',
           gap: '8px',
           paddingTop: '10px',
           borderTop: '1px solid var(--border)'
@@ -166,7 +179,7 @@ export const BusinessCard: React.FC<BusinessCardProps> = ({
               type="button"
               className="btn btn-whatsapp"
               onClick={handleWhatsApp}
-              style={{ fontSize: '0.8rem', padding: '6px 10px', width: '100%' }}
+              style={{ fontSize: '0.8rem', padding: '6px 8px', width: '100%', justifyContent: 'center' }}
             >
               <MessageCircle size={15} />
               <span>WhatsApp</span>
@@ -178,10 +191,30 @@ export const BusinessCard: React.FC<BusinessCardProps> = ({
               type="button"
               className="btn btn-secondary"
               onClick={handlePhone}
-              style={{ fontSize: '0.8rem', padding: '6px 10px', width: '100%' }}
+              style={{ fontSize: '0.8rem', padding: '6px 8px', width: '100%', justifyContent: 'center' }}
             >
               <Phone size={14} />
               <span>Llamar</span>
+            </button>
+          )}
+
+          {business.website_url && (
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={handleWebsite}
+              title="Visitar sitio web o enlace"
+              style={{
+                fontSize: '0.8rem',
+                padding: '6px 8px',
+                width: '100%',
+                justifyContent: 'center',
+                color: 'var(--primary)',
+                borderColor: '#bae6fd'
+              }}
+            >
+              <Globe size={14} />
+              <span>Web</span>
             </button>
           )}
         </div>

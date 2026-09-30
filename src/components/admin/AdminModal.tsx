@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Check, Trash2, Clock, MapPin, Phone, Shield, RefreshCw, MessageSquareHeart, Building2, Layers, Plus, Lightbulb } from 'lucide-react';
+import { X, Check, Trash2, Clock, MapPin, Phone, Shield, RefreshCw, MessageSquareHeart, Building2, Layers, Plus, Lightbulb, Globe } from 'lucide-react';
 import type { Business, FeedbackSuggestion, Category } from '../../types/database';
 import { businessService } from '../../services/businessService';
 import { feedbackService } from '../../services/feedbackService';
@@ -337,6 +337,20 @@ export const AdminModal: React.FC<AdminModalProps> = ({ onClose, onUpdate }) => 
                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                           <Clock size={13} />
                           <span>{b.schedule}</span>
+                        </div>
+                      )}
+
+                      {b.website_url && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <Globe size={13} color="var(--primary)" />
+                          <a
+                            href={b.website_url.startsWith('http') ? b.website_url : `https://${b.website_url}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ color: 'var(--primary)', textDecoration: 'underline' }}
+                          >
+                            Sitio Web
+                          </a>
                         </div>
                       )}
                     </div>

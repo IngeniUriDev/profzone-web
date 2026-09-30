@@ -20,6 +20,7 @@ export interface Business {
   locality?: string;
   address: string;
   google_maps_url?: string;
+  website_url?: string;
   phone?: string;
   whatsapp?: string;
   schedule?: string;

@@ -2,7 +2,7 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import type { Business, BusinessStatus } from '../types/database';
 import { INITIAL_BUSINESSES } from '../data/mockData';
 
-const LOCAL_STORAGE_KEY = 'profzone_businesses_v4';
+const LOCAL_STORAGE_KEY = 'profzone_businesses_v5';
 
 function getLocalBusinesses(): Business[] {
   const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
