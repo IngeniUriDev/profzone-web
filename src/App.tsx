@@ -209,25 +209,25 @@ export function App() {
         {/* Hero Section */}
         <section className="hero-section">
           <div style={{ maxWidth: '720px' }}>
-            <h1 style={{ fontSize: 'clamp(1.8rem, 4vw, 2.7rem)', fontWeight: 800, lineHeight: 1.2, marginBottom: '12px' }}>
+            <h1 style={{ fontSize: 'clamp(1.25rem, 3vw, 1.85rem)', fontWeight: 800, lineHeight: 1.2, marginBottom: '6px' }}>
               Encuentra los mejores profesionales y servicios en{' '}
               <span style={{ color: '#55c5f5ff' }}>
                 {selectedMunicipality === 'TODOS' ? 'Tu Región' : selectedMunicipality}
               </span>
             </h1>
 
-            <p style={{ color: '#94a3b8', fontSize: '1rem', lineHeight: 1.6 }}>
-              Doctores, Profesores, Mecanicos, Psicologos, Abogados, Lashistas, Maquillistas, Electricistas, Plomeros, Papelerias, etc. recomienda a tus favoritos y ayúdalos a crecer.
+            <p style={{ color: '#94a3b8', fontSize: '0.85rem', lineHeight: 1.4, marginBottom: '6px' }}>
+              Doctores, Mecánicos, Psicólogos, Abogados, Estéticas, Plomeros y más en tu zona.
             </p>
 
             {/* Barra de Búsqueda Semántica */}
             <div className="search-bar-container">
-              <Search size={32} color="#0284c7" style={{ marginRight: '10px', flexShrink: 0 }} />
+              <Search size={18} color="#0284c7" style={{ marginRight: '8px', flexShrink: 0 }} />
               <input
                 id="main-search-input"
                 type="text"
                 className="search-input"
-                placeholder="¿Qué servicio buscas? (ej. Hospital, Pediatra, Dentista, Barbacoa, etc...)"
+                placeholder="¿Qué servicio buscas? (ej. Dentista, Plomero, Barbacoa...)"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -240,8 +240,8 @@ export function App() {
                     border: 'none',
                     cursor: 'pointer',
                     color: '#64748b',
-                    fontSize: '0.85rem',
-                    padding: '4px 8px'
+                    fontSize: '0.8rem',
+                    padding: '2px 6px'
                   }}
                 >
                   Limpiar
@@ -250,7 +250,7 @@ export function App() {
             </div>
 
             {/* Sugerencias rápidas de búsqueda semántica */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginTop: '12px', fontSize: '0.8rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginTop: '8px', fontSize: '0.74rem' }}>
               <span style={{ color: '#94a3b8' }}>Buscar rápido:</span>
               {['Hospital', 'Pediatra', 'Dentista', 'Barbacoa', 'Mariachi', 'Mecánico'].map((term) => (
                 <button
@@ -261,10 +261,10 @@ export function App() {
                     background: 'rgba(255, 255, 255, 0.12)',
                     color: '#e2e8f0',
                     border: '1px solid rgba(255, 255, 255, 0.2)',
-                    padding: '2px 8px',
+                    padding: '2px 7px',
                     borderRadius: '6px',
                     cursor: 'pointer',
-                    fontSize: '0.78rem'
+                    fontSize: '0.74rem'
                   }}
                 >
                   {term}

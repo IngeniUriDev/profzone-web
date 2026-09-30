@@ -1,5 +1,5 @@
-import React from 'react';
-import { MapPin, PlusCircle, ShieldCheck, Sparkles, User, LogOut, MessageSquareHeart } from 'lucide-react';
+import React, { useState } from 'react';
+import { MapPin, PlusCircle, ShieldCheck, Sparkles, User, LogOut, MessageSquareHeart, Menu, X, ChevronDown } from 'lucide-react';
 import { isSupabaseConfigured } from '../../lib/supabase';
 import type { UserProfile } from '../../types/database';
 
@@ -24,14 +24,18 @@ export const Navbar: React.FC<NavbarProps> = ({
   onSignOut,
   pendingCount
 }) => {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const closeMenu = () => setMobileMenuOpen(false);
+
   return (
     <header className="glass-panel" style={{
       position: 'sticky',
       top: 0,
       zIndex: 100,
       borderBottom: '1px solid var(--border)',
-      padding: '12px 20px',
-      marginBottom: '20px'
+      padding: '8px 16px',
+      marginBottom: '12px'
     }}>
       <div style={{
         maxWidth: '1200px',
@@ -39,81 +43,78 @@ export const Navbar: React.FC<NavbarProps> = ({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: '12px'
+        gap: '8px'
       }}>
         {/* Marca y Subtítulo - Clickeable para ir a Inicio y limpiar búsqueda */}
         <div
           id="btn-navbar-home"
-          onClick={onGoHome}
+          onClick={() => { closeMenu(); onGoHome(); }}
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '10px',
+            gap: '8px',
             cursor: 'pointer',
             userSelect: 'none',
-            transition: 'opacity 0.2s ease'
+            transition: 'opacity 0.2s ease',
+            flexShrink: 0
           }}
           title="Ir a inicio y restablecer búsqueda"
-          onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.85'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
         >
           <div style={{
-            width: '42px',
-            height: '42px',
-            borderRadius: '12px',
+            width: '34px',
+            height: '34px',
+            borderRadius: '10px',
             background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             color: '#fff',
             fontWeight: 800,
-            fontSize: '1.25rem',
-            boxShadow: '0 4px 10px rgba(2, 132, 199, 0.3)',
-            transition: 'transform 0.15s ease'
+            fontSize: '1.05rem',
+            boxShadow: '0 2px 6px rgba(2, 132, 199, 0.3)'
           }}>
             PZ
           </div>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
                 Prof<span style={{ color: 'var(--primary)' }}>Zone</span>
               </span>
               <span style={{
-                fontSize: '0.68rem',
+                fontSize: '0.65rem',
                 fontWeight: 600,
                 background: '#f1f5f9',
                 color: '#64748b',
-                padding: '2px 6px',
+                padding: '1px 5px',
                 borderRadius: '4px',
                 border: '1px solid #e2e8f0'
               }}>
                 by RoliCode
               </span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-              <MapPin size={12} color="var(--primary)" />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+              <MapPin size={11} color="var(--primary)" />
               <span>Regiones cercanas</span>
             </div>
           </div>
         </div>
 
-        {/* Botones de acción y estado */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+        {/* ACCIONES DE ESCRITORIO (Ocultas en pantallas móviles con .nav-desktop-actions) */}
+        <div className="nav-desktop-actions">
           {!isSupabaseConfigured && (
             <div style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '6px',
-              fontSize: '0.75rem',
+              gap: '4px',
+              fontSize: '0.72rem',
               background: '#fef3c7',
               color: '#92400e',
-              padding: '4px 10px',
-              borderRadius: '20px',
+              padding: '3px 8px',
+              borderRadius: '16px',
               fontWeight: 600
-            }} title="Para conectar a tu base de datos en la nube, configura tu .env.local">
-              <Sparkles size={13} />
-              <span>Modo Demo Activo</span>
+            }}>
+              <Sparkles size={11} />
+              <span>Modo Demo</span>
             </div>
           )}
 
@@ -123,45 +124,45 @@ export const Navbar: React.FC<NavbarProps> = ({
             type="button"
             className="btn btn-secondary"
             onClick={onOpenFeedback}
-            style={{ fontSize: '0.85rem', padding: '8px 12px', background: '#fffbeb', borderColor: '#fde68a', color: '#b45309' }}
-            title="Envíanos tus ideas, nuevos oficios o municipios que te gustaría ver"
+            style={{ fontSize: '0.8rem', padding: '6px 10px', background: '#fffbeb', borderColor: '#fde68a', color: '#b45309' }}
+            title="Envíanos tus ideas"
           >
-            <MessageSquareHeart size={16} color="#d97706" />
-            <span>Buzón de Sugerencias</span>
+            <MessageSquareHeart size={14} color="#d97706" />
+            <span>Buzón</span>
           </button>
 
           {/* Estado de Usuario / Login */}
           {currentUser ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px',
-                padding: '6px 10px',
+                gap: '6px',
+                padding: '4px 8px',
                 background: 'var(--surface-secondary)',
-                borderRadius: '8px',
+                borderRadius: '6px',
                 border: '1px solid var(--border)'
               }}>
                 <div style={{
-                  width: '28px',
-                  height: '28px',
+                  width: '24px',
+                  height: '24px',
                   borderRadius: '50%',
                   background: currentUser.provider === 'facebook' ? '#1877F2' : '#16a34a',
                   color: '#fff',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: '0.8rem',
+                  fontSize: '0.75rem',
                   fontWeight: 700
                 }}>
                   {currentUser.full_name.charAt(0).toUpperCase()}
                 </div>
-                <div style={{ textAlign: 'left', lineHeight: 1.2 }}>
-                  <div style={{ fontSize: '0.82rem', fontWeight: 700 }}>
+                <div style={{ textAlign: 'left', lineHeight: 1.1 }}>
+                  <div style={{ fontSize: '0.78rem', fontWeight: 700 }}>
                     {currentUser.full_name.split(' ')[0]}
                   </div>
-                  <div style={{ fontSize: '0.68rem', color: '#64748b' }}>
-                    {currentUser.provider === 'facebook' ? '✓ Facebook' : '✓ Celular SMS'}
+                  <div style={{ fontSize: '0.65rem', color: '#64748b' }}>
+                    {currentUser.provider === 'facebook' ? '✓ Facebook' : '✓ Celular'}
                   </div>
                 </div>
               </div>
@@ -170,9 +171,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                 className="btn btn-secondary"
                 onClick={onSignOut}
                 title="Cerrar sesión"
-                style={{ padding: '8px 10px' }}
+                style={{ padding: '6px 8px' }}
               >
-                <LogOut size={15} />
+                <LogOut size={13} />
               </button>
             </div>
           ) : (
@@ -181,9 +182,9 @@ export const Navbar: React.FC<NavbarProps> = ({
               type="button"
               className="btn btn-secondary"
               onClick={onOpenAuth}
-              style={{ fontSize: '0.85rem', padding: '8px 12px' }}
+              style={{ fontSize: '0.8rem', padding: '6px 10px' }}
             >
-              <User size={15} color="var(--primary)" />
+              <User size={14} color="var(--primary)" />
               <span>Ingresar</span>
             </button>
           )}
@@ -196,8 +197,8 @@ export const Navbar: React.FC<NavbarProps> = ({
               className="btn btn-secondary"
               onClick={onOpenAdmin}
               style={{
-                fontSize: '0.85rem',
-                padding: '8px 14px',
+                fontSize: '0.8rem',
+                padding: '6px 12px',
                 position: 'relative',
                 background: '#f0fdf4',
                 borderColor: '#86efac',
@@ -205,8 +206,8 @@ export const Navbar: React.FC<NavbarProps> = ({
               }}
               title="Panel de Administración"
             >
-              <ShieldCheck size={16} color="#16a34a" />
-              <span>Panel Admin</span>
+              <ShieldCheck size={14} color="#16a34a" />
+              <span>Admin</span>
               {pendingCount > 0 && (
                 <span style={{
                   position: 'absolute',
@@ -214,10 +215,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                   right: '-4px',
                   background: 'var(--accent)',
                   color: '#fff',
-                  fontSize: '0.7rem',
+                  fontSize: '0.65rem',
                   fontWeight: 700,
-                  width: '18px',
-                  height: '18px',
+                  width: '16px',
+                  height: '16px',
                   borderRadius: '50%',
                   display: 'flex',
                   alignItems: 'center',
@@ -236,11 +237,250 @@ export const Navbar: React.FC<NavbarProps> = ({
             type="button"
             className="btn btn-primary"
             onClick={onOpenRegister}
-            style={{ fontSize: '0.85rem', padding: '8px 14px' }}
+            style={{ fontSize: '0.8rem', padding: '6px 12px' }}
           >
-            <PlusCircle size={16} />
+            <PlusCircle size={14} />
             <span>Registrar Servicio</span>
           </button>
+        </div>
+
+        {/* BOTÓN MÓVIL / MENÚ DESPLEGABLE (Visible solo en pantallas móviles) */}
+        <div className="nav-mobile-menu-btn" style={{ position: 'relative' }}>
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '6px 10px',
+              borderRadius: '8px',
+              border: '1px solid var(--border)',
+              background: currentUser ? 'var(--surface-secondary)' : 'var(--surface)',
+              color: 'var(--text-main)',
+              cursor: 'pointer',
+              position: 'relative'
+            }}
+            aria-label="Abrir menú de opciones"
+          >
+            {currentUser ? (
+              <div style={{
+                width: '24px',
+                height: '24px',
+                borderRadius: '50%',
+                background: currentUser.provider === 'facebook' ? '#1877F2' : '#16a34a',
+                color: '#fff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '0.75rem',
+                fontWeight: 700
+              }}>
+                {currentUser.full_name.charAt(0).toUpperCase()}
+              </div>
+            ) : (
+              <Menu size={18} />
+            )}
+
+            <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>
+              {currentUser ? currentUser.full_name.split(' ')[0] : 'Menú'}
+            </span>
+
+            {mobileMenuOpen ? <X size={14} /> : <ChevronDown size={14} />}
+
+            {/* Badge de alertas si hay registros pendientes de admin */}
+            {currentUser?.role === 'admin' && pendingCount > 0 && (
+              <span style={{
+                position: 'absolute',
+                top: '-3px',
+                right: '-3px',
+                background: 'var(--accent)',
+                color: '#fff',
+                fontSize: '0.65rem',
+                fontWeight: 800,
+                width: '16px',
+                height: '16px',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                {pendingCount}
+              </span>
+            )}
+          </button>
+
+          {/* Menú Flotante Desplegable en Móvil */}
+          {mobileMenuOpen && (
+            <>
+              {/* Overlay transparente para cerrar al hacer clic afuera */}
+              <div
+                onClick={closeMenu}
+                style={{
+                  position: 'fixed',
+                  inset: 0,
+                  zIndex: 150,
+                  background: 'rgba(0,0,0,0.15)'
+                }}
+              />
+
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 'calc(100% + 8px)',
+                  right: 0,
+                  width: '260px',
+                  background: 'var(--surface)',
+                  border: '1px solid var(--border)',
+                  borderRadius: '12px',
+                  boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
+                  padding: '10px',
+                  zIndex: 200,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '6px'
+                }}
+              >
+                {/* Cabecera del usuario si está conectado */}
+                {currentUser ? (
+                  <div style={{
+                    padding: '8px 10px',
+                    borderRadius: '8px',
+                    background: 'var(--surface-secondary)',
+                    marginBottom: '4px'
+                  }}>
+                    <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                      {currentUser.full_name}
+                    </div>
+                    <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                      {currentUser.provider === 'facebook' ? '✓ Conectado con Facebook' : `✓ Celular ${currentUser.phone || ''}`}
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={() => { closeMenu(); onOpenAuth(); }}
+                    style={{
+                      width: '100%',
+                      justifyContent: 'center',
+                      fontSize: '0.85rem',
+                      padding: '8px',
+                      marginBottom: '4px'
+                    }}
+                  >
+                    <User size={15} />
+                    <span>Iniciar Sesión / Registro</span>
+                  </button>
+                )}
+
+                {/* Si es Admin: Botón Panel Admin */}
+                {currentUser?.role === 'admin' && (
+                  <button
+                    type="button"
+                    onClick={() => { closeMenu(); onOpenAdmin(); }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      width: '100%',
+                      padding: '8px 10px',
+                      borderRadius: '8px',
+                      border: '1px solid #86efac',
+                      background: '#f0fdf4',
+                      color: '#15803d',
+                      fontSize: '0.85rem',
+                      fontWeight: 700,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <ShieldCheck size={16} color="#16a34a" />
+                      <span>Panel Admin</span>
+                    </div>
+                    {pendingCount > 0 && (
+                      <span style={{
+                        background: 'var(--accent)',
+                        color: '#fff',
+                        fontSize: '0.65rem',
+                        padding: '1px 6px',
+                        borderRadius: '999px'
+                      }}>
+                        {pendingCount}
+                      </span>
+                    )}
+                  </button>
+                )}
+
+                {/* Botón Registrar Servicio */}
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => { closeMenu(); onOpenRegister(); }}
+                  style={{
+                    width: '100%',
+                    justifyContent: 'flex-start',
+                    fontSize: '0.85rem',
+                    padding: '8px 10px'
+                  }}
+                >
+                  <PlusCircle size={15} />
+                  <span>+ Registrar Servicio</span>
+                </button>
+
+                {/* Botón Buzón de Sugerencias */}
+                <button
+                  type="button"
+                  onClick={() => { closeMenu(); onOpenFeedback(); }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    width: '100%',
+                    padding: '8px 10px',
+                    borderRadius: '8px',
+                    border: '1px solid #fde68a',
+                    background: '#fffbeb',
+                    color: '#b45309',
+                    fontSize: '0.82rem',
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >
+                  <MessageSquareHeart size={15} color="#d97706" />
+                  <span>Buzón de Sugerencias</span>
+                </button>
+
+                {/* Si está conectado: Opción de cerrar sesión */}
+                {currentUser && (
+                  <button
+                    type="button"
+                    onClick={() => { closeMenu(); onSignOut(); }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      width: '100%',
+                      padding: '8px 10px',
+                      borderRadius: '8px',
+                      border: 'none',
+                      background: 'transparent',
+                      color: '#dc2626',
+                      fontSize: '0.82rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      marginTop: '4px',
+                      borderTop: '1px solid var(--border)',
+                      paddingTop: '8px'
+                    }}
+                  >
+                    <LogOut size={14} />
+                    <span>Cerrar Sesión</span>
+                  </button>
+                )}
+              </div>
+            </>
+          )}
         </div>
       </div>
     </header>
