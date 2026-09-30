@@ -188,37 +188,47 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           )}
 
-          {/* Panel Admin */}
-          <button
-            id="btn-admin-panel"
-            type="button"
-            className="btn btn-secondary"
-            onClick={onOpenAdmin}
-            style={{ fontSize: '0.85rem', padding: '8px 14px', position: 'relative' }}
-          >
-            <ShieldCheck size={16} />
-            <span>Panel Admin</span>
-            {pendingCount > 0 && (
-              <span style={{
-                position: 'absolute',
-                top: '-4px',
-                right: '-4px',
-                background: 'var(--accent)',
-                color: '#fff',
-                fontSize: '0.7rem',
-                fontWeight: 700,
-                width: '18px',
-                height: '18px',
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                border: '2px solid #fff'
-              }}>
-                {pendingCount}
-              </span>
-            )}
-          </button>
+          {/* Panel Admin (Solo visible para usuarios con rol 'admin') */}
+          {currentUser?.role === 'admin' && (
+            <button
+              id="btn-admin-panel"
+              type="button"
+              className="btn btn-secondary"
+              onClick={onOpenAdmin}
+              style={{
+                fontSize: '0.85rem',
+                padding: '8px 14px',
+                position: 'relative',
+                background: '#f0fdf4',
+                borderColor: '#86efac',
+                color: '#15803d'
+              }}
+              title="Panel de Administración"
+            >
+              <ShieldCheck size={16} color="#16a34a" />
+              <span>Panel Admin</span>
+              {pendingCount > 0 && (
+                <span style={{
+                  position: 'absolute',
+                  top: '-4px',
+                  right: '-4px',
+                  background: 'var(--accent)',
+                  color: '#fff',
+                  fontSize: '0.7rem',
+                  fontWeight: 700,
+                  width: '18px',
+                  height: '18px',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  border: '2px solid #fff'
+                }}>
+                  {pendingCount}
+                </span>
+              )}
+            </button>
+          )}
 
           {/* Registrar Servicio */}
           <button

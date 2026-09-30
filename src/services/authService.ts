@@ -1,5 +1,6 @@
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import type { UserProfile } from '../types/database';
+import { adminService } from './adminService';
 
 const USER_SESSION_KEY = 'profzone_user_session';
 
@@ -54,6 +55,7 @@ export const authService = {
 
   async verifyPhoneOtp(phoneNumber: string, code: string, name?: string): Promise<UserProfile> {
     const cleanPhone = phoneNumber.replace(/\D/g, '');
+    const isAdmin = adminService.isAdminPhone(cleanPhone);
 
     if (isSupabaseConfigured && supabase) {
       const { data, error } = await supabase.auth.verifyOtp({
@@ -68,9 +70,9 @@ export const authService = {
       const user: UserProfile = {
         id: data.user?.id || `phone-${cleanPhone}`,
         provider: 'phone',
-        full_name: name || `Vecino (${cleanPhone.slice(-4)})`,
+        full_name: name || (isAdmin ? `Administrador (${cleanPhone.slice(-4)})` : `Vecino (${cleanPhone.slice(-4)})`),
         phone: cleanPhone,
-        role: 'user'
+        role: isAdmin ? 'admin' : 'user'
       };
       localStorage.setItem(USER_SESSION_KEY, JSON.stringify(user));
       return user;
@@ -80,12 +82,26 @@ export const authService = {
     const user: UserProfile = {
       id: `phone-${cleanPhone}`,
       provider: 'phone',
-      full_name: name || `Usuario Celular (${cleanPhone.slice(-4)})`,
+      full_name: name || (isAdmin ? `Administrador (${cleanPhone.slice(-4)})` : `Usuario Celular (${cleanPhone.slice(-4)})`),
       phone: cleanPhone,
-      role: 'user'
+      role: isAdmin ? 'admin' : 'user'
     };
     localStorage.setItem(USER_SESSION_KEY, JSON.stringify(user));
     return user;
+  },
+
+  async signInWithAdminPin(pin: string, adminName?: string): Promise<UserProfile> {
+    if (!adminService.verifyMasterPin(pin)) {
+      throw new Error('Clave de administrador incorrecta');
+    }
+    const adminUser: UserProfile = {
+      id: `admin-master-${Date.now()}`,
+      provider: 'phone',
+      full_name: adminName?.trim() || 'Superadministrador',
+      role: 'admin'
+    };
+    localStorage.setItem(USER_SESSION_KEY, JSON.stringify(adminUser));
+    return adminUser;
   },
 
   signOut(): void {

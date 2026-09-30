@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { X, Check, Trash2, Clock, MapPin, Phone, Shield, RefreshCw, MessageSquareHeart, Building2, Layers, Plus, Lightbulb, Globe } from 'lucide-react';
+import { X, Check, Trash2, Clock, MapPin, Phone, Shield, RefreshCw, MessageSquareHeart, Building2, Layers, Plus, Lightbulb, Globe, UserPlus } from 'lucide-react';
 import type { Business, FeedbackSuggestion, Category } from '../../types/database';
 import { businessService } from '../../services/businessService';
 import { feedbackService } from '../../services/feedbackService';
 import { categoryService } from '../../services/categoryService';
+import { adminService, type AdminUser } from '../../services/adminService';
 
 interface AdminModalProps {
   onClose: () => void;
@@ -11,10 +12,13 @@ interface AdminModalProps {
 }
 
 export const AdminModal: React.FC<AdminModalProps> = ({ onClose, onUpdate }) => {
-  const [activeTab, setActiveTab] = useState<'services' | 'feedback' | 'categories'>('services');
+  const [activeTab, setActiveTab] = useState<'services' | 'feedback' | 'categories' | 'admins'>('services');
   const [pendingBusinesses, setPendingBusinesses] = useState<Business[]>([]);
   const [feedbacks, setFeedbacks] = useState<FeedbackSuggestion[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [adminsList, setAdminsList] = useState<AdminUser[]>([]);
+  const [newAdminPhone, setNewAdminPhone] = useState('');
+  const [newAdminName, setNewAdminName] = useState('');
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
 
@@ -28,14 +32,16 @@ export const AdminModal: React.FC<AdminModalProps> = ({ onClose, onUpdate }) => 
   const loadAll = async () => {
     setLoading(true);
     try {
-      const [pending, listFeedback, listCats] = await Promise.all([
+      const [pending, listFeedback, listCats, listAdmins] = await Promise.all([
         businessService.getBusinesses({ status: 'pending' }),
         feedbackService.getFeedbacks(),
-        categoryService.getCategories()
+        categoryService.getCategories(),
+        Promise.resolve(adminService.getAdmins())
       ]);
       setPendingBusinesses(pending);
       setFeedbacks(listFeedback);
       setCategories(listCats);
+      setAdminsList(listAdmins);
     } catch (err) {
       console.error(err);
     } finally {
@@ -107,6 +113,26 @@ export const AdminModal: React.FC<AdminModalProps> = ({ onClose, onUpdate }) => 
       onUpdate();
       alert('Datos de prueba sincronizados correctamente.');
     }
+  };
+
+  const handleAddAdmin = (e: React.FormEvent) => {
+    e.preventDefault();
+    const clean = newAdminPhone.replace(/\D/g, '');
+    if (clean.length < 10) {
+      alert('Ingresa un número celular válido a 10 dígitos.');
+      return;
+    }
+    adminService.addAdmin(clean, newAdminName);
+    setNewAdminPhone('');
+    setNewAdminName('');
+    setAdminsList(adminService.getAdmins());
+    alert(`¡Permisos de administrador concedidos a ${newAdminName || clean}! Podrá acceder al panel al verificar su celular.`);
+  };
+
+  const handleRemoveAdmin = (id: string, name: string) => {
+    if (!window.confirm(`¿Estás seguro de revocar permisos de administrador a "${name}"?`)) return;
+    adminService.removeAdmin(id);
+    setAdminsList(adminService.getAdmins());
   };
 
   return (
@@ -229,6 +255,27 @@ export const AdminModal: React.FC<AdminModalProps> = ({ onClose, onUpdate }) => 
           >
             <Layers size={16} />
             <span>Categorías ({categories.length})</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('admins')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '8px 14px',
+              borderRadius: '8px',
+              border: 'none',
+              background: activeTab === 'admins' ? '#dcfce7' : 'transparent',
+              color: activeTab === 'admins' ? '#15803d' : 'var(--text-muted)',
+              fontWeight: 700,
+              fontSize: '0.85rem',
+              cursor: 'pointer'
+            }}
+          >
+            <Shield size={16} />
+            <span>Administradores ({adminsList.length})</span>
           </button>
         </div>
 
@@ -420,7 +467,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({ onClose, onUpdate }) => 
               </div>
             )}
           </div>
-        ) : (
+        ) : activeTab === 'categories' ? (
           <div>
             {/* Explicación de Categorías vs Especialidades */}
             <div style={{
@@ -633,6 +680,180 @@ export const AdminModal: React.FC<AdminModalProps> = ({ onClose, onUpdate }) => 
                   >
                     <Trash2 size={15} />
                   </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div>
+            {/* Cabecera de gestión de administradores */}
+            <div style={{
+              background: '#f0fdf4',
+              border: '1px solid #bbf7d0',
+              borderRadius: '10px',
+              padding: '16px',
+              marginBottom: '20px',
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '12px'
+            }}>
+              <Shield size={24} color="#16a34a" style={{ flexShrink: 0, marginTop: '2px' }} />
+              <div>
+                <h4 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#166534', marginBottom: '4px' }}>
+                  Control de Administradores Autorizados
+                </h4>
+                <p style={{ fontSize: '0.85rem', color: '#15803d', lineHeight: 1.5 }}>
+                  Solo los usuarios listados a continuación recibirán acceso al <strong>Panel Admin</strong> al iniciar sesión con su número celular. Puedes agregar colaboradores de confianza o revocar accesos en cualquier momento.
+                </p>
+              </div>
+            </div>
+
+            {/* Formulario para designar nuevo admin */}
+            <form
+              onSubmit={handleAddAdmin}
+              style={{
+                background: 'var(--surface-secondary)',
+                border: '1px solid var(--border)',
+                borderRadius: '10px',
+                padding: '16px',
+                marginBottom: '20px'
+              }}
+            >
+              <h4 style={{ fontSize: '0.9rem', fontWeight: 700, marginBottom: '10px' }}>
+                Designar nuevo Administrador
+              </h4>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: '10px', alignItems: 'end' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '4px' }}>
+                    Nombre del Colaborador
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Ej. Uriel (Soporte)"
+                    value={newAdminName}
+                    onChange={(e) => setNewAdminName(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border)',
+                      fontSize: '0.85rem'
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '4px' }}>
+                    Celular (10 dígitos)
+                  </label>
+                  <input
+                    type="tel"
+                    required
+                    placeholder="7131234567"
+                    value={newAdminPhone}
+                    onChange={(e) => setNewAdminPhone(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border)',
+                      fontSize: '0.85rem'
+                    }}
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  style={{ fontSize: '0.85rem', padding: '8px 14px' }}
+                >
+                  <UserPlus size={15} />
+                  <span>Autorizar</span>
+                </button>
+              </div>
+            </form>
+
+            {/* Lista de administradores activos */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {adminsList.map((adm) => (
+                <div
+                  key={adm.id}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '12px 16px',
+                    background: 'var(--surface)',
+                    border: '1px solid var(--border)',
+                    borderRadius: '8px'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{
+                      width: '34px',
+                      height: '34px',
+                      borderRadius: '50%',
+                      background: adm.is_superadmin ? '#16a34a' : '#0284c7',
+                      color: '#fff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 700,
+                      fontSize: '0.85rem'
+                    }}>
+                      {adm.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{ fontWeight: 700, fontSize: '0.9rem' }}>{adm.name}</span>
+                        {adm.is_superadmin ? (
+                          <span style={{
+                            background: '#dcfce7',
+                            color: '#166534',
+                            fontSize: '0.7rem',
+                            fontWeight: 700,
+                            padding: '2px 6px',
+                            borderRadius: '4px'
+                          }}>
+                            Superadmin (Tú)
+                          </span>
+                        ) : (
+                          <span style={{
+                            background: '#e0f2fe',
+                            color: '#0369a1',
+                            fontSize: '0.7rem',
+                            fontWeight: 700,
+                            padding: '2px 6px',
+                            borderRadius: '4px'
+                          }}>
+                            Admin Designado
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                        📱 +52 {adm.phone} • Autorizado el {new Date(adm.added_at).toLocaleDateString()}
+                      </div>
+                    </div>
+                  </div>
+
+                  {!adm.is_superadmin && (
+                    <button
+                      type="button"
+                      title="Revocar acceso de administrador"
+                      onClick={() => handleRemoveAdmin(adm.id, adm.name)}
+                      style={{
+                        border: 'none',
+                        background: 'transparent',
+                        color: '#ef4444',
+                        cursor: 'pointer',
+                        padding: '6px',
+                        borderRadius: '4px'
+                      }}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  )}
                 </div>
               ))}
             </div>

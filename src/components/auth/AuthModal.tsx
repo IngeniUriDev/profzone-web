@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Phone, ShieldCheck, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { X, Phone, ShieldCheck, ArrowRight, CheckCircle2, Shield, KeyRound } from 'lucide-react';
 import type { UserProfile } from '../../types/database';
 import { authService } from '../../services/authService';
 
@@ -9,11 +9,13 @@ interface AuthModalProps {
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({ onClose, onSuccess }) => {
-  const [method, setMethod] = useState<'options' | 'phone'>('options');
+  const [method, setMethod] = useState<'options' | 'phone' | 'admin'>('options');
   const [phoneStep, setPhoneStep] = useState<'enter_phone' | 'enter_code'>('enter_phone');
   const [phone, setPhone] = useState('');
   const [userName, setUserName] = useState('');
   const [otpCode, setOtpCode] = useState('');
+  const [adminPin, setAdminPin] = useState('');
+  const [adminName, setAdminName] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -67,6 +69,25 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose, onSuccess }) => {
     } catch (err: unknown) {
       console.error(err);
       setErrorMsg('Código incorrecto o expirado.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAdminPinLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!adminPin.trim()) {
+      setErrorMsg('Ingresa la clave maestra de administrador.');
+      return;
+    }
+    setLoading(true);
+    setErrorMsg('');
+    try {
+      const adminUser = await authService.signInWithAdminPin(adminPin, adminName);
+      onSuccess(adminUser);
+      onClose();
+    } catch {
+      setErrorMsg('Clave de administrador incorrecta. Verifica tu clave maestra.');
     } finally {
       setLoading(false);
     }
@@ -207,8 +228,30 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose, onSuccess }) => {
                 Para mantener la confianza comunitaria y evitar perfiles falsos, solo admitimos cuentas verificadas por <strong>Facebook</strong> o <strong>SMS</strong>.
               </span>
             </div>
+
+            <div style={{ textAlign: 'center', marginTop: '12px', paddingTop: '10px', borderTop: '1px solid var(--border)' }}>
+              <button
+                type="button"
+                onClick={() => { setMethod('admin'); setErrorMsg(''); }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#64748b',
+                  fontSize: '0.78rem',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '5px'
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--primary)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = '#64748b'; }}
+              >
+                <KeyRound size={13} />
+                <span>¿Eres administrador? Acceso con Clave</span>
+              </button>
+            </div>
           </div>
-        ) : (
+        ) : method === 'phone' ? (
           <div>
             {phoneStep === 'enter_phone' ? (
               <form onSubmit={handleSendOtp} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -348,6 +391,83 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose, onSuccess }) => {
                 </div>
               </form>
             )}
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <div style={{
+              background: '#f0fdf4',
+              border: '1px solid #bbf7d0',
+              borderRadius: '8px',
+              padding: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px'
+            }}>
+              <Shield size={20} color="#16a34a" style={{ flexShrink: 0 }} />
+              <div style={{ fontSize: '0.8rem', color: '#166534' }}>
+                Acceso exclusivo para el <strong>Superadministrador</strong> de ProfZone (RoliCode).
+              </div>
+            </div>
+
+            <form onSubmit={handleAdminPinLogin} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '4px' }}>
+                  Nombre o Identificador
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ej. Uriel (RoliCode)"
+                  value={adminName}
+                  onChange={(e) => setAdminName(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border)',
+                    fontSize: '0.9rem'
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '4px' }}>
+                  Clave Maestra de Administrador *
+                </label>
+                <input
+                  type="password"
+                  required
+                  placeholder="••••••••"
+                  value={adminPin}
+                  onChange={(e) => setAdminPin(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border)',
+                    fontSize: '0.9rem'
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px' }}>
+                <button
+                  type="button"
+                  onClick={() => { setMethod('options'); setErrorMsg(''); }}
+                  style={{ background: 'none', border: 'none', color: '#64748b', fontSize: '0.85rem', cursor: 'pointer' }}
+                >
+                  ← Volver
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="btn btn-primary"
+                  style={{ fontSize: '0.9rem', background: '#16a34a', borderColor: '#16a34a' }}
+                >
+                  <span>{loading ? 'Validando...' : 'Entrar como Admin'}</span>
+                </button>
+              </div>
+            </form>
           </div>
         )}
       </div>

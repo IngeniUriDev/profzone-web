@@ -405,7 +405,7 @@ export function App() {
         />
       )}
 
-      {showAdminModal && (
+      {showAdminModal && currentUser?.role === 'admin' && (
         <AdminModal
           onClose={() => setShowAdminModal(false)}
           onUpdate={() => {
