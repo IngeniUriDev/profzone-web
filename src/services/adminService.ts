@@ -93,17 +93,22 @@ export const adminService = {
     return getStoredAdmins();
   },
 
-  addAdmin(phone: string, name: string): AdminUser {
-    const clean = phone.replace(/\D/g, '');
+  addAdmin(phone: string, name: string, email?: string): AdminUser {
+    const clean = phone ? phone.replace(/\D/g, '') : '';
+    const cleanEmail = email ? email.toLowerCase().trim() : '';
     const list = getStoredAdmins();
-    const existing = list.find(a => a.phone && a.phone.replace(/\D/g, '') === clean);
+    const existing = list.find(a => 
+      (clean && a.phone && a.phone.replace(/\D/g, '') === clean) ||
+      (cleanEmail && a.email && a.email.toLowerCase().trim() === cleanEmail)
+    );
     if (existing) {
       return existing;
     }
     const newAdmin: AdminUser = {
       id: `admin-${Date.now()}`,
-      phone: clean,
-      name: name.trim() || `Admin (${clean.slice(-4)})`,
+      phone: clean || undefined,
+      email: cleanEmail || undefined,
+      name: name.trim() || (clean ? `Admin (${clean.slice(-4)})` : cleanEmail || 'Admin'),
       added_at: new Date().toISOString(),
       is_superadmin: false
     };

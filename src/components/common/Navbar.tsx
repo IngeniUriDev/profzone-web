@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { MapPin, PlusCircle, ShieldCheck, User, LogOut, MessageSquareHeart, Menu, X, ChevronDown } from 'lucide-react';
+import { MapPin, PlusCircle, ShieldCheck, User, LogOut, MessageSquareHeart, Menu, X, ChevronDown, KeyRound } from 'lucide-react';
 import type { UserProfile } from '../../types/database';
+import { authService } from '../../services/authService';
 
 interface NavbarProps {
   onOpenRegister: () => void;
@@ -11,6 +12,7 @@ interface NavbarProps {
   currentUser: UserProfile | null;
   onSignOut: () => void;
   pendingCount: number;
+  onUserUpdated?: (user: UserProfile) => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -21,11 +23,24 @@ export const Navbar: React.FC<NavbarProps> = ({
   onGoHome,
   currentUser,
   onSignOut,
-  pendingCount
+  pendingCount,
+  onUserUpdated
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const closeMenu = () => setMobileMenuOpen(false);
+
+  const handleClaimAdmin = () => {
+    const pin = window.prompt('Ingresa la clave maestra de administrador (PIN):');
+    if (!pin) return;
+    try {
+      const updated = authService.claimAdminWithPin(pin);
+      if (onUserUpdated) onUserUpdated(updated);
+      alert('¡Acceso de Administrador verificado y activado!');
+    } catch {
+      alert('Clave de administrador incorrecta. Verifica tu clave maestra.');
+    }
+  };
 
   return (
     <header className="glass-panel" style={{
@@ -121,35 +136,61 @@ export const Navbar: React.FC<NavbarProps> = ({
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '6px',
-                padding: '4px 8px',
+                gap: '8px',
+                padding: '4px 10px',
                 background: 'var(--surface-secondary)',
-                borderRadius: '6px',
+                borderRadius: '8px',
                 border: '1px solid var(--border)'
               }}>
-                <div style={{
-                  width: '24px',
-                  height: '24px',
-                  borderRadius: '50%',
-                  background: currentUser.provider === 'facebook' ? '#1877F2' : '#16a34a',
-                  color: '#fff',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '0.75rem',
-                  fontWeight: 700
-                }}>
-                  {currentUser.full_name.charAt(0).toUpperCase()}
-                </div>
-                <div style={{ textAlign: 'left', lineHeight: 1.1 }}>
-                  <div style={{ fontSize: '0.78rem', fontWeight: 700 }}>
-                    {currentUser.full_name.split(' ')[0]}
+                {currentUser.avatar_url ? (
+                  <img
+                    src={currentUser.avatar_url}
+                    alt={currentUser.full_name}
+                    style={{
+                      width: '28px',
+                      height: '28px',
+                      borderRadius: '50%',
+                      objectFit: 'cover',
+                      border: '1px solid rgba(0,0,0,0.1)'
+                    }}
+                  />
+                ) : (
+                  <div style={{
+                    width: '28px',
+                    height: '28px',
+                    borderRadius: '50%',
+                    background: currentUser.provider === 'facebook' ? '#1877F2' : '#16a34a',
+                    color: '#fff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '0.8rem',
+                    fontWeight: 700
+                  }}>
+                    {currentUser.full_name.charAt(0).toUpperCase()}
                   </div>
-                  <div style={{ fontSize: '0.65rem', color: '#64748b' }}>
-                    {currentUser.provider === 'facebook' ? '✓ Facebook' : '✓ Celular'}
+                )}
+                <div style={{ textAlign: 'left', lineHeight: 1.15 }}>
+                  <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                    {currentUser.full_name}
+                  </div>
+                  <div style={{ fontSize: '0.68rem', color: currentUser.role === 'admin' ? '#15803d' : '#64748b', fontWeight: currentUser.role === 'admin' ? 700 : 500 }}>
+                    {currentUser.role === 'admin' ? '🛡️ Administrador' : (currentUser.email || (currentUser.provider === 'facebook' ? '✓ Facebook' : `✓ Celular ${currentUser.phone || ''}`))}
                   </div>
                 </div>
               </div>
+              {currentUser.role !== 'admin' && (
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={handleClaimAdmin}
+                  title="¿Eres administrador? Activar con clave maestra"
+                  style={{ fontSize: '0.75rem', padding: '5px 8px', color: '#64748b' }}
+                >
+                  <KeyRound size={13} />
+                  <span>Soy Admin</span>
+                </button>
+              )}
               <button
                 type="button"
                 className="btn btn-secondary"
@@ -248,20 +289,33 @@ export const Navbar: React.FC<NavbarProps> = ({
             aria-label="Abrir menú de opciones"
           >
             {currentUser ? (
-              <div style={{
-                width: '24px',
-                height: '24px',
-                borderRadius: '50%',
-                background: currentUser.provider === 'facebook' ? '#1877F2' : '#16a34a',
-                color: '#fff',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '0.75rem',
-                fontWeight: 700
-              }}>
-                {currentUser.full_name.charAt(0).toUpperCase()}
-              </div>
+              currentUser.avatar_url ? (
+                <img
+                  src={currentUser.avatar_url}
+                  alt={currentUser.full_name}
+                  style={{
+                    width: '24px',
+                    height: '24px',
+                    borderRadius: '50%',
+                    objectFit: 'cover'
+                  }}
+                />
+              ) : (
+                <div style={{
+                  width: '24px',
+                  height: '24px',
+                  borderRadius: '50%',
+                  background: currentUser.provider === 'facebook' ? '#1877F2' : '#16a34a',
+                  color: '#fff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '0.75rem',
+                  fontWeight: 700
+                }}>
+                  {currentUser.full_name.charAt(0).toUpperCase()}
+                </div>
+              )
             ) : (
               <Menu size={18} />
             )}
@@ -331,13 +385,50 @@ export const Navbar: React.FC<NavbarProps> = ({
                     padding: '8px 10px',
                     borderRadius: '8px',
                     background: 'var(--surface-secondary)',
-                    marginBottom: '4px'
+                    marginBottom: '4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px'
                   }}>
-                    <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-main)' }}>
-                      {currentUser.full_name}
-                    </div>
-                    <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
-                      {currentUser.provider === 'facebook' ? '✓ Conectado con Facebook' : `✓ Celular ${currentUser.phone || ''}`}
+                    {currentUser.avatar_url ? (
+                      <img
+                        src={currentUser.avatar_url}
+                        alt={currentUser.full_name}
+                        style={{
+                          width: '38px',
+                          height: '38px',
+                          borderRadius: '50%',
+                          objectFit: 'cover',
+                          border: '2px solid var(--primary)',
+                          boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
+                        }}
+                      />
+                    ) : (
+                      <div style={{
+                        width: '38px',
+                        height: '38px',
+                        borderRadius: '50%',
+                        background: currentUser.provider === 'facebook' ? '#1877F2' : '#16a34a',
+                        color: '#fff',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '1rem',
+                        fontWeight: 700
+                      }}>
+                        {currentUser.full_name.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
+                      <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {currentUser.full_name}
+                      </div>
+                      <div style={{ fontSize: '0.7rem', color: '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {currentUser.email || (currentUser.phone ? `📱 ${currentUser.phone}` : (currentUser.provider === 'facebook' ? '✓ Facebook' : '✓ Celular'))}
+                      </div>
+                      <div style={{ fontSize: '0.68rem', fontWeight: 700, color: currentUser.role === 'admin' ? '#15803d' : '#0284c7', marginTop: '1px' }}>
+                        {currentUser.role === 'admin' ? '🛡️ Administrador' : '✓ Usuario Registrado'}
+                      </div>
                     </div>
                   </div>
                 ) : (
@@ -434,6 +525,31 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <MessageSquareHeart size={15} color="#d97706" />
                   <span>Buzón de Sugerencias</span>
                 </button>
+
+                {/* Si no es admin todavía, opción para activar modo admin con PIN */}
+                {currentUser && currentUser.role !== 'admin' && (
+                  <button
+                    type="button"
+                    onClick={() => { closeMenu(); handleClaimAdmin(); }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      width: '100%',
+                      padding: '8px 10px',
+                      borderRadius: '8px',
+                      border: '1px dashed #cbd5e1',
+                      background: '#f8fafc',
+                      color: '#475569',
+                      fontSize: '0.8rem',
+                      fontWeight: 600,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <KeyRound size={15} color="var(--primary)" />
+                    <span>Activar Panel Admin (Clave)</span>
+                  </button>
+                )}
 
                 {/* Si está conectado: Opción de cerrar sesión */}
                 {currentUser && (

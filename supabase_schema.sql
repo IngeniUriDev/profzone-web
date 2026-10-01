@@ -82,19 +82,34 @@ ALTER TABLE public.pz_reviews ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.pz_feedback ENABLE ROW LEVEL SECURITY;
 
 -- Políticas de lectura pública
+DROP POLICY IF EXISTS "Lectura pública de categorías" ON public.pz_categories;
 CREATE POLICY "Lectura pública de categorías" ON public.pz_categories FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Inserción de categorías" ON public.pz_categories;
 CREATE POLICY "Inserción de categorías" ON public.pz_categories FOR ALL USING (true);
 
+DROP POLICY IF EXISTS "Lectura pública de negocios aprobados" ON public.pz_businesses;
 CREATE POLICY "Lectura pública de negocios aprobados" ON public.pz_businesses FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Inserción de negocios pendientes" ON public.pz_businesses;
 CREATE POLICY "Inserción de negocios pendientes" ON public.pz_businesses FOR INSERT WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Actualización de negocios" ON public.pz_businesses;
 CREATE POLICY "Actualización de negocios" ON public.pz_businesses FOR ALL USING (true);
 
+DROP POLICY IF EXISTS "Lectura pública de staff" ON public.pz_staff;
 CREATE POLICY "Lectura pública de staff" ON public.pz_staff FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Gestión de staff" ON public.pz_staff;
 CREATE POLICY "Gestión de staff" ON public.pz_staff FOR ALL USING (true);
 
+DROP POLICY IF EXISTS "Lectura pública de reseñas" ON public.pz_reviews;
 CREATE POLICY "Lectura pública de reseñas" ON public.pz_reviews FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Inserción pública de reseñas" ON public.pz_reviews;
 CREATE POLICY "Inserción pública de reseñas" ON public.pz_reviews FOR INSERT WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Inserción pública de sugerencias" ON public.pz_feedback;
 CREATE POLICY "Inserción pública de sugerencias" ON public.pz_feedback FOR ALL USING (true);
 
 -- Insertar categorías iniciales si no existen

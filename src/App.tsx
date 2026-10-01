@@ -233,6 +233,7 @@ export function App() {
         onOpenFeedback={() => setShowFeedbackModal(true)}
         onGoHome={handleGoHome}
         currentUser={currentUser}
+        onUserUpdated={setCurrentUser}
         onSignOut={handleSignOut}
         pendingCount={pendingCount}
       />

@@ -71,6 +71,7 @@ export interface UserProfile {
   id: string;
   provider: 'facebook' | 'phone';
   full_name: string;
+  email?: string;
   phone?: string;
   avatar_url?: string;
   role: 'admin' | 'user';

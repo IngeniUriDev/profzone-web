@@ -111,12 +111,45 @@ export const authService = {
     localStorage.removeItem(USER_SESSION_KEY);
   },
 
+  claimAdminWithPin(pin: string): UserProfile {
+    if (!adminService.verifyMasterPin(pin)) {
+      throw new Error('Clave maestra incorrecta');
+    }
+    const current = this.getCurrentUser();
+    if (!current) {
+      throw new Error('No hay sesión activa');
+    }
+    const updated: UserProfile = {
+      ...current,
+      role: 'admin'
+    };
+    if (current.email) {
+      adminService.addAdmin(current.phone || '', current.full_name, current.email);
+    } else if (current.phone) {
+      adminService.addAdmin(current.phone, current.full_name);
+    }
+    localStorage.setItem(USER_SESSION_KEY, JSON.stringify(updated));
+    return updated;
+  },
+
   mapSupabaseUser(sbUser: { id: string; email?: string; phone?: string; user_metadata?: Record<string, any>; app_metadata?: Record<string, any> }): UserProfile {
     const meta = sbUser.user_metadata || {};
-    const email = sbUser.email || '';
-    const rawPhone = sbUser.phone || '';
+    const email = sbUser.email || meta.email || '';
+    const rawPhone = sbUser.phone || meta.phone || '';
     const cleanPhone = rawPhone.replace(/\D/g, '').replace(/^52/, '');
     const fullName = meta.full_name || meta.name || (email ? email.split('@')[0] : '') || (cleanPhone ? `Usuario (${cleanPhone.slice(-4)})` : 'Usuario Facebook');
+
+    // Extraer avatar de Facebook (soporta string de Supabase y objeto Graph API)
+    let avatarUrl: string | undefined = undefined;
+    if (typeof meta.avatar_url === 'string') {
+      avatarUrl = meta.avatar_url;
+    } else if (typeof meta.picture === 'string') {
+      avatarUrl = meta.picture;
+    } else if (meta.picture?.data?.url && typeof meta.picture.data.url === 'string') {
+      avatarUrl = meta.picture.data.url;
+    } else if (typeof meta.picture_url === 'string') {
+      avatarUrl = meta.picture_url;
+    }
 
     const isAdmin = adminService.isAdmin(cleanPhone, email);
 
@@ -124,8 +157,9 @@ export const authService = {
       id: sbUser.id,
       provider: sbUser.app_metadata?.provider === 'facebook' ? 'facebook' : 'phone',
       full_name: fullName,
+      email: email || undefined,
       phone: cleanPhone || undefined,
-      avatar_url: meta.avatar_url || meta.picture,
+      avatar_url: avatarUrl,
       role: isAdmin ? 'admin' : 'user'
     };
 
