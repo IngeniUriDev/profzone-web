@@ -10,7 +10,7 @@ export interface AdminUser {
 const ADMIN_STORAGE_KEY = 'profzone_admin_whitelist_v1';
 
 // Clave o PIN maestro de Superadministrador (configurable también por VITE_ADMIN_PIN en .env o Vercel)
-const MASTER_PIN = import.meta.env.VITE_ADMIN_PIN || 'admin2026';
+const MASTER_PIN = import.meta.env.VITE_ADMIN_PIN || 'Ipoduri5s';
 
 // Celular o Email inicial por defecto
 const INITIAL_SUPERADMIN_PHONE = import.meta.env.VITE_SUPERADMIN_PHONE || '7141087330';
