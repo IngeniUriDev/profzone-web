@@ -13,7 +13,7 @@ const ADMIN_STORAGE_KEY = 'profzone_admin_whitelist_v1';
 const MASTER_PIN = import.meta.env.VITE_ADMIN_PIN || 'admin2026';
 
 // Celular o Email inicial por defecto
-const INITIAL_SUPERADMIN_PHONE = import.meta.env.VITE_SUPERADMIN_PHONE || '7131234567';
+const INITIAL_SUPERADMIN_PHONE = import.meta.env.VITE_SUPERADMIN_PHONE || '7141087330';
 const INITIAL_SUPERADMIN_EMAIL = import.meta.env.VITE_SUPERADMIN_EMAIL || '';
 
 function getStoredAdmins(): AdminUser[] {
@@ -33,7 +33,21 @@ function getStoredAdmins(): AdminUser[] {
     return defaultList;
   }
   try {
-    return JSON.parse(stored);
+    const list: AdminUser[] = JSON.parse(stored);
+    // Asegurar que el superadmin inicial siempre esté en la lista
+    const initialClean = INITIAL_SUPERADMIN_PHONE.replace(/\D/g, '');
+    if (!list.some(a => a.phone && a.phone.replace(/\D/g, '') === initialClean)) {
+      list.unshift({
+        id: 'superadmin-1',
+        phone: INITIAL_SUPERADMIN_PHONE,
+        email: INITIAL_SUPERADMIN_EMAIL,
+        name: 'Superadministrador (RoliCode)',
+        added_at: new Date().toISOString(),
+        is_superadmin: true
+      });
+      localStorage.setItem(ADMIN_STORAGE_KEY, JSON.stringify(list));
+    }
+    return list;
   } catch {
     return [];
   }
@@ -55,6 +69,8 @@ export const adminService = {
   isAdminPhone(phoneNumber: string): boolean {
     const clean = phoneNumber.replace(/\D/g, '');
     if (!clean) return false;
+    const initialClean = INITIAL_SUPERADMIN_PHONE.replace(/\D/g, '');
+    if (initialClean && clean === initialClean) return true;
     const list = getStoredAdmins();
     return list.some(a => a.phone && a.phone.replace(/\D/g, '') === clean);
   },
