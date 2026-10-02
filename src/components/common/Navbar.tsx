@@ -107,17 +107,17 @@ export const Navbar: React.FC<NavbarProps> = ({
         {/* ACCIONES DE ESCRITORIO (Ocultas en pantallas móviles con .nav-desktop-actions) */}
         <div className="nav-desktop-actions">
 
-          {/* Botón Información / Acerca de */}
+          {/* Botón Acerca de */}
           <button
             id="btn-open-about"
             type="button"
             className="btn btn-secondary"
             onClick={onOpenAbout}
             style={{ fontSize: '0.8rem', padding: '6px 10px' }}
-            title="Conoce más sobre ProfZone"
+            title="Conoce la finalidad de ProfZone y a su desarrollador"
           >
             <Info size={14} color="var(--primary)" />
-            <span>Información</span>
+            <span>Acerca de</span>
           </button>
 
           {/* Botón Contacto y Soporte */}
