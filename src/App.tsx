@@ -483,6 +483,7 @@ export function App() {
 
       {showAdminModal && currentUser?.role === 'admin' && (
         <AdminModal
+          currentUser={currentUser}
           onClose={() => setShowAdminModal(false)}
           onUpdate={() => {
             loadData();

@@ -175,11 +175,12 @@ export const authService = {
       ...current,
       role: 'admin'
     };
-    if (current.email) {
-      adminService.addAdmin(current.phone || '', current.full_name, current.email);
-    } else if (current.phone) {
-      adminService.addAdmin(current.phone, current.full_name);
-    }
+    adminService.addAdmin({
+      name: current.full_name,
+      phone: current.phone,
+      email: current.email,
+      role: 'superadmin'
+    });
     localStorage.setItem(USER_SESSION_KEY, JSON.stringify(updated));
     return updated;
   },
