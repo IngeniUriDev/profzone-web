@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
-import { MapPin, PlusCircle, ShieldCheck, User, LogOut, MessageSquareHeart, Menu, X, ChevronDown, KeyRound } from 'lucide-react';
+import { MapPin, PlusCircle, ShieldCheck, User, LogOut, MessageSquareHeart, Menu, X, ChevronDown, Info, PhoneCall } from 'lucide-react';
 import type { UserProfile } from '../../types/database';
-import { authService } from '../../services/authService';
 
 interface NavbarProps {
   onOpenRegister: () => void;
   onOpenAdmin: () => void;
   onOpenAuth: () => void;
   onOpenFeedback: () => void;
+  onOpenAbout: () => void;
+  onOpenContact: () => void;
   onGoHome: () => void;
   currentUser: UserProfile | null;
   onSignOut: () => void;
@@ -20,27 +21,16 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenAdmin,
   onOpenAuth,
   onOpenFeedback,
+  onOpenAbout,
+  onOpenContact,
   onGoHome,
   currentUser,
   onSignOut,
   pendingCount,
-  onUserUpdated
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const closeMenu = () => setMobileMenuOpen(false);
-
-  const handleClaimAdmin = () => {
-    const pin = window.prompt('Ingresa la clave maestra de administrador (PIN):');
-    if (!pin) return;
-    try {
-      const updated = authService.claimAdminWithPin(pin);
-      if (onUserUpdated) onUserUpdated(updated);
-      alert('¡Acceso de Administrador verificado y activado!');
-    } catch {
-      alert('Clave de administrador incorrecta. Verifica tu clave maestra.');
-    }
-  };
 
   return (
     <header className="glass-panel" style={{
@@ -117,6 +107,32 @@ export const Navbar: React.FC<NavbarProps> = ({
         {/* ACCIONES DE ESCRITORIO (Ocultas en pantallas móviles con .nav-desktop-actions) */}
         <div className="nav-desktop-actions">
 
+          {/* Botón Información / Acerca de */}
+          <button
+            id="btn-open-about"
+            type="button"
+            className="btn btn-secondary"
+            onClick={onOpenAbout}
+            style={{ fontSize: '0.8rem', padding: '6px 10px' }}
+            title="Conoce más sobre ProfZone"
+          >
+            <Info size={14} color="var(--primary)" />
+            <span>Información</span>
+          </button>
+
+          {/* Botón Contacto y Soporte */}
+          <button
+            id="btn-open-contact"
+            type="button"
+            className="btn btn-secondary"
+            onClick={onOpenContact}
+            style={{ fontSize: '0.8rem', padding: '6px 10px' }}
+            title="Contacto y Soporte"
+          >
+            <PhoneCall size={14} color="#059669" />
+            <span>Contacto</span>
+          </button>
+
           {/* Botón Buzón de Sugerencias */}
           <button
             id="btn-open-feedback"
@@ -179,18 +195,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                   </div>
                 </div>
               </div>
-              {currentUser.role !== 'admin' && (
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={handleClaimAdmin}
-                  title="¿Eres administrador? Activar con clave maestra"
-                  style={{ fontSize: '0.75rem', padding: '5px 8px', color: '#64748b' }}
-                >
-                  <KeyRound size={13} />
-                  <span>Soy Admin</span>
-                </button>
-              )}
               <button
                 type="button"
                 className="btn btn-secondary"
@@ -503,6 +507,52 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <span>+ Registrar Servicio</span>
                 </button>
 
+                {/* Botón Información / Acerca de */}
+                <button
+                  type="button"
+                  onClick={() => { closeMenu(); onOpenAbout(); }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    width: '100%',
+                    padding: '8px 10px',
+                    borderRadius: '8px',
+                    border: '1px solid #bae6fd',
+                    background: '#f0f9ff',
+                    color: '#0369a1',
+                    fontSize: '0.82rem',
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >
+                  <Info size={15} color="var(--primary)" />
+                  <span>Acerca de ProfZone</span>
+                </button>
+
+                {/* Botón Contacto y Soporte */}
+                <button
+                  type="button"
+                  onClick={() => { closeMenu(); onOpenContact(); }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    width: '100%',
+                    padding: '8px 10px',
+                    borderRadius: '8px',
+                    border: '1px solid #bbf7d0',
+                    background: '#f0fdf4',
+                    color: '#166534',
+                    fontSize: '0.82rem',
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >
+                  <PhoneCall size={15} color="#16a34a" />
+                  <span>Contacto y Soporte</span>
+                </button>
+
                 {/* Botón Buzón de Sugerencias */}
                 <button
                   type="button"
@@ -525,31 +575,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <MessageSquareHeart size={15} color="#d97706" />
                   <span>Buzón de Sugerencias</span>
                 </button>
-
-                {/* Si no es admin todavía, opción para activar modo admin con PIN */}
-                {currentUser && currentUser.role !== 'admin' && (
-                  <button
-                    type="button"
-                    onClick={() => { closeMenu(); handleClaimAdmin(); }}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      width: '100%',
-                      padding: '8px 10px',
-                      borderRadius: '8px',
-                      border: '1px dashed #cbd5e1',
-                      background: '#f8fafc',
-                      color: '#475569',
-                      fontSize: '0.8rem',
-                      fontWeight: 600,
-                      cursor: 'pointer'
-                    }}
-                  >
-                    <KeyRound size={15} color="var(--primary)" />
-                    <span>Activar Panel Admin (Clave)</span>
-                  </button>
-                )}
 
                 {/* Si está conectado: Opción de cerrar sesión */}
                 {currentUser && (

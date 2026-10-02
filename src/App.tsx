@@ -15,6 +15,8 @@ import { RegisterBusinessModal } from './components/business/RegisterBusinessMod
 import { AdminModal } from './components/admin/AdminModal';
 import { AuthModal } from './components/auth/AuthModal';
 import { FeedbackModal } from './components/common/FeedbackModal';
+import { AboutModal } from './components/common/AboutModal';
+import { ContactModal } from './components/common/ContactModal';
 import { SponsorBanner } from './components/common/SponsorBanner';
 import { CURRENT_SPONSOR } from './data/sponsorData';
 import { supabase, isSupabaseConfigured } from './lib/supabase';
@@ -45,6 +47,8 @@ export function App() {
   const [showAdminModal, setShowAdminModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [showAboutModal, setShowAboutModal] = useState(false);
+  const [showContactModal, setShowContactModal] = useState(false);
   const [openRegisterAfterAuth, setOpenRegisterAfterAuth] = useState(false);
 
   const handleOpenRegister = () => {
@@ -231,6 +235,8 @@ export function App() {
         onOpenAdmin={() => setShowAdminModal(true)}
         onOpenAuth={() => setShowAuthModal(true)}
         onOpenFeedback={() => setShowFeedbackModal(true)}
+        onOpenAbout={() => setShowAboutModal(true)}
+        onOpenContact={() => setShowContactModal(true)}
         onGoHome={handleGoHome}
         currentUser={currentUser}
         onUserUpdated={setCurrentUser}
@@ -412,6 +418,34 @@ export function App() {
           <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
             Directorio y plataforma de recomendación comunitaria para la region.
           </p>
+
+          {/* Enlaces de pie de página */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', fontSize: '0.82rem', margin: '4px 0', flexWrap: 'wrap', justifyContent: 'center' }}>
+            <button
+              type="button"
+              onClick={() => setShowAboutModal(true)}
+              style={{ background: 'none', border: 'none', color: '#0284c7', cursor: 'pointer', fontWeight: 600, padding: 0 }}
+            >
+              Acerca de ProfZone
+            </button>
+            <span style={{ color: '#cbd5e1' }}>•</span>
+            <button
+              type="button"
+              onClick={() => setShowContactModal(true)}
+              style={{ background: 'none', border: 'none', color: '#0284c7', cursor: 'pointer', fontWeight: 600, padding: 0 }}
+            >
+              Contacto y Soporte
+            </button>
+            <span style={{ color: '#cbd5e1' }}>•</span>
+            <button
+              type="button"
+              onClick={() => setShowFeedbackModal(true)}
+              style={{ background: 'none', border: 'none', color: '#0284c7', cursor: 'pointer', fontWeight: 600, padding: 0 }}
+            >
+              Buzón de Sugerencias
+            </button>
+          </div>
+
           <div style={{ fontSize: '0.8rem', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px' }}>
             <MapPin size={13} />
             <span>Desarrollado bajo la firma <strong>RoliCode</strong></span>
@@ -480,6 +514,23 @@ export function App() {
           onSuccess={() => {
             loadData();
           }}
+        />
+      )}
+
+      {showAboutModal && (
+        <AboutModal
+          onClose={() => setShowAboutModal(false)}
+          onOpenRegister={() => {
+            setShowAboutModal(false);
+            handleOpenRegister();
+          }}
+        />
+      )}
+
+      {showContactModal && (
+        <ContactModal
+          currentUser={currentUser}
+          onClose={() => setShowContactModal(false)}
         />
       )}
     </div>
