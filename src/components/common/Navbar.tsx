@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { MapPin, PlusCircle, ShieldCheck, User, LogOut, MessageSquareHeart, Menu, X, ChevronDown, Info, PhoneCall, KeyRound, Crown, CheckCircle2 } from 'lucide-react';
+import { MapPin, PlusCircle, ShieldCheck, User, LogOut, MessageSquareHeart, Menu, X, ChevronDown, Info, PhoneCall, KeyRound, Crown, CheckCircle2, Bell } from 'lucide-react';
 import type { UserProfile } from '../../types/database';
 import { authService } from '../../services/authService';
 
@@ -15,6 +15,8 @@ interface NavbarProps {
   currentUser: UserProfile | null;
   onSignOut: () => void;
   pendingCount: number;
+  unreadFeedbackCount?: number;
+  onOpenNotifications?: () => void;
   onUserUpdated?: (user: UserProfile) => void;
 }
 
@@ -29,6 +31,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   currentUser,
   onSignOut,
   pendingCount,
+  unreadFeedbackCount = 0,
+  onOpenNotifications,
   onUserUpdated,
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -274,6 +278,49 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           )}
 
+          {/* Campanita de Notificaciones del Buzón (Solo para Admin) */}
+          {currentUser?.role === 'admin' && (
+            <button
+              id="btn-admin-notifications"
+              type="button"
+              className="btn btn-secondary"
+              onClick={onOpenNotifications}
+              style={{
+                fontSize: '0.8rem',
+                padding: '6px 11px',
+                position: 'relative',
+                background: unreadFeedbackCount > 0 ? '#fffbeb' : 'var(--surface-secondary)',
+                borderColor: unreadFeedbackCount > 0 ? '#fde68a' : 'var(--border)',
+                color: unreadFeedbackCount > 0 ? '#b45309' : '#475569',
+                cursor: 'pointer'
+              }}
+              title="Notificaciones de comentarios del Buzón"
+            >
+              <Bell size={15} color={unreadFeedbackCount > 0 ? '#d97706' : '#64748b'} />
+              <span>Buzón ({unreadFeedbackCount})</span>
+              {unreadFeedbackCount > 0 && (
+                <span style={{
+                  position: 'absolute',
+                  top: '-4px',
+                  right: '-4px',
+                  background: '#ef4444',
+                  color: '#ffffff',
+                  fontSize: '0.65rem',
+                  fontWeight: 800,
+                  minWidth: '17px',
+                  height: '17px',
+                  borderRadius: '999px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  border: '2px solid #ffffff'
+                }}>
+                  {unreadFeedbackCount}
+                </span>
+              )}
+            </button>
+          )}
+
           {/* Panel Admin (Solo visible para usuarios con rol 'admin') */}
           {currentUser?.role === 'admin' && (
             <button
@@ -516,6 +563,46 @@ export const Navbar: React.FC<NavbarProps> = ({
                   </button>
                 )}
 
+                {/* Si es Admin: Botón Notificaciones del Buzón */}
+                {currentUser?.role === 'admin' && (
+                  <button
+                    type="button"
+                    onClick={() => { closeMenu(); onOpenNotifications && onOpenNotifications(); }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      width: '100%',
+                      padding: '8px 10px',
+                      borderRadius: '8px',
+                      border: '1px solid #fde68a',
+                      background: '#fffbeb',
+                      color: '#b45309',
+                      fontSize: '0.82rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      marginBottom: '6px'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Bell size={15} color="#d97706" />
+                      <span>Notificaciones del Buzón</span>
+                    </div>
+                    {unreadFeedbackCount > 0 && (
+                      <span style={{
+                        background: '#ef4444',
+                        color: '#fff',
+                        fontSize: '0.7rem',
+                        fontWeight: 800,
+                        padding: '1px 7px',
+                        borderRadius: '10px'
+                      }}>
+                        {unreadFeedbackCount} nuevo{unreadFeedbackCount > 1 ? 's' : ''}
+                      </span>
+                    )}
+                  </button>
+                )}
+
                 {/* Si es Admin: Botón Panel Admin */}
                 {currentUser?.role === 'admin' && (
                   <button
@@ -553,6 +640,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     )}
                   </button>
                 )}
+
 
                 {/* Botón Registrar Servicio */}
                 <button

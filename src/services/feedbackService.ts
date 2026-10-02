@@ -2,6 +2,7 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import type { FeedbackSuggestion } from '../types/database';
 
 const LOCAL_STORAGE_FEEDBACK = 'profzone_feedback_v1';
+const LOCAL_STORAGE_READ_IDS = 'profzone_read_feedback_ids_v1';
 
 function getLocalFeedback(): FeedbackSuggestion[] {
   const stored = localStorage.getItem(LOCAL_STORAGE_FEEDBACK);
@@ -15,6 +16,20 @@ function getLocalFeedback(): FeedbackSuggestion[] {
 
 function saveLocalFeedback(list: FeedbackSuggestion[]) {
   localStorage.setItem(LOCAL_STORAGE_FEEDBACK, JSON.stringify(list));
+}
+
+function getReadIds(): string[] {
+  const stored = localStorage.getItem(LOCAL_STORAGE_READ_IDS);
+  if (!stored) return [];
+  try {
+    return JSON.parse(stored);
+  } catch {
+    return [];
+  }
+}
+
+function saveReadIds(list: string[]) {
+  localStorage.setItem(LOCAL_STORAGE_READ_IDS, JSON.stringify(list));
 }
 
 export const feedbackService = {
@@ -65,5 +80,37 @@ export const feedbackService = {
     const updated = [newRecord, ...current];
     saveLocalFeedback(updated);
     return newRecord;
+  },
+
+  getReadIds(): string[] {
+    return getReadIds();
+  },
+
+  isRead(id: string): boolean {
+    return getReadIds().includes(id);
+  },
+
+  markAsRead(id: string): void {
+    const list = getReadIds();
+    if (!list.includes(id)) {
+      list.push(id);
+      saveReadIds(list);
+    }
+  },
+
+  markAllAsRead(feedbacks: FeedbackSuggestion[]): void {
+    const list = getReadIds();
+    feedbacks.forEach(f => {
+      if (!list.includes(f.id)) {
+        list.push(f.id);
+      }
+    });
+    saveReadIds(list);
+  },
+
+  getUnreadCount(feedbacks: FeedbackSuggestion[]): number {
+    const readList = getReadIds();
+    return feedbacks.filter(f => !readList.includes(f.id)).length;
   }
 };
+

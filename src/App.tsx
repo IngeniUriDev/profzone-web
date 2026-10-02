@@ -1,6 +1,8 @@
 import { Search, MapPin, Building2 } from 'lucide-react';
 import './App.css';
-import type { Business, Category, SortOption, UserProfile } from './types/database';
+import { NotificationCenterModal } from './components/common/NotificationCenterModal';
+import { feedbackService } from './services/feedbackService';
+import type { Business, Category, SortOption, UserProfile, FeedbackSuggestion } from './types/database';
 import { businessService } from './services/businessService';
 import { categoryService } from './services/categoryService';
 import { authService } from './services/authService';
@@ -45,6 +47,9 @@ export function App() {
   const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(null);
   const [showRegisterModal, setShowRegisterModal] = useState(false);
   const [showAdminModal, setShowAdminModal] = useState(false);
+  const [adminInitialTab, setAdminInitialTab] = useState<'services' | 'feedback' | 'categories' | 'admins'>('services');
+  const [showNotificationsModal, setShowNotificationsModal] = useState(false);
+  const [feedbacks, setFeedbacks] = useState<FeedbackSuggestion[]>([]);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [showAboutModal, setShowAboutModal] = useState(false);
@@ -63,14 +68,16 @@ export function App() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [cats, bizList, pendingList] = await Promise.all([
+      const [cats, bizList, pendingList, feedbackList] = await Promise.all([
         categoryService.getCategories(),
         businessService.getBusinesses({ status: 'approved' }),
-        businessService.getBusinesses({ status: 'pending' })
+        businessService.getBusinesses({ status: 'pending' }),
+        feedbackService.getFeedbacks()
       ]);
       setCategories(cats);
       setBusinesses(bizList);
       setPendingCount(pendingList.length);
+      setFeedbacks(feedbackList);
     } catch (err) {
       console.error('Error loading data:', err);
     } finally {
@@ -106,9 +113,21 @@ export function App() {
         }
       });
 
+      // Escuchar nuevos mensajes del Buzón en tiempo real
+      const feedbackChannel = supabase
+        .channel('realtime:pz_feedback')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'pz_feedback' }, () => {
+          feedbackService.getFeedbacks().then(setFeedbacks);
+        })
+        .subscribe();
+
       return () => {
         subscription.unsubscribe();
+        if (supabase) {
+          supabase.removeChannel(feedbackChannel);
+        }
       };
+
     }
 
   }, []);
@@ -236,11 +255,16 @@ export function App() {
     setCurrentUser(null);
   };
 
+  const unreadFeedbackCount = feedbackService.getUnreadCount(feedbacks);
+
   return (
     <div>
       <Navbar
         onOpenRegister={handleOpenRegister}
-        onOpenAdmin={() => setShowAdminModal(true)}
+        onOpenAdmin={() => {
+          setAdminInitialTab('services');
+          setShowAdminModal(true);
+        }}
         onOpenAuth={() => setShowAuthModal(true)}
         onOpenFeedback={() => setShowFeedbackModal(true)}
         onOpenAbout={() => setShowAboutModal(true)}
@@ -250,6 +274,8 @@ export function App() {
         onUserUpdated={setCurrentUser}
         onSignOut={handleSignOut}
         pendingCount={pendingCount}
+        unreadFeedbackCount={unreadFeedbackCount}
+        onOpenNotifications={() => setShowNotificationsModal(true)}
       />
 
       <main className="app-container">
@@ -492,12 +518,28 @@ export function App() {
       {showAdminModal && currentUser?.role === 'admin' && (
         <AdminModal
           currentUser={currentUser}
+          initialTab={adminInitialTab}
           onClose={() => setShowAdminModal(false)}
           onUpdate={() => {
             loadData();
           }}
         />
       )}
+
+      {/* Centro de Notificaciones del Buzón para Administradores */}
+      <NotificationCenterModal
+        isOpen={showNotificationsModal}
+        onClose={() => setShowNotificationsModal(false)}
+        feedbacks={feedbacks}
+        onFeedbacksUpdated={async () => {
+          const list = await feedbackService.getFeedbacks();
+          setFeedbacks(list);
+        }}
+        onOpenAdminFeedback={() => {
+          setAdminInitialTab('feedback');
+          setShowAdminModal(true);
+        }}
+      />
 
       {showAuthModal && (
         <AuthModal

@@ -13,12 +13,13 @@ import { adminService, type AdminUser, type AdminRole } from '../../services/adm
 
 interface AdminModalProps {
   currentUser?: UserProfile | null;
+  initialTab?: 'services' | 'feedback' | 'categories' | 'admins';
   onClose: () => void;
   onUpdate: () => void;
 }
 
-export const AdminModal: React.FC<AdminModalProps> = ({ currentUser, onClose, onUpdate }) => {
-  const [activeTab, setActiveTab] = useState<'services' | 'feedback' | 'categories' | 'admins'>('services');
+export const AdminModal: React.FC<AdminModalProps> = ({ currentUser, initialTab = 'services', onClose, onUpdate }) => {
+  const [activeTab, setActiveTab] = useState<'services' | 'feedback' | 'categories' | 'admins'>(initialTab);
   const [pendingBusinesses, setPendingBusinesses] = useState<Business[]>([]);
   const [feedbacks, setFeedbacks] = useState<FeedbackSuggestion[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
