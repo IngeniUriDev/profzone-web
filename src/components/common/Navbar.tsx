@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { MapPin, PlusCircle, ShieldCheck, User, LogOut, MessageSquareHeart, Menu, X, ChevronDown, Info, PhoneCall, KeyRound, Crown, CheckCircle2 } from 'lucide-react';
 import type { UserProfile } from '../../types/database';
 import { authService } from '../../services/authService';
@@ -671,10 +672,10 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
       </div>
 
-      {/* Modal de Detalles de Perfil y Activación de Superadministrador */}
-      {showAccountModal && currentUser && (
-        <div className="modal-overlay" onClick={() => setShowAccountModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '440px' }}>
+      {/* Modal de Detalles de Perfil y Activación de Superadministrador (con Portal al body para centrado perfecto) */}
+      {showAccountModal && currentUser && typeof document !== 'undefined' && createPortal(
+        <div className="modal-overlay" onClick={() => setShowAccountModal(false)} style={{ zIndex: 9999 }}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '440px', margin: 'auto' }}>
             <button
               type="button"
               onClick={() => setShowAccountModal(false)}
@@ -847,9 +848,11 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </header>
   );
 };
+
 
