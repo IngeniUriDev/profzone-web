@@ -61,7 +61,7 @@ export interface Review {
   user_id?: string;
   user_name: string;
   user_phone?: string;
-  user_provider?: 'facebook' | 'phone';
+  user_provider?: 'facebook' | 'google' | 'azure' | 'phone';
   rating: number;
   comment: string;
   created_at?: string;
@@ -69,7 +69,7 @@ export interface Review {
 
 export interface UserProfile {
   id: string;
-  provider: 'facebook' | 'phone';
+  provider: 'facebook' | 'google' | 'azure' | 'phone';
   full_name: string;
   email?: string;
   phone?: string;

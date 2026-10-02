@@ -566,11 +566,11 @@ export const BusinessDetailModal: React.FC<BusinessDetailModalProps> = ({
                           fontSize: '0.68rem',
                           padding: '1px 6px',
                           borderRadius: '4px',
-                          background: rev.user_provider === 'facebook' ? '#e0f2fe' : '#f0fdf4',
-                          color: rev.user_provider === 'facebook' ? '#0369a1' : '#166534',
+                          background: rev.user_provider === 'facebook' ? '#e0f2fe' : (rev.user_provider === 'google' ? '#fee2e2' : '#f0fdf4'),
+                          color: rev.user_provider === 'facebook' ? '#0369a1' : (rev.user_provider === 'google' ? '#b91c1c' : '#166534'),
                           fontWeight: 700
                         }}>
-                          {rev.user_provider === 'facebook' ? '✓ Facebook' : '✓ Celular SMS'}
+                          {rev.user_provider === 'facebook' ? '✓ Facebook' : (rev.user_provider === 'google' ? '✓ Google' : (rev.user_provider === 'azure' ? '✓ Microsoft' : '✓ Celular SMS'))}
                         </span>
                       )}
                     </div>

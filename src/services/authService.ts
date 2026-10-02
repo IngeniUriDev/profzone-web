@@ -15,7 +15,7 @@ export const authService = {
     }
   },
 
-  async signInWithFacebook(): Promise<UserProfile> {
+  async signInWithFacebook(): Promise<UserProfile | void> {
     if (isSupabaseConfigured && supabase) {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'facebook',
@@ -24,14 +24,66 @@ export const authService = {
         }
       });
       if (error) throw error;
+      return; // El navegador es redirigido a Facebook
     }
 
-    // Modo demostración o persistencia de sesión inmediata
+    // Modo demostración offline
     const demoUser: UserProfile = {
       id: `fb-${Date.now()}`,
       provider: 'facebook',
-      full_name: 'Usuario Facebook Verificado',
+      full_name: 'Usuario Facebook',
       avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
+      role: 'user'
+    };
+    localStorage.setItem(USER_SESSION_KEY, JSON.stringify(demoUser));
+    return demoUser;
+  },
+
+  async signInWithGoogle(): Promise<UserProfile | void> {
+    if (isSupabaseConfigured && supabase) {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'select_account'
+          }
+        }
+      });
+      if (error) throw error;
+      return; // El navegador es redirigido a Google
+    }
+
+    const demoUser: UserProfile = {
+      id: `google-${Date.now()}`,
+      provider: 'google',
+      full_name: 'Usuario Google',
+      avatar_url: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80',
+      role: 'user'
+    };
+    localStorage.setItem(USER_SESSION_KEY, JSON.stringify(demoUser));
+    return demoUser;
+  },
+
+  async signInWithAzure(): Promise<UserProfile | void> {
+    if (isSupabaseConfigured && supabase) {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'azure',
+        options: {
+          redirectTo: window.location.origin,
+          scopes: 'email profile openid'
+        }
+      });
+      if (error) throw error;
+      return; // El navegador es redirigido a Microsoft
+    }
+
+    const demoUser: UserProfile = {
+      id: `azure-${Date.now()}`,
+      provider: 'azure',
+      full_name: 'Usuario Microsoft / Hotmail',
+      avatar_url: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=200&q=80',
       role: 'user'
     };
     localStorage.setItem(USER_SESSION_KEY, JSON.stringify(demoUser));
@@ -132,14 +184,31 @@ export const authService = {
     return updated;
   },
 
-  mapSupabaseUser(sbUser: { id: string; email?: string; phone?: string; user_metadata?: Record<string, any>; app_metadata?: Record<string, any> }): UserProfile {
+  mapSupabaseUser(sbUser: {
+    id: string;
+    email?: string;
+    phone?: string;
+    user_metadata?: Record<string, any>;
+    app_metadata?: Record<string, any>;
+    identities?: Array<{ identity_data?: Record<string, any> }>;
+  }): UserProfile {
     const meta = sbUser.user_metadata || {};
     const email = sbUser.email || meta.email || '';
     const rawPhone = sbUser.phone || meta.phone || '';
     const cleanPhone = rawPhone.replace(/\D/g, '').replace(/^52/, '');
-    const fullName = meta.full_name || meta.name || (email ? email.split('@')[0] : '') || (cleanPhone ? `Usuario (${cleanPhone.slice(-4)})` : 'Usuario Facebook');
 
-    // Extraer avatar de Facebook (soporta string de Supabase y objeto Graph API)
+    const identityData = sbUser.identities?.[0]?.identity_data || {};
+    const fullName =
+      meta.full_name ||
+      meta.name ||
+      identityData.full_name ||
+      identityData.name ||
+      meta.user_name ||
+      meta.preferred_username ||
+      (email ? email.split('@')[0] : '') ||
+      (cleanPhone ? `Usuario (${cleanPhone.slice(-4)})` : 'Usuario');
+
+    // Extraer avatar de Facebook / Google / Azure
     let avatarUrl: string | undefined = undefined;
     if (typeof meta.avatar_url === 'string') {
       avatarUrl = meta.avatar_url;
@@ -149,13 +218,21 @@ export const authService = {
       avatarUrl = meta.picture.data.url;
     } else if (typeof meta.picture_url === 'string') {
       avatarUrl = meta.picture_url;
+    } else if (identityData.avatar_url) {
+      avatarUrl = identityData.avatar_url;
     }
+
+    const providerRaw = sbUser.app_metadata?.provider || 'phone';
+    const provider: 'facebook' | 'google' | 'azure' | 'phone' =
+      providerRaw === 'facebook' ? 'facebook' :
+      providerRaw === 'google' ? 'google' :
+      providerRaw === 'azure' ? 'azure' : 'phone';
 
     const isAdmin = adminService.isAdmin(cleanPhone, email);
 
     const profile: UserProfile = {
       id: sbUser.id,
-      provider: sbUser.app_metadata?.provider === 'facebook' ? 'facebook' : 'phone',
+      provider,
       full_name: fullName,
       email: email || undefined,
       phone: cleanPhone || undefined,

@@ -175,7 +175,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     width: '28px',
                     height: '28px',
                     borderRadius: '50%',
-                    background: currentUser.provider === 'facebook' ? '#1877F2' : '#16a34a',
+                    background: currentUser.provider === 'facebook' ? '#1877F2' : (currentUser.provider === 'google' ? '#ea4335' : '#16a34a'),
                     color: '#fff',
                     display: 'flex',
                     alignItems: 'center',
@@ -191,7 +191,13 @@ export const Navbar: React.FC<NavbarProps> = ({
                     {currentUser.full_name}
                   </div>
                   <div style={{ fontSize: '0.68rem', color: currentUser.role === 'admin' ? '#15803d' : '#64748b', fontWeight: currentUser.role === 'admin' ? 700 : 500 }}>
-                    {currentUser.role === 'admin' ? '🛡️ Administrador' : (currentUser.email || (currentUser.provider === 'facebook' ? '✓ Facebook' : `✓ Celular ${currentUser.phone || ''}`))}
+                    {currentUser.role === 'admin' 
+                      ? '🛡️ Administrador' 
+                      : (currentUser.provider === 'facebook' 
+                          ? `✓ Facebook (${currentUser.full_name})` 
+                          : (currentUser.provider === 'google'
+                              ? `✓ Google (${currentUser.full_name})`
+                              : (currentUser.email || (currentUser.phone ? `📱 ${currentUser.phone}` : '✓ Conectado'))))}
                   </div>
                 </div>
               </div>
@@ -412,7 +418,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                         width: '38px',
                         height: '38px',
                         borderRadius: '50%',
-                        background: currentUser.provider === 'facebook' ? '#1877F2' : '#16a34a',
+                        background: currentUser.provider === 'facebook' ? '#1877F2' : (currentUser.provider === 'google' ? '#ea4335' : '#16a34a'),
                         color: '#fff',
                         display: 'flex',
                         alignItems: 'center',
@@ -428,10 +434,14 @@ export const Navbar: React.FC<NavbarProps> = ({
                         {currentUser.full_name}
                       </div>
                       <div style={{ fontSize: '0.7rem', color: '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {currentUser.email || (currentUser.phone ? `📱 ${currentUser.phone}` : (currentUser.provider === 'facebook' ? '✓ Facebook' : '✓ Celular'))}
+                        {currentUser.email || (currentUser.phone ? `📱 ${currentUser.phone}` : (currentUser.provider === 'facebook' ? `Facebook: ${currentUser.full_name}` : '✓ Conectado'))}
                       </div>
                       <div style={{ fontSize: '0.68rem', fontWeight: 700, color: currentUser.role === 'admin' ? '#15803d' : '#0284c7', marginTop: '1px' }}>
-                        {currentUser.role === 'admin' ? '🛡️ Administrador' : '✓ Usuario Registrado'}
+                        {currentUser.role === 'admin' 
+                          ? '🛡️ Administrador' 
+                          : (currentUser.provider === 'facebook' 
+                              ? `✓ Facebook (${currentUser.full_name})` 
+                              : (currentUser.provider === 'google' ? `✓ Google (${currentUser.full_name})` : '✓ Usuario Registrado'))}
                       </div>
                     </div>
                   </div>
