@@ -87,6 +87,10 @@ export function App() {
         if (session?.user) {
           const profile = authService.mapSupabaseUser(session.user);
           setCurrentUser(profile);
+          // Limpiar hash de la URL para que no quede expuesto el access_token
+          if (window.location.hash.includes('access_token')) {
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }
         }
       });
 
@@ -94,6 +98,9 @@ export function App() {
         if (session?.user) {
           const profile = authService.mapSupabaseUser(session.user);
           setCurrentUser(profile);
+          if (window.location.hash.includes('access_token')) {
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }
         } else if (_event === 'SIGNED_OUT') {
           setCurrentUser(null);
         }
@@ -103,6 +110,7 @@ export function App() {
         subscription.unsubscribe();
       };
     }
+
   }, []);
 
   // Función para restablecer filtros e ir al inicio

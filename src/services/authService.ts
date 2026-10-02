@@ -179,7 +179,9 @@ export const authService = {
       name: current.full_name,
       phone: current.phone,
       email: current.email,
-      role: 'superadmin'
+      user_id: current.id,
+      role: 'superadmin',
+      assigned_by: 'Clave Maestra'
     });
     localStorage.setItem(USER_SESSION_KEY, JSON.stringify(updated));
     return updated;
@@ -207,7 +209,7 @@ export const authService = {
       meta.user_name ||
       meta.preferred_username ||
       (email ? email.split('@')[0] : '') ||
-      (cleanPhone ? `Usuario (${cleanPhone.slice(-4)})` : 'Usuario');
+      (cleanPhone ? `Usuario (${cleanPhone.slice(-4)})` : 'Usuario Facebook');
 
     // Extraer avatar de Facebook / Google / Azure
     let avatarUrl: string | undefined = undefined;
@@ -229,7 +231,10 @@ export const authService = {
       providerRaw === 'google' ? 'google' :
       providerRaw === 'azure' ? 'azure' : 'phone';
 
-    const isAdmin = adminService.isAdmin(cleanPhone, email);
+    // Verificar si es administrador reconocido o si ya se había vinculado con éxito en esta sesión
+    const currentStored = this.getCurrentUser();
+    const previouslyAdmin = currentStored && currentStored.id === sbUser.id && currentStored.role === 'admin';
+    const isAdmin = previouslyAdmin || adminService.isAdmin(cleanPhone, email, sbUser.id);
 
     const profile: UserProfile = {
       id: sbUser.id,
@@ -245,3 +250,4 @@ export const authService = {
     return profile;
   }
 };
+

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { MapPin, PlusCircle, ShieldCheck, User, LogOut, MessageSquareHeart, Menu, X, ChevronDown, Info, PhoneCall } from 'lucide-react';
+import { MapPin, PlusCircle, ShieldCheck, User, LogOut, MessageSquareHeart, Menu, X, ChevronDown, Info, PhoneCall, KeyRound, Crown, CheckCircle2 } from 'lucide-react';
 import type { UserProfile } from '../../types/database';
+import { authService } from '../../services/authService';
 
 interface NavbarProps {
   onOpenRegister: () => void;
@@ -27,10 +28,34 @@ export const Navbar: React.FC<NavbarProps> = ({
   currentUser,
   onSignOut,
   pendingCount,
+  onUserUpdated,
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showAccountModal, setShowAccountModal] = useState(false);
+  const [pinInput, setPinInput] = useState('');
+  const [pinError, setPinError] = useState('');
+  const [pinSuccess, setPinSuccess] = useState('');
 
   const closeMenu = () => setMobileMenuOpen(false);
+
+  const handleClaimAdmin = (e: React.FormEvent) => {
+    e.preventDefault();
+    setPinError('');
+    try {
+      const updated = authService.claimAdminWithPin(pinInput);
+      if (onUserUpdated) {
+        onUserUpdated(updated);
+      }
+      setPinSuccess('¡Privilegios de Superadministrador activados permanentemente!');
+      setTimeout(() => {
+        setShowAccountModal(false);
+        setPinSuccess('');
+        setPinInput('');
+      }, 1500);
+    } catch {
+      setPinError('Clave incorrecta. Verifica tu clave maestra.');
+    }
+  };
 
   return (
     <header className="glass-panel" style={{
@@ -149,15 +174,21 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Estado de Usuario / Login */}
           {currentUser ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '4px 10px',
-                background: 'var(--surface-secondary)',
-                borderRadius: '8px',
-                border: '1px solid var(--border)'
-              }}>
+              <div
+                onClick={() => setShowAccountModal(true)}
+                title="Ver mi perfil y opciones de cuenta"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '4px 10px',
+                  background: 'var(--surface-secondary)',
+                  borderRadius: '8px',
+                  border: '1px solid var(--border)',
+                  cursor: 'pointer',
+                  transition: 'background 0.2s ease'
+                }}
+              >
                 {currentUser.avatar_url ? (
                   <img
                     src={currentUser.avatar_url}
@@ -192,7 +223,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   </div>
                   <div style={{ fontSize: '0.68rem', color: currentUser.role === 'admin' ? '#15803d' : '#64748b', fontWeight: currentUser.role === 'admin' ? 700 : 500 }}>
                     {currentUser.role === 'admin' 
-                      ? '🛡️ Administrador' 
+                      ? '👑 Superadmin' 
                       : (currentUser.provider === 'facebook' 
                           ? `✓ Facebook (${currentUser.full_name})` 
                           : (currentUser.provider === 'google'
@@ -201,6 +232,24 @@ export const Navbar: React.FC<NavbarProps> = ({
                   </div>
                 </div>
               </div>
+
+              {currentUser.role !== 'admin' && (
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowAccountModal(true)}
+                  title="Vincular permisos de Superadministrador"
+                  style={{
+                    padding: '6px 8px',
+                    color: '#d97706',
+                    borderColor: '#fde68a',
+                    background: '#fffbeb'
+                  }}
+                >
+                  <KeyRound size={13} />
+                </button>
+              )}
+
               <button
                 type="button"
                 className="btn btn-secondary"
@@ -229,31 +278,33 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               id="btn-admin-panel"
               type="button"
-              className="btn btn-secondary"
+              className="btn btn-primary"
               onClick={onOpenAdmin}
               style={{
                 fontSize: '0.8rem',
-                padding: '6px 12px',
+                padding: '6px 14px',
                 position: 'relative',
-                background: '#f0fdf4',
-                borderColor: '#86efac',
-                color: '#15803d'
+                background: '#16a34a',
+                borderColor: '#15803d',
+                color: '#ffffff',
+                fontWeight: 700,
+                boxShadow: '0 2px 6px rgba(22, 163, 74, 0.25)'
               }}
-              title="Panel de Administración"
+              title="Panel de Administración y Moderación"
             >
-              <ShieldCheck size={14} color="#16a34a" />
-              <span>Admin</span>
+              <Crown size={14} />
+              <span>Panel Admin</span>
               {pendingCount > 0 && (
                 <span style={{
                   position: 'absolute',
                   top: '-4px',
                   right: '-4px',
-                  background: 'var(--accent)',
+                  background: '#ef4444',
                   color: '#fff',
                   fontSize: '0.65rem',
-                  fontWeight: 700,
-                  width: '16px',
-                  height: '16px',
+                  fontWeight: 800,
+                  width: '18px',
+                  height: '18px',
                   borderRadius: '50%',
                   display: 'flex',
                   alignItems: 'center',
@@ -267,6 +318,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           )}
 
           {/* Registrar Servicio */}
+
           <button
             id="btn-register-service"
             type="button"
@@ -618,6 +670,186 @@ export const Navbar: React.FC<NavbarProps> = ({
           )}
         </div>
       </div>
+
+      {/* Modal de Detalles de Perfil y Activación de Superadministrador */}
+      {showAccountModal && currentUser && (
+        <div className="modal-overlay" onClick={() => setShowAccountModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '440px' }}>
+            <button
+              type="button"
+              onClick={() => setShowAccountModal(false)}
+              style={{
+                position: 'absolute',
+                top: '16px',
+                right: '16px',
+                background: 'var(--surface-secondary)',
+                border: 'none',
+                borderRadius: '50%',
+                width: '32px',
+                height: '32px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer'
+              }}
+              aria-label="Cerrar modal"
+            >
+              <X size={16} />
+            </button>
+
+            <div style={{ textAlign: 'center', marginBottom: '18px' }}>
+              <div style={{
+                width: '64px',
+                height: '64px',
+                borderRadius: '50%',
+                margin: '0 auto 12px auto',
+                overflow: 'hidden',
+                border: '3px solid var(--primary)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: '#e0f2fe'
+              }}>
+                {currentUser.avatar_url ? (
+                  <img src={currentUser.avatar_url} alt={currentUser.full_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <span style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--primary)' }}>
+                    {currentUser.full_name.charAt(0).toUpperCase()}
+                  </span>
+                )}
+              </div>
+
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: '0 0 4px 0' }}>
+                {currentUser.full_name}
+              </h3>
+
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', color: '#64748b' }}>
+                <span>Conectado con Facebook</span>
+                <span>•</span>
+                <strong style={{ color: currentUser.role === 'admin' ? '#16a34a' : '#0284c7' }}>
+                  {currentUser.role === 'admin' ? '👑 Superadministrador' : 'Usuario Comunitario'}
+                </strong>
+              </div>
+            </div>
+
+            {pinSuccess && (
+              <div style={{
+                background: '#ecfdf5',
+                color: '#065f46',
+                border: '1px solid #a7f3d0',
+                padding: '10px 14px',
+                borderRadius: '8px',
+                fontSize: '0.86rem',
+                marginBottom: '14px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <CheckCircle2 size={18} color="#10b981" />
+                <span>{pinSuccess}</span>
+              </div>
+            )}
+
+            {pinError && (
+              <div style={{
+                background: '#fef2f2',
+                color: '#dc2626',
+                border: '1px solid #fecaca',
+                padding: '10px 14px',
+                borderRadius: '8px',
+                fontSize: '0.86rem',
+                marginBottom: '14px',
+                textAlign: 'center'
+              }}>
+                {pinError}
+              </div>
+            )}
+
+            {/* Si aún no es admin: Formulario de vinculación con clave maestra */}
+            {currentUser.role !== 'admin' ? (
+              <div style={{
+                background: '#f8fafc',
+                border: '1px solid #e2e8f0',
+                borderRadius: '12px',
+                padding: '16px',
+                marginTop: '10px'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                  <KeyRound size={18} color="#d97706" />
+                  <h4 style={{ fontSize: '0.92rem', fontWeight: 700, margin: 0, color: '#0f172a' }}>
+                    Vincular como Superadministrador
+                  </h4>
+                </div>
+                <p style={{ fontSize: '0.8rem', color: '#64748b', lineHeight: 1.4, margin: '0 0 12px 0' }}>
+                  Si eres el desarrollador o administrador principal de ProfZone, ingresa tu Clave Maestra para activar el panel en tu cuenta de Facebook para siempre.
+                </p>
+
+                <form onSubmit={handleClaimAdmin} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <input
+                    type="password"
+                    required
+                    placeholder="Ingresa tu clave maestra..."
+                    value={pinInput}
+                    onChange={(e) => setPinInput(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '9px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid #cbd5e1',
+                      fontSize: '0.88rem'
+                    }}
+                  />
+                  <button
+                    type="submit"
+                    className="btn btn-primary"
+                    style={{ width: '100%', justifyContent: 'center', fontSize: '0.86rem', padding: '9px' }}
+                  >
+                    <Crown size={15} />
+                    <span>Activar Permisos de Admin</span>
+                  </button>
+                </form>
+              </div>
+            ) : (
+              <div style={{
+                background: '#f0fdf4',
+                border: '1px solid #bbf7d0',
+                borderRadius: '10px',
+                padding: '14px',
+                marginTop: '10px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px'
+              }}>
+                <Crown size={22} color="#16a34a" />
+                <div style={{ fontSize: '0.84rem', color: '#166534' }}>
+                  <strong>Perfil Autorizado:</strong> Tienes acceso total a la Consola de Administración para moderar negocios, categorías y asignar colaboradores.
+                </div>
+              </div>
+            )}
+
+            <div style={{ marginTop: '16px', display: 'flex', gap: '8px' }}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => { setShowAccountModal(false); onSignOut(); }}
+                style={{ flex: 1, justifyContent: 'center', fontSize: '0.84rem', color: '#dc2626' }}
+              >
+                <LogOut size={14} />
+                <span>Cerrar Sesión</span>
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setShowAccountModal(false)}
+                style={{ flex: 1, justifyContent: 'center', fontSize: '0.84rem' }}
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 };
+

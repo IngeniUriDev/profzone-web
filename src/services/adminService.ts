@@ -2,6 +2,7 @@ export type AdminRole = 'superadmin' | 'moderator' | 'editor';
 
 export interface AdminUser {
   id: string;
+  user_id?: string;
   phone?: string;
   email?: string;
   name: string;
@@ -95,13 +96,17 @@ export const adminService = {
     return list.some(a => a.email && a.email.toLowerCase().trim() === clean);
   },
 
-  isAdmin(phone?: string, email?: string): boolean {
+  isAdmin(phone?: string, email?: string, userId?: string): boolean {
     if (phone && this.isAdminPhone(phone)) return true;
     if (email && this.isAdminEmail(email)) return true;
+    if (userId) {
+      const list = getStoredAdmins();
+      if (list.some(a => a.user_id === userId || a.id === userId)) return true;
+    }
     return false;
   },
 
-  isSuperAdmin(phone?: string, email?: string): boolean {
+  isSuperAdmin(phone?: string, email?: string, userId?: string): boolean {
     const cleanPhone = phone ? phone.replace(/\D/g, '') : '';
     const initialClean = INITIAL_SUPERADMIN_PHONE.replace(/\D/g, '');
     if (cleanPhone && cleanPhone === initialClean) return true;
@@ -110,18 +115,20 @@ export const adminService = {
     const list = getStoredAdmins();
     return list.some(a => 
       ((cleanPhone && a.phone && a.phone.replace(/\D/g, '') === cleanPhone) ||
-       (email && a.email && a.email.toLowerCase().trim() === email.toLowerCase().trim())) &&
+       (email && a.email && a.email.toLowerCase().trim() === email.toLowerCase().trim()) ||
+       (userId && (a.user_id === userId || a.id === userId))) &&
       (a.is_superadmin || a.role === 'superadmin')
     );
   },
 
-  getAdminUser(phone?: string, email?: string): AdminUser | null {
+  getAdminUser(phone?: string, email?: string, userId?: string): AdminUser | null {
     const cleanPhone = phone ? phone.replace(/\D/g, '') : '';
     const cleanEmail = email ? email.toLowerCase().trim() : '';
     const list = getStoredAdmins();
     return list.find(a => 
       (cleanPhone && a.phone && a.phone.replace(/\D/g, '') === cleanPhone) ||
-      (cleanEmail && a.email && a.email.toLowerCase().trim() === cleanEmail)
+      (cleanEmail && a.email && a.email.toLowerCase().trim() === cleanEmail) ||
+      (userId && (a.user_id === userId || a.id === userId))
     ) || null;
   },
 
@@ -135,6 +142,7 @@ export const adminService = {
     email?: string;
     role?: AdminRole;
     assigned_by?: string;
+    user_id?: string;
   }): AdminUser {
     const clean = params.phone ? params.phone.replace(/\D/g, '') : '';
     const cleanEmail = params.email ? params.email.toLowerCase().trim() : '';
@@ -142,18 +150,21 @@ export const adminService = {
 
     const existing = list.find(a => 
       (clean && a.phone && a.phone.replace(/\D/g, '') === clean) ||
-      (cleanEmail && a.email && a.email.toLowerCase().trim() === cleanEmail)
+      (cleanEmail && a.email && a.email.toLowerCase().trim() === cleanEmail) ||
+      (params.user_id && a.user_id === params.user_id)
     );
 
     if (existing) {
       if (params.role) existing.role = params.role;
       if (params.name) existing.name = params.name;
+      if (params.user_id) existing.user_id = params.user_id;
       saveAdmins(list);
       return existing;
     }
 
     const newAdmin: AdminUser = {
       id: `admin-${Date.now()}`,
+      user_id: params.user_id,
       phone: clean || undefined,
       email: cleanEmail || undefined,
       name: params.name.trim() || (clean ? `Admin (${clean.slice(-4)})` : cleanEmail || 'Admin'),
