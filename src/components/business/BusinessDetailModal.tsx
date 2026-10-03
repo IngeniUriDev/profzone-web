@@ -623,6 +623,26 @@ export const BusinessDetailModal: React.FC<BusinessDetailModalProps> = ({
             </div>
           )}
         </div>
+
+        {/* Deslinde de Responsabilidad Profesional */}
+        <div style={{
+          marginTop: '18px',
+          padding: '10px 12px',
+          borderRadius: '8px',
+          background: 'var(--surface-secondary)',
+          border: '1px solid var(--border)',
+          fontSize: '0.74rem',
+          color: 'var(--text-muted)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          lineHeight: 1.4
+        }}>
+          <span style={{ fontSize: '1rem' }}>🛡️</span>
+          <span>
+            <strong>Aviso Legal:</strong> ProfZone es un directorio comunitario e informativo. No certifica cédulas ni intermedia contrataciones. Verifica siempre las credenciales oficiales del profesional antes de recibir atención.
+          </span>
+        </div>
       </div>
     </div>
   );

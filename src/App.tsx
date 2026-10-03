@@ -19,6 +19,7 @@ import { AuthModal } from './components/auth/AuthModal';
 import { FeedbackModal } from './components/common/FeedbackModal';
 import { AboutModal } from './components/common/AboutModal';
 import { ContactModal } from './components/common/ContactModal';
+import { LegalModal } from './components/common/LegalModal';
 import { SponsorBanner } from './components/common/SponsorBanner';
 import { CURRENT_SPONSOR } from './data/sponsorData';
 import { supabase, isSupabaseConfigured } from './lib/supabase';
@@ -55,6 +56,8 @@ export function App() {
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [showAboutModal, setShowAboutModal] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
+  const [showLegalModal, setShowLegalModal] = useState(false);
+  const [legalModalTab, setLegalModalTab] = useState<'disclaimer' | 'terms' | 'privacy'>('disclaimer');
   const [openRegisterAfterAuth, setOpenRegisterAfterAuth] = useState(false);
 
   // Helper para verificar si el usuario conectado es propietario de un negocio
@@ -513,9 +516,56 @@ export function App() {
             >
               Buzón de Sugerencias
             </button>
+            <span style={{ color: '#cbd5e1' }}>•</span>
+            <button
+              type="button"
+              onClick={() => {
+                setLegalModalTab('disclaimer');
+                setShowLegalModal(true);
+              }}
+              style={{ background: 'none', border: 'none', color: '#0284c7', cursor: 'pointer', fontWeight: 600, padding: 0 }}
+            >
+              Términos & Deslinde Legal
+            </button>
+            <span style={{ color: '#cbd5e1' }}>•</span>
+            <button
+              type="button"
+              onClick={() => {
+                setLegalModalTab('privacy');
+                setShowLegalModal(true);
+              }}
+              style={{ background: 'none', border: 'none', color: '#0284c7', cursor: 'pointer', fontWeight: 600, padding: 0 }}
+            >
+              Aviso de Privacidad
+            </button>
           </div>
 
-          <div style={{ fontSize: '0.8rem', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px' }}>
+          {/* Deslinde de Responsabilidad Permanente */}
+          <div style={{
+            maxWidth: '840px',
+            margin: '8px auto',
+            padding: '10px 16px',
+            borderRadius: '10px',
+            background: 'var(--surface-secondary)',
+            border: '1px solid var(--border)',
+            fontSize: '0.74rem',
+            color: 'var(--text-muted)',
+            lineHeight: 1.5,
+            textAlign: 'center'
+          }}>
+            <strong>Deslinde de Responsabilidad Legal:</strong> ProfZone es un directorio comunitario e informativo independiente. No procesa pagos, no cobra comisiones ni valida cédulas de profesionistas. Cualquier acuerdo o contratación es responsabilidad exclusiva entre el usuario y el prestador del servicio. Consulta nuestros{' '}
+            <span
+              onClick={() => {
+                setLegalModalTab('disclaimer');
+                setShowLegalModal(true);
+              }}
+              style={{ color: 'var(--primary)', cursor: 'pointer', textDecoration: 'underline', fontWeight: 600 }}
+            >
+              Términos y Deslinde Legal
+            </span>.
+          </div>
+
+          <div style={{ fontSize: '0.8rem', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '6px' }}>
             <MapPin size={13} />
             <span>Desarrollado bajo la firma <strong>RoliCode</strong></span>
           </div>
@@ -626,6 +676,13 @@ export function App() {
         <ContactModal
           currentUser={currentUser}
           onClose={() => setShowContactModal(false)}
+        />
+      )}
+
+      {showLegalModal && (
+        <LegalModal
+          initialTab={legalModalTab}
+          onClose={() => setShowLegalModal(false)}
         />
       )}
     </div>
