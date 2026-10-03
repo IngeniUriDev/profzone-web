@@ -145,7 +145,7 @@ export const DigitalSchedulePicker: React.FC<DigitalSchedulePickerProps> = ({
           }}
         >
           <Sparkles size={12} color={is24Hours ? '#16a34a' : '#94a3b8'} />
-          <span>{is24Hours ? '✓ Abierto 24 Horas' : '¿Servicio 24 Horas?'}</span>
+          <span>{is24Hours ? 'Abierto 24 Horas' : '¿Servicio 24 Horas?'}</span>
         </button>
       </div>
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, MapPin, Clock, Phone, MessageCircle, Edit3, MessageSquarePlus, Star, UserCheck, Stethoscope, Globe } from 'lucide-react';
+import { X, MapPin, Clock, Phone, MessageCircle, Edit3, MessageSquarePlus, Star, UserCheck, Stethoscope, Globe, ShieldCheck } from 'lucide-react';
 import type { Business, Review, UserProfile } from '../../types/database';
 import { StarRating } from '../common/StarRating';
 import { reviewService } from '../../services/reviewService';
@@ -522,7 +522,7 @@ export const BusinessDetailModal: React.FC<BusinessDetailModalProps> = ({
               {currentUser ? (
                 <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <UserCheck size={14} color="#16a34a" />
-                  <span>Publicando como: <strong>{currentUser.full_name}</strong> (✓ {currentUser.provider === 'google' ? 'Google' : 'Cuenta Verificada'})</span>
+                  <span>Publicando como: <strong>{currentUser.full_name}</strong> ({currentUser.provider === 'google' ? 'Google' : 'Cuenta Verificada'})</span>
                 </div>
               ) : (
                 <div style={{ fontSize: '0.8rem', color: 'var(--primary)' }}>
@@ -590,7 +590,7 @@ export const BusinessDetailModal: React.FC<BusinessDetailModalProps> = ({
                           color: rev.user_provider === 'facebook' ? '#0369a1' : (rev.user_provider === 'google' ? '#b91c1c' : '#166534'),
                           fontWeight: 700
                         }}>
-                          {rev.user_provider === 'facebook' ? '✓ Facebook' : (rev.user_provider === 'google' ? '✓ Google' : (rev.user_provider === 'azure' ? '✓ Microsoft' : '✓ Celular SMS'))}
+                          {rev.user_provider === 'facebook' ? 'Facebook' : (rev.user_provider === 'google' ? 'Google' : (rev.user_provider === 'azure' ? 'Microsoft' : 'Celular SMS'))}
                         </span>
                       )}
                     </div>
@@ -638,7 +638,7 @@ export const BusinessDetailModal: React.FC<BusinessDetailModalProps> = ({
           gap: '8px',
           lineHeight: 1.4
         }}>
-          <span style={{ fontSize: '1rem' }}>🛡️</span>
+          <ShieldCheck size={18} color="var(--primary)" style={{ flexShrink: 0 }} />
           <span>
             <strong>Aviso Legal:</strong> ProfZone es un directorio comunitario e informativo. No certifica cédulas ni intermedia contrataciones. Verifica siempre las credenciales oficiales del profesional antes de recibir atención.
           </span>

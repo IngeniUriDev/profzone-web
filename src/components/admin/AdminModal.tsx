@@ -3,7 +3,7 @@ import {
   X, Check, Trash2, Clock, MapPin, Phone, Shield,
   MessageSquareHeart, Building2, Layers, Plus, Lightbulb, Globe,
   UserPlus, Crown, Users, Lock, Mail, CheckCircle2,
-  Sparkles, Award, Edit2
+  Sparkles, Award, Edit2, MessageCircle, AlertCircle
 } from 'lucide-react';
 import type { Business, FeedbackSuggestion, Category, UserProfile } from '../../types/database';
 import { businessService } from '../../services/businessService';
@@ -187,7 +187,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({ currentUser, initialTab 
 
   const handleClearAllData = async () => {
     const input = window.prompt(
-      '⚠️ ZONA DE SEGURIDAD CRÍTICA:\n\n' +
+      'ZONA DE SEGURIDAD CRÍTICA:\n\n' +
       'Esta acción eliminará todos los negocios registrados y dejará el directorio en blanco.\n\n' +
       'Para confirmar, escribe exactamente la frase de seguridad:\n' +
       'vaciar catalogo'
@@ -199,7 +199,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({ currentUser, initialTab 
     const normalized = input.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
     if (normalized !== 'vaciar catalogo') {
-      alert('❌ Frase de seguridad incorrecta. La operación fue cancelada y no se borró ningún dato.');
+      alert('Frase de seguridad incorrecta. La operación fue cancelada y no se borró ningún dato.');
       return;
     }
 
@@ -208,7 +208,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({ currentUser, initialTab 
       await businessService.clearAllBusinesses();
       await loadAll();
       onUpdate();
-      alert('✅ El catálogo ha sido vaciado con éxito. La plataforma ahora inicia 100% limpia sin comercios.');
+      alert('El catálogo ha sido vaciado con éxito. La plataforma ahora inicia 100% limpia sin comercios.');
     } catch (err) {
       console.error(err);
       alert('Error al vaciar los datos.');
@@ -772,11 +772,29 @@ export const AdminModal: React.FC<AdminModalProps> = ({ currentUser, initialTab 
                             {b.status === 'approved' ? 'Aprobado' : b.status === 'rejected' ? 'Pausado/Rechazado' : 'Pendiente'}
                           </span>
                         </div>
-                        <div style={{ display: 'flex', gap: '12px', fontSize: '0.82rem', color: '#64748b', flexWrap: 'wrap' }}>
-                          <span>📍 {b.municipality} {b.locality ? `• ${b.locality}` : ''}</span>
-                          {b.category?.name && <span>🏷️ {b.category.name}</span>}
-                          {b.phone && <span>📞 {b.phone}</span>}
-                          {b.whatsapp && <span>💬 WA: {b.whatsapp}</span>}
+                        <div style={{ display: 'flex', gap: '12px', fontSize: '0.82rem', color: '#64748b', flexWrap: 'wrap', alignItems: 'center' }}>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                            <MapPin size={13} color="#0284c7" />
+                            {b.municipality} {b.locality ? `• ${b.locality}` : ''}
+                          </span>
+                          {b.category?.name && (
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                              <Layers size={13} color="#8b5cf6" />
+                              {b.category.name}
+                            </span>
+                          )}
+                          {b.phone && (
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                              <Phone size={13} color="#10b981" />
+                              {b.phone}
+                            </span>
+                          )}
+                          {b.whatsapp && (
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                              <MessageCircle size={13} color="#16a34a" />
+                              WA: {b.whatsapp}
+                            </span>
+                          )}
                         </div>
                       </div>
 
@@ -886,12 +904,21 @@ export const AdminModal: React.FC<AdminModalProps> = ({ currentUser, initialTab 
                           borderRadius: '6px',
                           background: '#fef3c7',
                           color: '#92400e',
-                          textTransform: 'uppercase'
+                          textTransform: 'uppercase',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '5px'
                         }}>
-                          {f.type === 'category' ? '💡 Nueva Categoría' :
-                           f.type === 'municipality' ? '📍 Municipio/Zona' :
-                           f.type === 'feature' ? '⚡ Mejora App' :
-                           f.type === 'correction' ? '⚠️ Corrección' : '💬 Comentario'}
+                          {f.type === 'category' ? <Lightbulb size={12} /> :
+                           f.type === 'municipality' ? <MapPin size={12} /> :
+                           f.type === 'feature' ? <Sparkles size={12} /> :
+                           f.type === 'correction' ? <AlertCircle size={12} /> : <MessageCircle size={12} />}
+                          <span>
+                            {f.type === 'category' ? 'Nueva Categoría' :
+                             f.type === 'municipality' ? 'Municipio/Zona' :
+                             f.type === 'feature' ? 'Mejora App' :
+                             f.type === 'correction' ? 'Corrección' : 'Comentario'}
+                          </span>
                         </span>
                         <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>
                           {new Date(f.created_at).toLocaleDateString('es-MX')}
@@ -1434,9 +1461,9 @@ export const AdminModal: React.FC<AdminModalProps> = ({ currentUser, initialTab 
                           backgroundColor: '#ffffff'
                         }}
                       >
-                        <option value="moderator">🛡️ Moderador</option>
-                        <option value="editor">✏️ Editor de Directorio</option>
-                        <option value="superadmin">👑 Superadministrador</option>
+                        <option value="moderator">Moderador</option>
+                        <option value="editor">Editor de Directorio</option>
+                        <option value="superadmin">Superadministrador</option>
                       </select>
                     </div>
 

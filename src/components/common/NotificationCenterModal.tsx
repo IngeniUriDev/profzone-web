@@ -50,35 +50,35 @@ export const NotificationCenterModal: React.FC<NotificationCenterModalProps> = (
     switch (type) {
       case 'category':
         return {
-          label: '💡 Nueva Categoría',
+          label: 'Nueva Categoría',
           bg: '#fef3c7',
           color: '#92400e',
           icon: <Lightbulb size={13} color="#b45309" />
         };
       case 'municipality':
         return {
-          label: '📍 Municipio / Región',
+          label: 'Municipio / Región',
           bg: '#e0f2fe',
           color: '#075985',
           icon: <MapPin size={13} color="#0284c7" />
         };
       case 'feature':
         return {
-          label: '⚡ Mejora App',
+          label: 'Mejora App',
           bg: '#ede9fe',
           color: '#5b21b6',
           icon: <Sparkles size={13} color="#7c3aed" />
         };
       case 'correction':
         return {
-          label: '⚠️ Corrección',
+          label: 'Corrección',
           bg: '#fee2e2',
           color: '#991b1b',
           icon: <AlertCircle size={13} color="#dc2626" />
         };
       default:
         return {
-          label: '💬 Comentario Comunitario',
+          label: 'Comentario Comunitario',
           bg: '#f1f5f9',
           color: '#334155',
           icon: <MessageCircle size={13} color="#475569" />

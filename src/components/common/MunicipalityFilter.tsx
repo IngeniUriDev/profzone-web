@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MapPin, Navigation, ArrowUpDown, Layers, ChevronDown, X, Check } from 'lucide-react';
+import { MapPin, Navigation, ArrowUpDown, Layers, ChevronDown, X, Check, Sparkles } from 'lucide-react';
 import type { Category, SortOption } from '../../types/database';
 
 interface MunicipalityFilterProps {
@@ -135,12 +135,12 @@ export const MunicipalityFilter: React.FC<MunicipalityFilterProps> = ({
   };
 
   const placeholderMuni = selectedMunicipality === 'TODOS'
-    ? '📍 Toda la Región (Escribir o buscar...)'
-    : `📍 ${selectedMunicipality}`;
+    ? 'Toda la Región (Escribir o buscar...)'
+    : selectedMunicipality;
 
   const placeholderCat = selectedCategoryObj
-    ? `🏷️ ${selectedCategoryObj.name}`
-    : '✨ Todas las Especialidades (Buscar...)';
+    ? selectedCategoryObj.name
+    : 'Todas las Especialidades (Buscar...)';
 
   return (
     <div style={{
@@ -317,7 +317,10 @@ export const MunicipalityFilter: React.FC<MunicipalityFilterProps> = ({
                     if (selectedMunicipality !== 'TODOS') e.currentTarget.style.backgroundColor = 'transparent';
                   }}
                 >
-                  <span>📍 Toda la Región (Ver todos)</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <MapPin size={14} color="var(--primary)" />
+                    <span>Toda la Región (Ver todos)</span>
+                  </div>
                   {selectedMunicipality === 'TODOS' && <Check size={14} color="var(--primary)" />}
                 </div>
 
@@ -572,7 +575,10 @@ export const MunicipalityFilter: React.FC<MunicipalityFilterProps> = ({
                   if (selectedCategoryId !== null) e.currentTarget.style.backgroundColor = 'transparent';
                 }}
               >
-                <span>✨ Todas las Especialidades</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Sparkles size={14} color="var(--primary)" />
+                  <span>Todas las Especialidades</span>
+                </div>
                 {selectedCategoryId === null && <Check size={14} color="var(--primary)" />}
               </div>
 
@@ -669,10 +675,10 @@ export const MunicipalityFilter: React.FC<MunicipalityFilterProps> = ({
             outline: 'none'
           }}
         >
-          <option value="rating">⭐ Mejor Calificados</option>
-          <option value="reviews">💬 Más Recomendados</option>
-          <option value="distance">📍 Más Cercanos (GPS)</option>
-          <option value="recent">🕒 Más Recientes</option>
+          <option value="rating">Mejor Calificados</option>
+          <option value="reviews">Más Recomendados</option>
+          <option value="distance">Más Cercanos (GPS)</option>
+          <option value="recent">Más Recientes</option>
         </select>
       </div>
     </div>

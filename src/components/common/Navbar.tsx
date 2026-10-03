@@ -250,14 +250,19 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-main)' }}>
                     {currentUser.full_name}
                   </div>
-                  <div style={{ fontSize: '0.68rem', color: currentUser.role === 'admin' ? '#15803d' : '#64748b', fontWeight: currentUser.role === 'admin' ? 700 : 500 }}>
-                    {currentUser.role === 'admin' 
-                      ? '👑 Superadmin' 
-                      : (currentUser.provider === 'facebook' 
-                          ? `✓ Facebook (${currentUser.full_name})` 
-                          : (currentUser.provider === 'google'
-                              ? `✓ Google (${currentUser.full_name})`
-                              : (currentUser.email || (currentUser.phone ? `📱 ${currentUser.phone}` : '✓ Conectado'))))}
+                  <div style={{ fontSize: '0.68rem', color: currentUser.role === 'admin' ? '#15803d' : '#64748b', fontWeight: currentUser.role === 'admin' ? 700 : 500, display: 'flex', alignItems: 'center', gap: '3px' }}>
+                    {currentUser.role === 'admin' ? (
+                      <>
+                        <Crown size={11} color="#15803d" />
+                        <span>Superadmin</span>
+                      </>
+                    ) : (
+                      currentUser.provider === 'facebook' 
+                        ? `Facebook (${currentUser.full_name})` 
+                        : (currentUser.provider === 'google'
+                            ? `Google (${currentUser.full_name})`
+                            : (currentUser.email || currentUser.phone || 'Conectado'))
+                    )}
                   </div>
                 </div>
               </div>
@@ -558,14 +563,19 @@ export const Navbar: React.FC<NavbarProps> = ({
                         {currentUser.full_name}
                       </div>
                       <div style={{ fontSize: '0.7rem', color: '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {currentUser.email || (currentUser.phone ? `📱 ${currentUser.phone}` : (currentUser.provider === 'facebook' ? `Facebook: ${currentUser.full_name}` : '✓ Conectado'))}
+                        {currentUser.email || (currentUser.phone ? currentUser.phone : (currentUser.provider === 'facebook' ? `Facebook: ${currentUser.full_name}` : 'Conectado'))}
                       </div>
-                      <div style={{ fontSize: '0.68rem', fontWeight: 700, color: currentUser.role === 'admin' ? '#15803d' : '#0284c7', marginTop: '1px' }}>
-                        {currentUser.role === 'admin' 
-                          ? '🛡️ Administrador' 
-                          : (currentUser.provider === 'facebook' 
-                              ? `✓ Facebook (${currentUser.full_name})` 
-                              : (currentUser.provider === 'google' ? `✓ Google (${currentUser.full_name})` : '✓ Usuario Registrado'))}
+                      <div style={{ fontSize: '0.68rem', fontWeight: 700, color: currentUser.role === 'admin' ? '#15803d' : '#0284c7', marginTop: '1px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        {currentUser.role === 'admin' ? (
+                          <>
+                            <ShieldCheck size={12} color="#15803d" />
+                            <span>Administrador</span>
+                          </>
+                        ) : (
+                          currentUser.provider === 'facebook' 
+                            ? `Facebook (${currentUser.full_name})` 
+                            : (currentUser.provider === 'google' ? `Google (${currentUser.full_name})` : 'Usuario Registrado')
+                        )}
                       </div>
                     </div>
                   </div>
@@ -775,9 +785,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       {theme === 'dark' ? <Sun size={15} color="#fbbf24" /> : <Moon size={15} color="#64748b" />}
                       <span>{theme === 'dark' ? 'Modo Claro' : 'Modo Oscuro'}</span>
                     </div>
-                    <span style={{ fontSize: '0.82rem' }}>
-                      {theme === 'dark' ? '☀️' : '🌙'}
-                    </span>
+                    {theme === 'dark' ? <Sun size={14} color="#fbbf24" /> : <Moon size={14} color="#64748b" />}
                   </button>
                 )}
 
@@ -869,8 +877,15 @@ export const Navbar: React.FC<NavbarProps> = ({
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', color: '#64748b' }}>
                 <span>Conectado con Facebook</span>
                 <span>•</span>
-                <strong style={{ color: currentUser.role === 'admin' ? '#16a34a' : '#0284c7' }}>
-                  {currentUser.role === 'admin' ? '👑 Superadministrador' : 'Usuario Comunitario'}
+                <strong style={{ color: currentUser.role === 'admin' ? '#16a34a' : '#0284c7', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                  {currentUser.role === 'admin' ? (
+                    <>
+                      <Crown size={13} color="#16a34a" />
+                      <span>Superadministrador</span>
+                    </>
+                  ) : (
+                    'Usuario Comunitario'
+                  )}
                 </strong>
               </div>
             </div>

@@ -181,7 +181,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
                 borderRadius: '4px',
                 border: '1px solid #cbd5e1'
               }}>
-                {currentUser.provider === 'facebook' ? '✓ Facebook' : '✓ Teléfono SMS'}
+                {currentUser.provider === 'facebook' ? 'Facebook' : 'Teléfono SMS'}
               </span>
             </div>
 
@@ -202,11 +202,11 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
                     backgroundColor: 'white'
                   }}
                 >
-                  <option value="category">💡 Sugerir nueva categoría u oficio (ej. Psicología, Abogados, Plomería...)</option>
-                  <option value="municipality">📍 Sugerir nuevo municipio o colonia de la zona</option>
-                  <option value="feature">⚡ Sugerencia de mejora para la página o app</option>
-                  <option value="correction">⚠️ Reportar dato incorrecto o negocio cerrado</option>
-                  <option value="other">💬 Otra sugerencia o comentario</option>
+                  <option value="category">Sugerir nueva categoría u oficio (ej. Psicología, Abogados, Plomería...)</option>
+                  <option value="municipality">Sugerir nuevo municipio o colonia de la zona</option>
+                  <option value="feature">Sugerencia de mejora para la página o app</option>
+                  <option value="correction">Reportar dato incorrecto o negocio cerrado</option>
+                  <option value="other">Otra sugerencia o comentario</option>
                 </select>
               </div>
 

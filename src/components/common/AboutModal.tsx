@@ -88,14 +88,23 @@ export const AboutModal: React.FC<AboutModalProps> = ({ onClose, onOpenRegister 
             <h3 style={{ fontSize: '1.02rem', fontWeight: 800, margin: 0 }}>Finalidad y Misión de ProfZone</h3>
           </div>
           <p style={{ fontSize: '0.88rem', color: '#334155', lineHeight: 1.6, margin: '0 0 10px 0' }}>
-            <strong>ProfZone</strong> nació con el propósito de resolver una necesidad real en nuestra región: 
-            brindar a las familias un espacio digital confiable donde encontrar rápidamente desde un <strong>médico especialista, dentista, psicólogo o abogado</strong>, 
+            <strong>ProfZone</strong> nació con el propósito de resolver una necesidad real en nuestra región:
+            brindar a las familias un espacio digital confiable donde encontrar rápidamente desde un <strong>médico especialista, dentista, psicólogo o abogado</strong>,
             hasta un <strong>mecánico, plomero, electricista o negocio de comida</strong> local.
           </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.82rem', color: '#15803d' }}>
-            <div>✓ <strong>Impulso a la economía local:</strong> Visibilidad digital profesional para negocios y oficios sin costo de publicación.</div>
-            <div>✓ <strong>Sin intermediarios ni comisiones:</strong> El trato y el pago es 100% directo entre tú y el profesional.</div>
-            <div>✓ <strong>Opiniones transparentes:</strong> Valoraciones reales hechas por vecinos de la misma comunidad.</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.82rem', color: '#15803d' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <CheckCircle2 size={15} color="#16a34a" style={{ flexShrink: 0 }} />
+              <span><strong>Impulso a la economía local:</strong> Visibilidad digital profesional para negocios y oficios sin costo de publicación.</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <CheckCircle2 size={15} color="#16a34a" style={{ flexShrink: 0 }} />
+              <span><strong>Sin intermediarios ni comisiones:</strong> El trato y el pago es 100% directo entre tú y el profesional.</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <CheckCircle2 size={15} color="#16a34a" style={{ flexShrink: 0 }} />
+              <span><strong>Opiniones transparentes:</strong> Valoraciones reales hechas por vecinos de la misma comunidad.</span>
+            </div>
           </div>
         </div>
 
@@ -107,7 +116,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({ onClose, onOpenRegister 
               <strong style={{ fontSize: '0.88rem' }}>100% Regional</strong>
             </div>
             <p style={{ fontSize: '0.8rem', color: '#64748b', margin: 0, lineHeight: 1.45 }}>
-              Enfocado en Santiago Tianguistenco, Almoloya del Río, Calimaya, Capulhuac, Tenango del Valle, Toluca y municipios conurbados.
+              Enfocado en Santiago Tianguistenco, Xalatlaco, Capulhuac, Ocoyoacac, San Pedro, Almoloya, etc.
             </p>
           </div>
 
@@ -197,8 +206,8 @@ export const AboutModal: React.FC<AboutModalProps> = ({ onClose, onOpenRegister 
           </div>
 
           <p style={{ fontSize: '0.85rem', color: '#cbd5e1', lineHeight: 1.6, margin: '0 0 14px 0' }}>
-            Esta plataforma fue diseñada y desarrollada de manera independiente por <strong>Uriel</strong> bajo la firma <strong>RoliCode</strong>, 
-            con el objetivo de democratizar la tecnología en la región y ofrecer soluciones web de alto rendimiento, seguras y accesibles 
+            Esta plataforma fue diseñada y desarrollada de manera independiente por <strong>Uriel</strong> bajo la firma <strong>RoliCode</strong>,
+            con el objetivo de democratizar la tecnología en la región y ofrecer soluciones web de alto rendimiento, seguras y accesibles
             para negocios locales y proyectos emprendedores.
           </p>
 

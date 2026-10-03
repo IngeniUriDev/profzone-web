@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Send, AlertCircle, CheckCircle2, MapPin, Globe, Lock, LogIn, UserCheck, Layers, Sparkles } from 'lucide-react';
+import { X, Send, AlertCircle, CheckCircle2, MapPin, Globe, Lock, LogIn, UserCheck, Layers, Sparkles, Lightbulb } from 'lucide-react';
 import type { Business, Category, UserProfile } from '../../types/database';
 import { businessService } from '../../services/businessService';
 import { categoryService } from '../../services/categoryService';
@@ -368,7 +368,7 @@ export const RegisterBusinessModal: React.FC<RegisterBusinessModalProps> = ({
                         {c.name}
                       </option>
                     ))}
-                    <option value="NEW_CATEGORY">✨ + ¿No existe tu especialidad? Agregar nueva categoría...</option>
+                    <option value="NEW_CATEGORY">+ ¿No existe tu especialidad? Agregar nueva categoría...</option>
                   </select>
                 </div>
               </div>
@@ -404,9 +404,10 @@ export const RegisterBusinessModal: React.FC<RegisterBusinessModalProps> = ({
                       color: 'var(--text-main)'
                     }}
                   />
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                    💡 Esta categoría se registrará automáticamente en ProfZone y quedará disponible para tu publicación y futuros negocios.
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                    <Lightbulb size={13} color="var(--primary)" style={{ flexShrink: 0 }} />
+                    <span>Esta categoría se registrará automáticamente en ProfZone y quedará disponible para tu publicación y futuros negocios.</span>
+                  </div>
                 </div>
               )}
 
