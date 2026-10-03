@@ -148,19 +148,29 @@ export const AdminModal: React.FC<AdminModalProps> = ({ currentUser, initialTab 
   };
 
   const handleClearAllData = async () => {
-    const confirmed = window.confirm(
-      '⚠️ ¿Estás seguro de que deseas VACIAR todos los comercios y empezar la plataforma completamente en blanco?\n\n' +
-      '• Se borrarán todos los comercios de prueba locales y de la base de datos.\n' +
-      '• Las categorías se mantendrán intactas para que los nuevos usuarios puedan registrarse.'
+    const input = window.prompt(
+      '⚠️ ZONA DE SEGURIDAD CRÍTICA:\n\n' +
+      'Esta acción eliminará todos los negocios registrados y dejará el directorio en blanco.\n\n' +
+      'Para confirmar, escribe exactamente la frase de seguridad:\n' +
+      'vaciar catalogo'
     );
-    if (!confirmed) return;
+
+    if (input === null) return; // Cancelado por el usuario
+
+    // Normaliza para admitir "vaciar catalogo" o "vaciar catálogo" (mayúsculas o minúsculas)
+    const normalized = input.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+    if (normalized !== 'vaciar catalogo') {
+      alert('❌ Frase de seguridad incorrecta. La operación fue cancelada y no se borró ningún dato.');
+      return;
+    }
 
     setLoading(true);
     try {
       await businessService.clearAllBusinesses();
       await loadAll();
       onUpdate();
-      alert('✅ El catálogo ha sido vaciado. La plataforma ahora inicia 100% limpia sin comercios.');
+      alert('✅ El catálogo ha sido vaciado con éxito. La plataforma ahora inicia 100% limpia sin comercios.');
     } catch (err) {
       console.error(err);
       alert('Error al vaciar los datos.');
