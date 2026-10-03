@@ -324,25 +324,6 @@ export function App() {
 
             {/* Sugerencias rápidas de búsqueda semántica */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginTop: '8px', fontSize: '0.74rem' }}>
-              <span style={{ color: '#94a3b8' }}>Buscar rápido:</span>
-              {['Hospital', 'Pediatra', 'Dentista', 'Barbacoa', 'Mariachi', 'Mecánico'].map((term) => (
-                <button
-                  key={term}
-                  type="button"
-                  onClick={() => setSearchQuery(term)}
-                  style={{
-                    background: 'rgba(255, 255, 255, 0.12)',
-                    color: '#e2e8f0',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                    padding: '2px 7px',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    fontSize: '0.74rem'
-                  }}
-                >
-                  {term}
-                </button>
-              ))}
             </div>
           </div>
         </section>
