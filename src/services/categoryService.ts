@@ -2,7 +2,7 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import type { Category } from '../types/database';
 import { INITIAL_CATEGORIES } from '../data/mockData';
 
-const LOCAL_STORAGE_CATEGORIES = 'profzone_categories_v4';
+const LOCAL_STORAGE_CATEGORIES = 'profzone_categories_v5';
 
 function getLocalCategories(): Category[] {
   const stored = localStorage.getItem(LOCAL_STORAGE_CATEGORIES);
@@ -88,6 +88,34 @@ export const categoryService = {
 
     const current = getLocalCategories();
     const updated = current.filter(c => c.id !== id);
+    saveLocalCategories(updated);
+  },
+
+  async updateCategory(id: string, updates: { name: string; icon: string; description?: string }): Promise<void> {
+    if (isSupabaseConfigured && supabase) {
+      const { error } = await supabase
+        .from('pz_categories')
+        .update({
+          name: updates.name.trim(),
+          icon: updates.icon.trim() || 'Layers',
+          description: updates.description?.trim()
+        })
+        .eq('id', id);
+
+      if (error) {
+        console.error('Error updating category in Supabase:', error);
+        throw error;
+      }
+      return;
+    }
+
+    const current = getLocalCategories();
+    const updated = current.map(c => c.id === id ? {
+      ...c,
+      name: updates.name.trim(),
+      icon: updates.icon.trim() || 'Layers',
+      description: updates.description?.trim()
+    } : c);
     saveLocalCategories(updated);
   }
 };

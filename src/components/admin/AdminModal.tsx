@@ -3,7 +3,7 @@ import {
   X, Check, Trash2, Clock, MapPin, Phone, Shield,
   MessageSquareHeart, Building2, Layers, Plus, Lightbulb, Globe,
   UserPlus, Crown, Users, Lock, Mail, CheckCircle2,
-  Sparkles, Award
+  Sparkles, Award, Edit2
 } from 'lucide-react';
 import type { Business, FeedbackSuggestion, Category, UserProfile } from '../../types/database';
 import { businessService } from '../../services/businessService';
@@ -41,6 +41,13 @@ export const AdminModal: React.FC<AdminModalProps> = ({ currentUser, initialTab 
   const [newCatDesc, setNewCatDesc] = useState('');
   const [creatingCategory, setCreatingCategory] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
+
+  // Formulario edición de categoría existente
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [editCatName, setEditCatName] = useState('');
+  const [editCatIcon, setEditCatIcon] = useState('Layers');
+  const [editCatDesc, setEditCatDesc] = useState('');
+  const [savingCategory, setSavingCategory] = useState(false);
 
   // Privilegios del usuario actual
   const isSuperAdmin = adminService.isSuperAdmin(currentUser?.phone, currentUser?.email);
@@ -126,6 +133,37 @@ export const AdminModal: React.FC<AdminModalProps> = ({ currentUser, initialTab 
     } catch (err) {
       console.error(err);
       alert('Error al eliminar la categoría.');
+    }
+  };
+
+  const handleStartEditCategory = (cat: Category) => {
+    setEditingCategory(cat);
+    setEditCatName(cat.name);
+    setEditCatIcon(cat.icon || 'Layers');
+    setEditCatDesc(cat.description || '');
+    setShowAddForm(false);
+  };
+
+  const handleSaveEditCategory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingCategory || !editCatName.trim()) return;
+
+    setSavingCategory(true);
+    try {
+      await categoryService.updateCategory(editingCategory.id, {
+        name: editCatName.trim(),
+        icon: editCatIcon.trim() || 'Layers',
+        description: editCatDesc.trim() || undefined
+      });
+      setEditingCategory(null);
+      await loadAll();
+      onUpdate();
+      alert(`¡La especialidad "${editCatName.trim()}" ha sido actualizada con éxito!`);
+    } catch (err) {
+      console.error(err);
+      alert('Error al actualizar la categoría.');
+    } finally {
+      setSavingCategory(false);
     }
   };
 
@@ -1028,6 +1066,131 @@ export const AdminModal: React.FC<AdminModalProps> = ({ currentUser, initialTab 
                 </form>
               )}
 
+              {/* Formulario para Editar Categoría Existente */}
+              {editingCategory && (
+                <form onSubmit={handleSaveEditCategory} style={{
+                  background: '#fffbeb',
+                  border: '1px solid #fde68a',
+                  borderRadius: '10px',
+                  padding: '16px',
+                  marginBottom: '20px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <Edit2 size={16} color="#d97706" />
+                      <h4 style={{ fontSize: '0.95rem', fontWeight: 800, margin: 0, color: '#92400e' }}>
+                        Modificar Especialidad: {editingCategory.name}
+                      </h4>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setEditingCategory(null)}
+                      style={{ background: 'none', border: 'none', color: '#92400e', cursor: 'pointer', padding: '2px' }}
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '12px' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '4px', color: '#78350f' }}>
+                        Nombre de la Especialidad / Categoría *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="Ej. Música, Bandas, Rock, Norteño y DJs..."
+                        value={editCatName}
+                        onChange={(e) => setEditCatName(e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '9px 12px',
+                          borderRadius: '8px',
+                          border: '1px solid #f59e0b',
+                          fontSize: '0.9rem',
+                          backgroundColor: '#ffffff'
+                        }}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '4px', color: '#78350f' }}>
+                        Ícono Lucide
+                      </label>
+                      <select
+                        value={editCatIcon}
+                        onChange={(e) => setEditCatIcon(e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '9px 12px',
+                          borderRadius: '8px',
+                          border: '1px solid #f59e0b',
+                          fontSize: '0.9rem',
+                          backgroundColor: '#ffffff'
+                        }}
+                      >
+                        <option value="Layers">Layers (General)</option>
+                        <option value="Music">Music (Música/Bandas/DJs)</option>
+                        <option value="Stethoscope">Stethoscope (Médicos/Hospitales)</option>
+                        <option value="Smile">Smile (Dental)</option>
+                        <option value="Baby">Baby (Infantil/Bebés)</option>
+                        <option value="Utensils">Utensils (Comida/Restaurantes)</option>
+                        <option value="Wrench">Wrench (Oficios/Talleres)</option>
+                        <option value="Sparkles">Sparkles (Belleza/Estética)</option>
+                        <option value="HeartHandshake">HeartHandshake (Psicología/Salud)</option>
+                        <option value="Scale">Scale (Leyes/Notarías)</option>
+                        <option value="BookOpen">BookOpen (Papelerías/Escolar)</option>
+                        <option value="ShoppingBag">ShoppingBag (Comercio)</option>
+                        <option value="Car">Car (Automotriz)</option>
+                        <option value="Home">Home (Hogar/Inmobiliaria)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '4px', color: '#78350f' }}>
+                      Descripción de giros incluidos
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Ej. Bandas de rock, música norteña, mariachis, grupos versátiles, tríos y DJs para eventos"
+                      value={editCatDesc}
+                      onChange={(e) => setEditCatDesc(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '9px 12px',
+                        borderRadius: '8px',
+                        border: '1px solid #f59e0b',
+                        fontSize: '0.9rem',
+                        backgroundColor: '#ffffff'
+                      }}
+                    />
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '6px' }}>
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={() => setEditingCategory(null)}
+                      style={{ fontSize: '0.82rem', padding: '6px 14px' }}
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={savingCategory}
+                      className="btn btn-primary"
+                      style={{ fontSize: '0.82rem', padding: '7px 16px', background: '#d97706', borderColor: '#b45309' }}
+                    >
+                      {savingCategory ? 'Guardando...' : 'Guardar Cambios'}
+                    </button>
+                  </div>
+                </form>
+              )}
+
               {/* Grid de Categorías */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '12px' }}>
                 {categories.map((cat) => (
@@ -1067,26 +1230,51 @@ export const AdminModal: React.FC<AdminModalProps> = ({ currentUser, initialTab 
                       </div>
                     </div>
 
-                    {isSuperAdmin && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                       <button
                         type="button"
-                        title="Eliminar categoría"
-                        onClick={() => handleDeleteCategory(cat.id, cat.name)}
+                        title={`Editar ${cat.name}`}
+                        onClick={() => handleStartEditCategory(cat)}
                         style={{
-                          border: 'none',
-                          background: 'transparent',
-                          color: '#94a3b8',
+                          border: '1px solid #cbd5e1',
+                          background: '#f8fafc',
+                          color: '#0284c7',
                           cursor: 'pointer',
-                          padding: '4px',
-                          borderRadius: '4px',
-                          transition: 'color 0.15s ease'
+                          padding: '5px 8px',
+                          borderRadius: '6px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          fontSize: '0.74rem',
+                          fontWeight: 700,
+                          transition: 'all 0.15s ease'
                         }}
-                        onMouseEnter={(e) => { e.currentTarget.style.color = '#ef4444'; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.color = '#94a3b8'; }}
                       >
-                        <Trash2 size={16} />
+                        <Edit2 size={12} />
+                        <span>Editar</span>
                       </button>
-                    )}
+
+                      {isSuperAdmin && (
+                        <button
+                          type="button"
+                          title="Eliminar categoría"
+                          onClick={() => handleDeleteCategory(cat.id, cat.name)}
+                          style={{
+                            border: 'none',
+                            background: 'transparent',
+                            color: '#94a3b8',
+                            cursor: 'pointer',
+                            padding: '5px',
+                            borderRadius: '4px',
+                            transition: 'color 0.15s ease'
+                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.color = '#ef4444'; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.color = '#94a3b8'; }}
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>

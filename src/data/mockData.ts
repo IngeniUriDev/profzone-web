@@ -21,9 +21,9 @@ export const INITIAL_CATEGORIES: Category[] = [
   },
   {
     id: 'cat-4',
-    name: 'Mariachi y Música Regional',
+    name: 'Música, Bandas, Mariachis y DJs',
     icon: 'Music',
-    description: 'Mariachis profesionales, agrupaciones y tríos para serenatas y celebraciones'
+    description: 'Mariachis, bandas de rock, música norteña, agrupaciones versátiles, tríos, sonido y DJs para eventos'
   },
   {
     id: 'cat-5',
