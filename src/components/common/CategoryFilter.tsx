@@ -29,10 +29,12 @@ export const CategoryFilter: React.FC<CategoryFilterProps> = ({
     <div style={{
       display: 'flex',
       alignItems: 'center',
-      gap: '8px',
+      gap: '10px',
       overflowX: 'auto',
-      paddingBottom: '8px',
-      margin: '16px 0 24px 0'
+      padding: '6px 2px 14px 2px',
+      margin: '14px 0 20px 0',
+      scrollbarWidth: 'none',
+      msOverflowStyle: 'none'
     }}>
       <button
         type="button"
@@ -40,19 +42,33 @@ export const CategoryFilter: React.FC<CategoryFilterProps> = ({
         style={{
           display: 'inline-flex',
           alignItems: 'center',
-          gap: '6px',
-          padding: '8px 16px',
+          gap: '8px',
+          padding: '9px 18px',
           borderRadius: '9999px',
-          fontSize: '0.85rem',
-          fontWeight: 600,
+          fontSize: '0.86rem',
+          fontWeight: 700,
           border: '1px solid',
-          borderColor: selectedCategoryId === null ? 'var(--primary)' : 'var(--border)',
+          borderColor: selectedCategoryId === null ? 'transparent' : 'var(--border)',
           backgroundColor: selectedCategoryId === null ? 'var(--primary)' : 'var(--surface)',
           color: selectedCategoryId === null ? '#ffffff' : 'var(--text-main)',
           cursor: 'pointer',
           whiteSpace: 'nowrap',
-          transition: 'all 0.15s ease',
-          boxShadow: selectedCategoryId === null ? '0 2px 8px rgba(2,132,199,0.3)' : 'none'
+          transition: 'all 0.22s cubic-bezier(0.16, 1, 0.3, 1)',
+          boxShadow: selectedCategoryId === null
+            ? '0 4px 14px rgba(2, 132, 199, 0.35)'
+            : 'var(--shadow-sm)'
+        }}
+        onMouseEnter={(e) => {
+          if (selectedCategoryId !== null) {
+            e.currentTarget.style.borderColor = 'var(--primary)';
+            e.currentTarget.style.transform = 'translateY(-1px)';
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (selectedCategoryId !== null) {
+            e.currentTarget.style.borderColor = 'var(--border)';
+            e.currentTarget.style.transform = 'translateY(0)';
+          }
         }}
       >
         <Layers size={16} />
@@ -69,19 +85,33 @@ export const CategoryFilter: React.FC<CategoryFilterProps> = ({
             style={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '6px',
-              padding: '8px 16px',
+              gap: '8px',
+              padding: '9px 18px',
               borderRadius: '9999px',
-              fontSize: '0.85rem',
-              fontWeight: 600,
+              fontSize: '0.86rem',
+              fontWeight: 700,
               border: '1px solid',
-              borderColor: isSelected ? 'var(--primary)' : 'var(--border)',
+              borderColor: isSelected ? 'transparent' : 'var(--border)',
               backgroundColor: isSelected ? 'var(--primary)' : 'var(--surface)',
               color: isSelected ? '#ffffff' : 'var(--text-main)',
               cursor: 'pointer',
               whiteSpace: 'nowrap',
-              transition: 'all 0.15s ease',
-              boxShadow: isSelected ? '0 2px 8px rgba(2,132,199,0.3)' : 'none'
+              transition: 'all 0.22s cubic-bezier(0.16, 1, 0.3, 1)',
+              boxShadow: isSelected
+                ? '0 4px 14px rgba(2, 132, 199, 0.35)'
+                : 'var(--shadow-sm)'
+            }}
+            onMouseEnter={(e) => {
+              if (!isSelected) {
+                e.currentTarget.style.borderColor = 'var(--primary)';
+                e.currentTarget.style.transform = 'translateY(-1px)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!isSelected) {
+                e.currentTarget.style.borderColor = 'var(--border)';
+                e.currentTarget.style.transform = 'translateY(0)';
+              }
             }}
           >
             {getIcon(cat.icon)}

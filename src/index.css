@@ -2,29 +2,59 @@
   --primary: #0284c7;
   --primary-hover: #0369a1;
   --primary-light: #e0f2fe;
+  --primary-glow: rgba(2, 132, 199, 0.28);
   --accent: #f59e0b;
   --accent-light: #fef3c7;
   --success: #10b981;
+  --success-light: #d1fae5;
   --danger: #ef4444;
+  --danger-light: #fee2e2;
   --background: #f8fafc;
   --surface: #ffffff;
   --surface-secondary: #f1f5f9;
+  --surface-elevated: #ffffff;
   --text-main: #0f172a;
   --text-muted: #64748b;
   --border: #e2e8f0;
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --border-focus: #38bdf8;
+  --glass-bg: rgba(255, 255, 255, 0.88);
+  --glass-border: rgba(255, 255, 255, 0.6);
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.06);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.06);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.06);
   --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-  --radius-sm: 8px;
-  --radius-md: 14px;
-  --radius-lg: 20px;
-  --font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+[data-theme="dark"] {
+  --background: #090d16;
+  --surface: #111827;
+  --surface-secondary: #1a2333;
+  --surface-elevated: #1e293b;
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --border: #243044;
+  --border-focus: #38bdf8;
+  --glass-bg: rgba(17, 24, 39, 0.85);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --primary-light: rgba(2, 132, 199, 0.18);
+  --accent-light: rgba(245, 158, 11, 0.18);
+  --success-light: rgba(16, 185, 129, 0.18);
+  --danger-light: rgba(239, 68, 68, 0.18);
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.3);
+  --shadow-md: 0 4px 12px -2px rgb(0 0 0 / 0.35);
+  --shadow-xl: 0 20px 30px -8px rgb(0 0 0 / 0.5);
 }
 
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  transition: background-color 0.25s ease, border-color 0.25s ease, color 0.2s ease;
 }
 
 body {
@@ -33,15 +63,17 @@ body {
   color: var(--text-main);
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   line-height: 1.5;
+  letter-spacing: -0.01em;
 }
 
 /* Glassmorphism utility */
 .glass-panel {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: var(--glass-bg);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--border);
 }
 
 /* Base button styles */
@@ -50,26 +82,28 @@ body {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 10px 18px;
-  font-size: 0.95rem;
+  padding: 9px 16px;
+  font-size: 0.92rem;
   font-weight: 600;
+  font-family: var(--font-family);
   border-radius: var(--radius-sm);
   border: none;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   text-decoration: none;
+  user-select: none;
 }
 
 .btn-primary {
   background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
   color: #ffffff;
-  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
+  box-shadow: 0 4px 14px var(--primary-glow);
 }
 
 .btn-primary:hover {
   background: linear-gradient(135deg, #0369a1 0%, #075985 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(2, 132, 199, 0.35);
+  transform: translateY(-1.5px);
+  box-shadow: 0 6px 18px rgba(2, 132, 199, 0.4);
 }
 
 .btn-secondary {
@@ -79,42 +113,43 @@ body {
 }
 
 .btn-secondary:hover {
-  background: #e2e8f0;
-  color: #000000;
+  background: var(--border);
+  color: var(--text-main);
+  transform: translateY(-1px);
 }
 
 .btn-whatsapp {
-  background: #25D366;
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
   color: white;
+  box-shadow: 0 3px 10px rgba(34, 197, 94, 0.3);
 }
 
 .btn-whatsapp:hover {
-  background: #1eb856;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
+  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+  transform: translateY(-1.5px);
+  box-shadow: 0 5px 14px rgba(34, 197, 94, 0.4);
 }
 
 /* Badges */
 .badge {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
+  gap: 5px;
+  padding: 4px 9px;
   border-radius: 9999px;
-  font-size: 0.75rem;
+  font-size: 0.73rem;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.02em;
 }
 
 .badge-verified {
-  background-color: #dcfce7;
-  color: #166534;
+  background-color: var(--success-light);
+  color: #16a34a;
 }
 
 .badge-pending {
-  background-color: #fef3c7;
-  color: #92400e;
+  background-color: var(--accent-light);
+  color: #d97706;
 }
 
 .badge-category {
@@ -122,22 +157,36 @@ body {
   color: var(--primary);
 }
 
+.badge-live-open {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.35);
+}
+
+.badge-live-closed {
+  background: rgba(148, 163, 184, 0.15);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
 /* Modal styles */
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.6);
-  backdrop-filter: blur(4px);
+  background: rgba(10, 15, 26, 0.72);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
   padding: 16px;
-  animation: fadeIn 0.2s ease-out;
+  animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .modal-content {
   background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   max-width: 580px;
   width: 100%;
@@ -146,7 +195,7 @@ body {
   box-shadow: var(--shadow-xl);
   padding: 24px;
   position: relative;
-  animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: slideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes fadeIn {
@@ -155,22 +204,27 @@ body {
 }
 
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px) scale(0.98); }
+  from { opacity: 0; transform: translateY(18px) scale(0.97); }
   to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.05); }
 }
 
 /* Custom scrollbars */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 4px;
+  background: var(--border);
+  border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: var(--text-muted);
 }

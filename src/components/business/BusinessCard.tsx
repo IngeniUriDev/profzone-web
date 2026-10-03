@@ -1,5 +1,5 @@
 import React from 'react';
-import { Star, MapPin, Clock, Phone, MessageCircle, Navigation2, Globe } from 'lucide-react';
+import { Star, MapPin, Clock, Phone, MessageCircle, Navigation2, Globe, ArrowRight } from 'lucide-react';
 import type { Business } from '../../types/database';
 
 interface BusinessCardProps {
@@ -8,11 +8,37 @@ interface BusinessCardProps {
   onClick: () => void;
 }
 
+function checkIsOpenNow(schedule?: string): { isOpen: boolean; label: string } {
+  if (!schedule) {
+    const hour = new Date().getHours();
+    const isOpen = hour >= 9 && hour < 20;
+    return { isOpen, label: isOpen ? 'Abierto ahora' : 'Cerrado' };
+  }
+
+  const s = schedule.toLowerCase();
+  if (s.includes('24 horas') || s.includes('24 hrs') || s.includes('24h')) {
+    return { isOpen: true, label: 'Abierto 24 hrs' };
+  }
+
+  const now = new Date();
+  const day = now.getDay(); // 0 = Domingo
+  const hour = now.getHours();
+
+  if (day === 0 && (s.includes('lunes a viernes') || s.includes('lunes a sábado') || s.includes('lunes a sabado'))) {
+    return { isOpen: false, label: 'Cerrado domingos' };
+  }
+
+  const isOpen = hour >= 9 && hour < 20;
+  return { isOpen, label: isOpen ? 'Abierto ahora' : 'Cerrado' };
+}
+
 export const BusinessCard: React.FC<BusinessCardProps> = ({
   business,
   categoryName,
   onClick
 }) => {
+  const status = checkIsOpenNow(business.schedule);
+
   const handleWhatsApp = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!business.whatsapp) return;
@@ -47,58 +73,117 @@ export const BusinessCard: React.FC<BusinessCardProps> = ({
         boxShadow: 'var(--shadow-sm)',
         display: 'flex',
         flexDirection: 'column',
-        transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-        cursor: 'pointer'
+        transition: 'all 0.28s cubic-bezier(0.16, 1, 0.3, 1)',
+        cursor: 'pointer',
+        position: 'relative'
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.transform = 'translateY(-4px)';
-        e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+        e.currentTarget.style.transform = 'translateY(-5px)';
+        e.currentTarget.style.boxShadow = '0 16px 30px -10px rgba(0, 0, 0, 0.15), 0 0 0 1px var(--primary-light)';
+        const img = e.currentTarget.querySelector('img');
+        if (img) img.style.transform = 'scale(1.06)';
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.transform = 'translateY(0)';
         e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+        const img = e.currentTarget.querySelector('img');
+        if (img) img.style.transform = 'scale(1)';
       }}
     >
-      {/* Imagen de Cabecera */}
-      <div style={{ position: 'relative', width: '100%', height: '170px', backgroundColor: '#e2e8f0' }}>
+      {/* Contenedor de Imagen de Alta Presentación */}
+      <div style={{ position: 'relative', width: '100%', height: '185px', backgroundColor: 'var(--surface-secondary)', overflow: 'hidden' }}>
         <img
           src={business.image_url || 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=80'}
           alt={business.name}
-          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)'
+          }}
           loading="lazy"
         />
+
+        {/* Degradado inferior para resaltar texto sobre fotos claras */}
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          background: 'linear-gradient(180deg, rgba(0,0,0,0.3) 0%, transparent 40%, rgba(0,0,0,0.65) 100%)',
+          pointerEvents: 'none'
+        }} />
         
         {/* Badges superiores: Categoría y Municipio */}
-        <div style={{ position: 'absolute', top: '10px', left: '10px', display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-          <span className="badge badge-category" style={{ backdropFilter: 'blur(8px)', background: 'rgba(255,255,255,0.92)' }}>
+        <div style={{ position: 'absolute', top: '12px', left: '12px', display: 'flex', gap: '6px', flexWrap: 'wrap', zIndex: 2 }}>
+          <span className="badge" style={{
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+            background: 'rgba(255, 255, 255, 0.92)',
+            color: '#0369a1',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
+          }}>
             {categoryName || 'Servicio Local'}
           </span>
-          <span className="badge" style={{ backdropFilter: 'blur(8px)', background: 'rgba(15,23,42,0.85)', color: '#ffffff' }}>
-            <MapPin size={10} color="#38bdf8" />
+          <span className="badge" style={{
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+            background: 'rgba(15, 23, 42, 0.85)',
+            color: '#f8fafc',
+            border: '1px solid rgba(255,255,255,0.1)'
+          }}>
+            <MapPin size={11} color="#38bdf8" />
             {business.municipality}
           </span>
         </div>
 
-        {/* Badge inferior: Rating y Distancia */}
+        {/* Badge superior derecho: Abierto / Cerrado */}
+        <div style={{ position: 'absolute', top: '12px', right: '12px', zIndex: 2 }}>
+          <span style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '5px',
+            padding: '3px 8px',
+            borderRadius: '9999px',
+            fontSize: '0.7rem',
+            fontWeight: 700,
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+            background: status.isOpen ? 'rgba(22, 163, 74, 0.9)' : 'rgba(30, 41, 59, 0.85)',
+            color: '#ffffff',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
+          }}>
+            <span style={{
+              width: '6px',
+              height: '6px',
+              borderRadius: '50%',
+              backgroundColor: status.isOpen ? '#4ade80' : '#94a3b8',
+              boxShadow: status.isOpen ? '0 0 6px #4ade80' : 'none'
+            }} />
+            <span>{status.label}</span>
+          </span>
+        </div>
+
+        {/* Badge inferior: Rating y Distancia GPS */}
         <div style={{
           position: 'absolute',
-          bottom: '10px',
-          right: '10px',
+          bottom: '12px',
+          right: '12px',
           display: 'flex',
-          gap: '6px'
+          gap: '6px',
+          zIndex: 2
         }}>
           {business.distanceKm !== undefined && (
             <div style={{
-              background: 'rgba(2, 132, 199, 0.9)',
+              background: 'rgba(2, 132, 199, 0.95)',
               color: '#ffffff',
               borderRadius: '8px',
               padding: '4px 8px',
               display: 'flex',
               alignItems: 'center',
               gap: '4px',
-              fontSize: '0.78rem',
+              fontSize: '0.76rem',
               fontWeight: 700,
-              backdropFilter: 'blur(4px)'
+              backdropFilter: 'blur(6px)',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
             }}>
               <Navigation2 size={11} fill="#fff" />
               <span>{business.distanceKm} km</span>
@@ -106,45 +191,54 @@ export const BusinessCard: React.FC<BusinessCardProps> = ({
           )}
 
           <div style={{
-            background: 'rgba(15, 23, 42, 0.88)',
+            background: 'rgba(15, 23, 42, 0.92)',
             color: '#ffffff',
             borderRadius: '8px',
             padding: '4px 8px',
             display: 'flex',
             alignItems: 'center',
             gap: '4px',
-            fontSize: '0.8rem',
-            fontWeight: 700
+            fontSize: '0.78rem',
+            fontWeight: 700,
+            backdropFilter: 'blur(6px)',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
           }}>
             <Star size={13} fill="#f59e0b" color="#f59e0b" />
             <span>{business.rating_avg.toFixed(1)}</span>
-            <span style={{ color: '#94a3b8', fontSize: '0.75rem', fontWeight: 500 }}>
+            <span style={{ color: '#94a3b8', fontSize: '0.72rem', fontWeight: 500 }}>
               ({business.rating_count})
             </span>
           </div>
         </div>
       </div>
 
-      {/* Contenido */}
+      {/* Contenido de la Tarjeta */}
       <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', flex: 1, gap: '10px' }}>
         <div>
-          <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '4px' }}>
+          <h3 style={{
+            fontSize: '1.08rem',
+            fontWeight: 800,
+            color: 'var(--text-main)',
+            marginBottom: '4px',
+            letterSpacing: '-0.015em'
+          }}>
             {business.name}
           </h3>
           <p style={{
-            fontSize: '0.85rem',
+            fontSize: '0.84rem',
             color: 'var(--text-muted)',
             display: '-webkit-box',
             WebkitLineClamp: 2,
             WebkitBoxOrient: 'vertical',
-            overflow: 'hidden'
+            overflow: 'hidden',
+            lineHeight: 1.45
           }}>
             {business.description || `Servicio verificado en ${business.municipality}.`}
           </p>
         </div>
 
         {/* Datos clave: Ubicación y Horario */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.8rem', color: '#475569', marginTop: 'auto' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: 'auto' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
             <MapPin size={14} color="var(--primary)" style={{ flexShrink: 0, marginTop: '2px' }} />
             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -154,7 +248,7 @@ export const BusinessCard: React.FC<BusinessCardProps> = ({
 
           {business.schedule && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Clock size={14} color="#64748b" style={{ flexShrink: 0 }} />
+              <Clock size={14} color="var(--text-muted)" style={{ flexShrink: 0 }} />
               <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {business.schedule}
               </span>
@@ -171,7 +265,7 @@ export const BusinessCard: React.FC<BusinessCardProps> = ({
             ? '1fr 1fr'
             : '1fr',
           gap: '8px',
-          paddingTop: '10px',
+          paddingTop: '12px',
           borderTop: '1px solid var(--border)'
         }}>
           {business.whatsapp && (
@@ -179,7 +273,8 @@ export const BusinessCard: React.FC<BusinessCardProps> = ({
               type="button"
               className="btn btn-whatsapp"
               onClick={handleWhatsApp}
-              style={{ fontSize: '0.8rem', padding: '6px 8px', width: '100%', justifyContent: 'center' }}
+              style={{ fontSize: '0.8rem', padding: '7px 8px', width: '100%', justifyContent: 'center' }}
+              title="Contactar directamente por WhatsApp"
             >
               <MessageCircle size={15} />
               <span>WhatsApp</span>
@@ -191,7 +286,8 @@ export const BusinessCard: React.FC<BusinessCardProps> = ({
               type="button"
               className="btn btn-secondary"
               onClick={handlePhone}
-              style={{ fontSize: '0.8rem', padding: '6px 8px', width: '100%', justifyContent: 'center' }}
+              style={{ fontSize: '0.8rem', padding: '7px 8px', width: '100%', justifyContent: 'center' }}
+              title="Llamar al negocio"
             >
               <Phone size={14} />
               <span>Llamar</span>
@@ -206,15 +302,25 @@ export const BusinessCard: React.FC<BusinessCardProps> = ({
               title="Visitar sitio web o enlace"
               style={{
                 fontSize: '0.8rem',
-                padding: '6px 8px',
+                padding: '7px 8px',
                 width: '100%',
                 justifyContent: 'center',
-                color: 'var(--primary)',
-                borderColor: '#bae6fd'
+                color: 'var(--primary)'
               }}
             >
               <Globe size={14} />
               <span>Web</span>
+            </button>
+          )}
+
+          {![business.whatsapp, business.phone, business.website_url].some(Boolean) && (
+            <button
+              type="button"
+              className="btn btn-secondary"
+              style={{ fontSize: '0.82rem', padding: '7px 12px', width: '100%', justifyContent: 'space-between' }}
+            >
+              <span>Ver detalles y reseñas</span>
+              <ArrowRight size={14} />
             </button>
           )}
         </div>
@@ -222,3 +328,4 @@ export const BusinessCard: React.FC<BusinessCardProps> = ({
     </article>
   );
 };
+

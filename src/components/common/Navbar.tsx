@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { MapPin, PlusCircle, ShieldCheck, User, LogOut, MessageSquareHeart, Menu, X, ChevronDown, Info, PhoneCall, KeyRound, Crown, CheckCircle2, Bell } from 'lucide-react';
+import { MapPin, PlusCircle, ShieldCheck, User, LogOut, MessageSquareHeart, Menu, X, ChevronDown, Info, PhoneCall, KeyRound, Crown, CheckCircle2, Bell, Sun, Moon } from 'lucide-react';
 import type { UserProfile } from '../../types/database';
 import { authService } from '../../services/authService';
 
@@ -18,6 +18,8 @@ interface NavbarProps {
   unreadFeedbackCount?: number;
   onOpenNotifications?: () => void;
   onUserUpdated?: (user: UserProfile) => void;
+  theme?: 'light' | 'dark';
+  onToggleTheme?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -34,6 +36,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   unreadFeedbackCount = 0,
   onOpenNotifications,
   onUserUpdated,
+  theme = 'light',
+  onToggleTheme,
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showAccountModal, setShowAccountModal] = useState(false);
@@ -68,7 +72,9 @@ export const Navbar: React.FC<NavbarProps> = ({
       top: 0,
       zIndex: 100,
       borderBottom: '1px solid var(--border)',
-      backgroundColor: 'rgba(255, 255, 255, 0.98)',
+      backgroundColor: 'var(--glass-bg)',
+      backdropFilter: 'blur(16px)',
+      WebkitBackdropFilter: 'blur(16px)',
       padding: '8px 16px',
       marginBottom: '12px'
     }}>
@@ -118,11 +124,11 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span style={{
                 fontSize: '0.65rem',
                 fontWeight: 600,
-                background: '#f1f5f9',
-                color: '#64748b',
+                background: 'var(--surface-secondary)',
+                color: 'var(--text-muted)',
                 padding: '1px 5px',
                 borderRadius: '4px',
-                border: '1px solid #e2e8f0'
+                border: '1px solid var(--border)'
               }}>
                 by RoliCode
               </span>
@@ -169,12 +175,30 @@ export const Navbar: React.FC<NavbarProps> = ({
             type="button"
             className="btn btn-secondary"
             onClick={onOpenFeedback}
-            style={{ fontSize: '0.8rem', padding: '6px 10px', background: '#fffbeb', borderColor: '#fde68a', color: '#b45309' }}
+            style={{ fontSize: '0.8rem', padding: '6px 10px', background: 'var(--surface-secondary)', color: 'var(--text-main)' }}
             title="Envíanos tus ideas"
           >
             <MessageSquareHeart size={14} color="#d97706" />
             <span>Buzón</span>
           </button>
+
+          {/* Botón Tema Oscuro / Claro */}
+          {onToggleTheme && (
+            <button
+              id="btn-toggle-theme"
+              type="button"
+              className="btn btn-secondary"
+              onClick={onToggleTheme}
+              style={{
+                fontSize: '0.8rem',
+                padding: '6px 9px',
+                borderRadius: '8px'
+              }}
+              title={theme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+            >
+              {theme === 'dark' ? <Sun size={15} color="#fbbf24" /> : <Moon size={15} color="#64748b" />}
+            </button>
+          )}
 
           {/* Estado de Usuario / Login */}
           {currentUser ? (
@@ -726,6 +750,36 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <MessageSquareHeart size={15} color="#d97706" />
                   <span>Buzón de Sugerencias</span>
                 </button>
+
+                {/* Selector Modo Oscuro / Claro en Móvil */}
+                {onToggleTheme && (
+                  <button
+                    type="button"
+                    onClick={() => { onToggleTheme(); }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      width: '100%',
+                      padding: '8px 10px',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border)',
+                      background: 'var(--surface-secondary)',
+                      color: 'var(--text-main)',
+                      fontSize: '0.82rem',
+                      fontWeight: 600,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      {theme === 'dark' ? <Sun size={15} color="#fbbf24" /> : <Moon size={15} color="#64748b" />}
+                      <span>{theme === 'dark' ? 'Modo Claro' : 'Modo Oscuro'}</span>
+                    </div>
+                    <span style={{ fontSize: '0.82rem' }}>
+                      {theme === 'dark' ? '☀️' : '🌙'}
+                    </span>
+                  </button>
+                )}
 
                 {/* Si está conectado: Opción de cerrar sesión */}
                 {currentUser && (

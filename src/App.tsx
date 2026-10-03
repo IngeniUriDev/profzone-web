@@ -56,6 +56,22 @@ export function App() {
   const [showContactModal, setShowContactModal] = useState(false);
   const [openRegisterAfterAuth, setOpenRegisterAfterAuth] = useState(false);
 
+  // Tema Claro / Oscuro con persistencia en localStorage
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    const saved = localStorage.getItem('pz_theme');
+    if (saved === 'dark' || saved === 'light') return saved;
+    return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('pz_theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+  };
+
   const handleOpenRegister = () => {
     if (!currentUser) {
       setOpenRegisterAfterAuth(true);
@@ -276,31 +292,38 @@ export function App() {
         pendingCount={pendingCount}
         unreadFeedbackCount={unreadFeedbackCount}
         onOpenNotifications={() => setShowNotificationsModal(true)}
+        theme={theme}
+        onToggleTheme={toggleTheme}
       />
 
       <main className="app-container">
         {/* Hero Section */}
         <section className="hero-section">
-          <div style={{ maxWidth: '720px' }}>
-            <h1 style={{ fontSize: 'clamp(1.25rem, 3vw, 1.85rem)', fontWeight: 800, lineHeight: 1.2, marginBottom: '6px' }}>
-              Encuentra los mejores profesionales y servicios en{' '}
-              <span style={{ color: '#55c5f5ff' }}>
-                {selectedMunicipality === 'TODOS' ? 'Tu Región' : selectedMunicipality}
+          <div style={{ maxWidth: '780px', margin: '0 auto', textAlign: 'center' }}>
+            <div className="hero-pill-badge">
+              <span className="hero-pulse-dot" />
+              <span>Directorio Oficial de Profesionales & Comercios</span>
+            </div>
+
+            <h1 className="hero-title">
+              Encuentra los mejores especialistas y servicios en{' '}
+              <span className="hero-title-highlight">
+                {selectedMunicipality === 'TODOS' ? 'tu región' : selectedMunicipality}
               </span>
             </h1>
 
-            <p style={{ color: '#94a3b8', fontSize: '0.85rem', lineHeight: 1.4, marginBottom: '6px' }}>
-              Doctores, Mecánicos, Psicólogos, Abogados, Estéticas, Plomeros y más en tu zona.
+            <p style={{ color: '#94a3b8', fontSize: '0.92rem', lineHeight: 1.5, marginBottom: '20px', maxWidth: '600px', margin: '0 auto 20px auto' }}>
+              Salud, mecánica, eventos, gastronomía, oficios y profesionales verificados cerca de ti.
             </p>
 
-            {/* Barra de Búsqueda Semántica */}
-            <div className="search-bar-container">
-              <Search size={18} color="#0284c7" style={{ marginRight: '8px', flexShrink: 0 }} />
+            {/* Barra de Búsqueda Flotante con Glassmorphism */}
+            <div className="search-bar-container" style={{ margin: '0 auto' }}>
+              <Search size={20} color="var(--primary)" style={{ marginRight: '10px', flexShrink: 0 }} />
               <input
                 id="main-search-input"
                 type="text"
                 className="search-input"
-                placeholder="¿Qué servicio buscas? (ej. Dentista, Plomero, Barbacoa...)"
+                placeholder="¿Qué servicio buscas? (ej. Dentista, Plomero, Mariachi, Mecánico...)"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -309,12 +332,14 @@ export function App() {
                   type="button"
                   onClick={() => setSearchQuery('')}
                   style={{
-                    background: 'none',
-                    border: 'none',
+                    background: 'var(--surface-secondary)',
+                    border: '1px solid var(--border)',
+                    borderRadius: '6px',
                     cursor: 'pointer',
-                    color: '#64748b',
-                    fontSize: '0.8rem',
-                    padding: '2px 6px'
+                    color: 'var(--text-muted)',
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    padding: '4px 8px'
                   }}
                 >
                   Limpiar
@@ -322,8 +347,21 @@ export function App() {
               )}
             </div>
 
-            {/* Sugerencias rápidas de búsqueda semántica */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginTop: '8px', fontSize: '0.74rem' }}>
+            {/* Píldoras de búsqueda rápida populares */}
+            <div className="search-quick-pills" style={{ justifyContent: 'center' }}>
+              <span style={{ color: '#94a3b8', fontSize: '0.78rem', fontWeight: 600, marginRight: '4px' }}>
+                Popular:
+              </span>
+              {['Dentistas', 'Pediatras', 'Mariachis', 'Cocinas', 'Mecánicos', 'Veterinarias'].map((term) => (
+                <button
+                  key={term}
+                  type="button"
+                  className={`quick-pill-btn ${searchQuery.toLowerCase() === term.toLowerCase() ? 'active' : ''}`}
+                  onClick={() => setSearchQuery(term)}
+                >
+                  {term}
+                </button>
+              ))}
             </div>
           </div>
         </section>
