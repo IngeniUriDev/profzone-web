@@ -385,110 +385,58 @@ export function App() {
         {currentUser && (
           <div style={{
             display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '12px',
-            margin: '22px 0 16px 0',
-            paddingBottom: '10px',
-            borderBottom: '1px solid var(--border)'
+            gap: '10px',
+            margin: '20px 0 16px 0',
+            borderBottom: '1px solid var(--border)',
+            paddingBottom: '12px'
           }}>
-            {/* Control Segmentado Moderno */}
-            <div style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              background: 'var(--surface-secondary)',
-              padding: '4px',
-              borderRadius: '12px',
-              border: '1px solid var(--border)',
-              gap: '4px'
-            }}>
-              <button
-                id="tab-explore-directory"
-                type="button"
-                onClick={() => setActiveMainTab('directory')}
-                style={{
-                  height: '38px',
-                  padding: '0 16px',
-                  borderRadius: '9px',
-                  border: activeMainTab === 'directory' ? '1px solid var(--border)' : '1px solid transparent',
-                  background: activeMainTab === 'directory' ? 'var(--surface)' : 'transparent',
-                  color: activeMainTab === 'directory' ? 'var(--primary)' : 'var(--text-muted)',
-                  fontWeight: 700,
-                  fontSize: '0.88rem',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  cursor: 'pointer',
-                  boxShadow: activeMainTab === 'directory' ? '0 2px 6px rgba(0,0,0,0.06)' : 'none',
-                  transition: 'all 0.2s ease',
-                  whiteSpace: 'nowrap'
-                }}
-              >
-                <Building2 size={16} />
-                <span>Explorar Directorio</span>
-              </button>
-
-              <button
-                id="tab-my-businesses"
-                type="button"
-                onClick={() => setActiveMainTab('my-businesses')}
-                style={{
-                  height: '38px',
-                  padding: '0 16px',
-                  borderRadius: '9px',
-                  border: activeMainTab === 'my-businesses' ? '1px solid var(--border)' : '1px solid transparent',
-                  background: activeMainTab === 'my-businesses' ? 'var(--surface)' : 'transparent',
-                  color: activeMainTab === 'my-businesses' ? 'var(--primary)' : 'var(--text-muted)',
-                  fontWeight: 700,
-                  fontSize: '0.88rem',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  cursor: 'pointer',
-                  boxShadow: activeMainTab === 'my-businesses' ? '0 2px 6px rgba(0,0,0,0.06)' : 'none',
-                  transition: 'all 0.2s ease',
-                  whiteSpace: 'nowrap'
-                }}
-              >
-                <Briefcase size={16} />
-                <span>Mis Negocios</span>
-                {myBusinesses.length > 0 && (
-                  <span style={{
-                    background: activeMainTab === 'my-businesses' ? 'var(--primary)' : 'var(--border)',
-                    color: activeMainTab === 'my-businesses' ? '#ffffff' : 'var(--text-main)',
-                    fontSize: '0.72rem',
-                    fontWeight: 800,
-                    padding: '2px 8px',
-                    borderRadius: '999px',
-                    transition: 'all 0.2s ease'
-                  }}>
-                    {myBusinesses.length}
-                  </span>
-                )}
-              </button>
-            </div>
-
-            {/* Indicador de Vista Activa */}
-            <div style={{
-              fontSize: '0.82rem',
-              color: 'var(--text-muted)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px'
-            }}>
-              <span>Vista:</span>
-              <span style={{
+            <button
+              id="tab-explore-directory"
+              type="button"
+              className={`btn ${activeMainTab === 'directory' ? 'btn-primary' : 'btn-secondary'}`}
+              onClick={() => setActiveMainTab('directory')}
+              style={{
+                padding: '9px 18px',
+                fontSize: '0.9rem',
                 fontWeight: 700,
-                color: 'var(--text-main)',
-                background: 'var(--surface-secondary)',
-                padding: '4px 10px',
-                borderRadius: '8px',
-                border: '1px solid var(--border)'
-              }}>
-                {activeMainTab === 'directory' ? 'Explorar Directorio' : 'Mis Publicaciones'}
-              </span>
-            </div>
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+            >
+              <Building2 size={16} />
+              <span>Explorar Directorio</span>
+            </button>
+
+            <button
+              id="tab-my-businesses"
+              type="button"
+              className={`btn ${activeMainTab === 'my-businesses' ? 'btn-primary' : 'btn-secondary'}`}
+              onClick={() => setActiveMainTab('my-businesses')}
+              style={{
+                padding: '9px 18px',
+                fontSize: '0.9rem',
+                fontWeight: 700,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+            >
+              <Briefcase size={16} />
+              <span>Mis Negocios</span>
+              {myBusinesses.length > 0 && (
+                <span style={{
+                  background: activeMainTab === 'my-businesses' ? '#ffffff' : 'var(--primary)',
+                  color: activeMainTab === 'my-businesses' ? 'var(--primary)' : '#ffffff',
+                  fontSize: '0.72rem',
+                  fontWeight: 800,
+                  padding: '2px 8px',
+                  borderRadius: '999px'
+                }}>
+                  {myBusinesses.length}
+                </span>
+              )}
+            </button>
           </div>
         )}
 

@@ -172,11 +172,12 @@ export const Navbar: React.FC<NavbarProps> = ({
           <button
             id="btn-open-about"
             type="button"
-            className="nav-btn"
+            className="btn btn-secondary"
             onClick={onOpenAbout}
+            style={{ fontSize: '0.8rem', padding: '6px 10px', whiteSpace: 'nowrap', flexShrink: 0 }}
             title="Conoce la finalidad de ProfZone y a su desarrollador"
           >
-            <Info size={15} color="var(--primary)" />
+            <Info size={14} color="var(--primary)" />
             <span>Acerca de</span>
           </button>
 
@@ -184,24 +185,26 @@ export const Navbar: React.FC<NavbarProps> = ({
           <button
             id="btn-open-contact"
             type="button"
-            className="nav-btn"
+            className="btn btn-secondary"
             onClick={onOpenContact}
+            style={{ fontSize: '0.8rem', padding: '6px 10px', whiteSpace: 'nowrap', flexShrink: 0 }}
             title="Contacto y Soporte"
           >
-            <PhoneCall size={15} color="#059669" />
+            <PhoneCall size={14} color="#059669" />
             <span>Contacto</span>
           </button>
 
-          {/* Botón Sugerencias */}
+          {/* Botón Buzón de Sugerencias */}
           <button
             id="btn-open-feedback"
             type="button"
-            className="nav-btn"
+            className="btn btn-secondary"
             onClick={onOpenFeedback}
-            title="Envíanos tus sugerencias e ideas"
+            style={{ fontSize: '0.8rem', padding: '6px 10px', background: 'var(--surface-secondary)', color: 'var(--text-main)', whiteSpace: 'nowrap', flexShrink: 0 }}
+            title="Envíanos tus ideas"
           >
-            <MessageSquareHeart size={15} color="#d97706" />
-            <span>Sugerencias</span>
+            <MessageSquareHeart size={14} color="#d97706" />
+            <span>Buzón</span>
           </button>
 
           {/* Botón Tema Oscuro / Claro */}
@@ -209,32 +212,40 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               id="btn-toggle-theme"
               type="button"
-              className="nav-btn nav-btn-icon"
+              className="btn btn-secondary"
               onClick={onToggleTheme}
+              style={{
+                fontSize: '0.8rem',
+                padding: '6px 9px',
+                borderRadius: '8px',
+                flexShrink: 0
+              }}
               title={theme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
             >
               {theme === 'dark' ? <Sun size={15} color="#fbbf24" /> : <Moon size={15} color="#64748b" />}
             </button>
           )}
 
-          {/* Separador vertical sutil */}
-          <div style={{ width: '1px', height: '22px', background: 'var(--border)', margin: '0 2px', flexShrink: 0 }} />
-
           {/* Estado de Usuario / Menú Desplegable con Funciones de Usuario */}
           {currentUser ? (
-            <div ref={userDropdownRef} style={{ position: 'relative' }}>
+            <div ref={userDropdownRef} style={{ position: 'relative', flexShrink: 0 }}>
               <button
                 id="btn-user-menu"
                 type="button"
                 aria-label="Menú de funciones de usuario"
                 onClick={() => setUserDropdownOpen(!userDropdownOpen)}
                 title="Menú de funciones de usuario"
-                className="nav-btn"
                 style={{
-                  padding: '0 10px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '4px 10px',
                   background: userDropdownOpen ? 'var(--surface)' : 'var(--surface-secondary)',
-                  borderColor: userDropdownOpen ? 'var(--primary)' : 'var(--border)',
-                  boxShadow: userDropdownOpen ? '0 0 0 2px rgba(2, 132, 199, 0.15)' : 'none'
+                  borderRadius: '10px',
+                  border: userDropdownOpen ? '1px solid var(--primary)' : '1px solid var(--border)',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  boxShadow: userDropdownOpen ? '0 0 0 2px rgba(2, 132, 199, 0.2)' : 'none'
                 }}
               >
                 {currentUser.avatar_url ? (
@@ -464,7 +475,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                     >
                       <PlusCircle size={15} color="#059669" />
-                      <span>Registrar Servicio / Negocio</span>
+                      <span>Registrar Nuevo Negocio</span>
                     </button>
 
                     {/* Buzón de Sugerencias */}
@@ -662,11 +673,11 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               id="btn-open-auth"
               type="button"
-              className="nav-btn"
+              className="btn btn-secondary"
               onClick={onOpenAuth}
-              title="Iniciar sesión o registrarse"
+              style={{ fontSize: '0.8rem', padding: '6px 10px', whiteSpace: 'nowrap', flexShrink: 0 }}
             >
-              <User size={15} color="var(--primary)" />
+              <User size={14} color="var(--primary)" />
               <span>Ingresar</span>
             </button>
           )}
@@ -676,12 +687,22 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               id="btn-admin-notifications"
               type="button"
-              className="nav-btn"
+              className="btn btn-secondary"
               onClick={onOpenNotifications}
-              style={{ position: 'relative' }}
+              style={{
+                fontSize: '0.8rem',
+                padding: '6px 11px',
+                position: 'relative',
+                background: unreadFeedbackCount > 0 ? '#fffbeb' : 'var(--surface-secondary)',
+                borderColor: unreadFeedbackCount > 0 ? '#fde68a' : 'var(--border)',
+                color: unreadFeedbackCount > 0 ? '#b45309' : '#475569',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+                flexShrink: 0
+              }}
               title="Notificaciones de comentarios del Buzón"
             >
-              <Bell size={15} color={unreadFeedbackCount > 0 ? '#d97706' : 'var(--text-muted)'} />
+              <Bell size={15} color={unreadFeedbackCount > 0 ? '#d97706' : '#64748b'} />
               <span>Buzón ({unreadFeedbackCount})</span>
               {unreadFeedbackCount > 0 && (
                 <span style={{
@@ -698,7 +719,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  border: '2px solid var(--surface)'
+                  border: '2px solid #ffffff'
                 }}>
                   {unreadFeedbackCount}
                 </span>
@@ -711,12 +732,23 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               id="btn-admin-panel"
               type="button"
-              className="nav-btn nav-btn-admin"
+              className="btn btn-primary"
               onClick={onOpenAdmin}
-              style={{ position: 'relative' }}
+              style={{
+                fontSize: '0.8rem',
+                padding: '6px 14px',
+                position: 'relative',
+                background: '#16a34a',
+                borderColor: '#15803d',
+                color: '#ffffff',
+                fontWeight: 700,
+                boxShadow: '0 2px 6px rgba(22, 163, 74, 0.25)',
+                whiteSpace: 'nowrap',
+                flexShrink: 0
+              }}
               title="Panel de Administración y Moderación"
             >
-              <Crown size={14} color="#15803d" />
+              <Crown size={14} />
               <span>Panel Admin</span>
               {pendingCount > 0 && (
                 <span style={{
@@ -724,7 +756,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   top: '-4px',
                   right: '-4px',
                   background: '#ef4444',
-                  color: '#ffffff',
+                  color: '#fff',
                   fontSize: '0.65rem',
                   fontWeight: 800,
                   width: '18px',
@@ -733,7 +765,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  border: '2px solid var(--surface)'
+                  border: '2px solid #fff'
                 }}>
                   {pendingCount}
                 </span>
@@ -746,8 +778,26 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               id="btn-my-businesses"
               type="button"
-              className={`nav-btn ${activeView === 'my-businesses' ? 'nav-btn-active' : ''}`}
+              className={`btn ${activeView === 'my-businesses' ? 'btn-primary' : 'btn-secondary'}`}
               onClick={onOpenMyBusinesses}
+              style={{
+                fontSize: '0.8rem',
+                padding: '6px 12px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                fontWeight: 700,
+                whiteSpace: 'nowrap',
+                flexShrink: 0,
+                ...(activeView === 'my-businesses' ? {
+                  background: 'var(--primary)',
+                  color: '#ffffff'
+                } : {
+                  background: 'var(--surface-secondary)',
+                  color: 'var(--primary)',
+                  borderColor: 'var(--primary)'
+                })
+              }}
               title="Ver y editar mis publicaciones de negocios"
             >
               <Briefcase size={14} />
@@ -771,14 +821,13 @@ export const Navbar: React.FC<NavbarProps> = ({
           <button
             id="btn-register-service"
             type="button"
-            className="nav-btn nav-btn-primary"
+            className="btn btn-primary"
             onClick={onOpenRegister}
-            title="Publicar un nuevo negocio o servicio"
+            style={{ fontSize: '0.8rem', padding: '6px 12px', whiteSpace: 'nowrap', flexShrink: 0 }}
           >
-            <PlusCircle size={15} />
+            <PlusCircle size={14} />
             <span>Registrar Servicio</span>
           </button>
-
         </div>
 
         {/* BOTÓN MÓVIL / MENÚ DESPLEGABLE (Visible solo en pantallas móviles) */}

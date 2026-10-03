@@ -45,7 +45,8 @@ describe('Navbar - User Session and Dropdown Menu', () => {
 
     render(<Navbar {...defaultProps} currentUser={mockUser} />);
 
-    // Juan Perez username should be visible in trigger
+    // "Mis Negocios" should be visible
+    expect(screen.getByText('Mis Negocios')).toBeInTheDocument();
     expect(screen.getByText('Juan Perez')).toBeInTheDocument();
 
     // User dropdown trigger should exist
@@ -56,8 +57,7 @@ describe('Navbar - User Session and Dropdown Menu', () => {
     fireEvent.click(userMenuBtn);
 
     // Dropdown should be visible with user options
-    expect(screen.getAllByText('Mis Negocios').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText(/Registrar/i).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('Registrar Nuevo Negocio')).toBeInTheDocument();
     expect(screen.getByText('Cerrar Sesión')).toBeInTheDocument();
   });
 
