@@ -9,7 +9,6 @@ import { authService } from './services/authService';
 import { REGIONAL_MUNICIPALITIES, calculateDistanceKm } from './lib/geo';
 import { matchBusinessSearch } from './lib/search';
 import { Navbar } from './components/common/Navbar';
-import { CategoryFilter } from './components/common/CategoryFilter';
 import { MunicipalityFilter } from './components/common/MunicipalityFilter';
 import { BusinessCard } from './components/business/BusinessCard';
 import { BusinessDetailModal } from './components/business/BusinessDetailModal';
@@ -364,53 +363,23 @@ export function App() {
                 </button>
               )}
             </div>
-
-            {/* Píldoras de búsqueda rápida populares */}
-            <div className="search-quick-pills" style={{ justifyContent: 'center' }}>
-              <span style={{ color: '#94a3b8', fontSize: '0.78rem', fontWeight: 600, marginRight: '4px' }}>
-                Popular:
-              </span>
-              {['Dentistas', 'Pediatras', 'Mariachis', 'Cocinas', 'Mecánicos', 'Veterinarias'].map((term) => (
-                <button
-                  key={term}
-                  type="button"
-                  className={`quick-pill-btn ${searchQuery.toLowerCase() === term.toLowerCase() ? 'active' : ''}`}
-                  onClick={() => setSearchQuery(term)}
-                >
-                  {term}
-                </button>
-              ))}
-            </div>
           </div>
         </section>
 
-        {/* Barra de Filtro de Municipio y Ordenamiento */}
+        {/* Barra Unificada de Filtros: Municipio, Especialidad, Ordenamiento y GPS */}
         <MunicipalityFilter
           municipalities={availableMunicipalities}
           selectedMunicipality={selectedMunicipality}
           onSelectMunicipality={setSelectedMunicipality}
+          categories={categories}
+          selectedCategoryId={selectedCategoryId}
+          onSelectCategory={setSelectedCategoryId}
           sortBy={sortBy}
           onSelectSortBy={setSortBy}
           onDetectLocation={handleDetectGPS}
           detectingLocation={detectingLocation}
           userCoords={userCoords}
         />
-
-        {/* Filtro por Categorías */}
-        <section>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <h2 style={{ fontSize: '1.2rem', fontWeight: 800 }}>Explorar por Especialidad</h2>
-            <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-              {processedBusinesses.length} servicios encontrados
-            </span>
-          </div>
-
-          <CategoryFilter
-            categories={categories}
-            selectedCategoryId={selectedCategoryId}
-            onSelectCategory={setSelectedCategoryId}
-          />
-        </section>
 
         {/* Grid de Negocios y Servicios */}
         <section>
