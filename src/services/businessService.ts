@@ -2,7 +2,7 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import type { Business, BusinessStatus } from '../types/database';
 import { INITIAL_BUSINESSES } from '../data/mockData';
 
-const LOCAL_STORAGE_KEY = 'profzone_businesses_v5';
+const LOCAL_STORAGE_KEY = 'profzone_businesses_v6';
 
 function getLocalBusinesses(): Business[] {
   const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
@@ -11,13 +11,7 @@ function getLocalBusinesses(): Business[] {
     return INITIAL_BUSINESSES;
   }
   try {
-    const list: Business[] = JSON.parse(stored);
-    // Si los datos en el navegador no tienen el personal / doctores actualizados, re-sincronizar
-    if (!list.some(b => b.staff && b.staff.length > 0)) {
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(INITIAL_BUSINESSES));
-      return INITIAL_BUSINESSES;
-    }
-    return list;
+    return JSON.parse(stored);
   } catch {
     return INITIAL_BUSINESSES;
   }
@@ -178,5 +172,71 @@ export const businessService = {
     const current = getLocalBusinesses();
     const updated = current.map(b => b.id === id ? { ...b, ...updates } : b);
     saveLocalBusinesses(updated);
+  },
+
+  async getAllBusinesses(): Promise<Business[]> {
+    if (isSupabaseConfigured && supabase) {
+      const { data, error } = await supabase
+        .from('pz_businesses')
+        .select('*, category:pz_categories(*), staff:pz_staff(*)')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching all businesses from Supabase:', error);
+        throw error;
+      }
+      return data || [];
+    }
+
+    return getLocalBusinesses();
+  },
+
+  async deleteBusiness(id: string): Promise<void> {
+    if (isSupabaseConfigured && supabase) {
+      try {
+        await supabase.from('pz_reviews').delete().eq('business_id', id);
+        await supabase.from('pz_staff').delete().eq('business_id', id);
+      } catch (e) {
+        console.warn('Could not cascade delete reviews/staff:', e);
+      }
+
+      const { error } = await supabase
+        .from('pz_businesses')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        console.error('Error deleting business from Supabase:', error);
+        throw error;
+      }
+      return;
+    }
+
+    const current = getLocalBusinesses();
+    const updated = current.filter(b => b.id !== id);
+    saveLocalBusinesses(updated);
+  },
+
+  async clearAllBusinesses(): Promise<void> {
+    if (isSupabaseConfigured && supabase) {
+      try {
+        await supabase.from('pz_reviews').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+        await supabase.from('pz_staff').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+        await supabase.from('pz_businesses').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      } catch (err) {
+        console.error('Error clearing businesses from Supabase:', err);
+      }
+    }
+
+    this.clearAllLocalBusinesses();
+  },
+
+  clearAllLocalBusinesses(): void {
+    localStorage.removeItem(LOCAL_STORAGE_KEY);
+    localStorage.removeItem('profzone_businesses_v5');
+    localStorage.removeItem('profzone_businesses');
+    localStorage.removeItem('profzone_reviews');
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify([]));
+    localStorage.setItem('profzone_reviews', JSON.stringify([]));
   }
 };

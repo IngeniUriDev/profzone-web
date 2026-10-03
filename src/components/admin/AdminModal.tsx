@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
-  X, Check, Trash2, Clock, MapPin, Phone, Shield, RefreshCw,
+  X, Check, Trash2, Clock, MapPin, Phone, Shield,
   MessageSquareHeart, Building2, Layers, Plus, Lightbulb, Globe,
   UserPlus, Crown, Users, Lock, Mail, CheckCircle2,
   Sparkles, Award
@@ -13,14 +13,15 @@ import { adminService, type AdminUser, type AdminRole } from '../../services/adm
 
 interface AdminModalProps {
   currentUser?: UserProfile | null;
-  initialTab?: 'services' | 'feedback' | 'categories' | 'admins';
+  initialTab?: 'services' | 'all-services' | 'feedback' | 'categories' | 'admins';
   onClose: () => void;
   onUpdate: () => void;
 }
 
 export const AdminModal: React.FC<AdminModalProps> = ({ currentUser, initialTab = 'services', onClose, onUpdate }) => {
-  const [activeTab, setActiveTab] = useState<'services' | 'feedback' | 'categories' | 'admins'>(initialTab);
+  const [activeTab, setActiveTab] = useState<'services' | 'all-services' | 'feedback' | 'categories' | 'admins'>(initialTab);
   const [pendingBusinesses, setPendingBusinesses] = useState<Business[]>([]);
+  const [allBusinesses, setAllBusinesses] = useState<Business[]>([]);
   const [feedbacks, setFeedbacks] = useState<FeedbackSuggestion[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [adminsList, setAdminsList] = useState<AdminUser[]>([]);
@@ -49,13 +50,15 @@ export const AdminModal: React.FC<AdminModalProps> = ({ currentUser, initialTab 
   const loadAll = async () => {
     setLoading(true);
     try {
-      const [pending, listFeedback, listCats, listAdmins] = await Promise.all([
+      const [pending, allBiz, listFeedback, listCats, listAdmins] = await Promise.all([
         businessService.getBusinesses({ status: 'pending' }),
+        businessService.getAllBusinesses(),
         feedbackService.getFeedbacks(),
         categoryService.getCategories(),
         Promise.resolve(adminService.getAdmins())
       ]);
       setPendingBusinesses(pending);
+      setAllBusinesses(allBiz);
       setFeedbacks(listFeedback);
       setCategories(listCats);
       setAdminsList(listAdmins);
@@ -126,13 +129,43 @@ export const AdminModal: React.FC<AdminModalProps> = ({ currentUser, initialTab 
     }
   };
 
-  const handleResetData = () => {
-    if (window.confirm('¿Deseas restablecer los datos de prueba a la versión más reciente (incluyendo categorías, doctores y municipios)?')) {
-      businessService.resetToInitialData();
-      localStorage.removeItem('profzone_categories_v4');
-      loadAll();
+  const handleDeleteBusiness = async (id: string, name: string) => {
+    if (!window.confirm(`¿Estás seguro de que deseas ELIMINAR permanentemente "${name}" del catálogo? Esta acción no se puede deshacer.`)) {
+      return;
+    }
+    setProcessingId(id);
+    try {
+      await businessService.deleteBusiness(id);
+      await loadAll();
       onUpdate();
-      alert('Datos de prueba sincronizados correctamente.');
+      alert(`El comercio "${name}" ha sido eliminado con éxito.`);
+    } catch (err) {
+      console.error(err);
+      alert('Error al eliminar el comercio.');
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const handleClearAllData = async () => {
+    const confirmed = window.confirm(
+      '⚠️ ¿Estás seguro de que deseas VACIAR todos los comercios y empezar la plataforma completamente en blanco?\n\n' +
+      '• Se borrarán todos los comercios de prueba locales y de la base de datos.\n' +
+      '• Las categorías se mantendrán intactas para que los nuevos usuarios puedan registrarse.'
+    );
+    if (!confirmed) return;
+
+    setLoading(true);
+    try {
+      await businessService.clearAllBusinesses();
+      await loadAll();
+      onUpdate();
+      alert('✅ El catálogo ha sido vaciado. La plataforma ahora inicia 100% limpia sin comercios.');
+    } catch (err) {
+      console.error(err);
+      alert('Error al vaciar los datos.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -306,24 +339,24 @@ export const AdminModal: React.FC<AdminModalProps> = ({ currentUser, initialTab 
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <button
                 type="button"
-                onClick={handleResetData}
+                onClick={handleClearAllData}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: '6px',
-                  background: 'rgba(255, 255, 255, 0.08)',
-                  border: '1px solid rgba(255, 255, 255, 0.15)',
-                  color: '#e2e8f0',
+                  background: 'rgba(239, 68, 68, 0.15)',
+                  border: '1px solid rgba(239, 68, 68, 0.4)',
+                  color: '#fca5a5',
                   padding: '7px 12px',
                   borderRadius: '8px',
                   fontSize: '0.78rem',
                   fontWeight: 600,
                   cursor: 'pointer'
                 }}
-                title="Sincroniza y recarga los datos de prueba más recientes"
+                title="Vacía los comercios de prueba y empieza la plataforma en blanco"
               >
-                <RefreshCw size={13} />
-                <span>Restablecer demo</span>
+                <Trash2 size={13} />
+                <span>Vaciar catálogo (Iniciar en blanco)</span>
               </button>
             </div>
           </div>
@@ -357,7 +390,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({ currentUser, initialTab 
               whiteSpace: 'nowrap'
             }}
           >
-            <Building2 size={16} />
+            <Clock size={16} />
             <span>Servicios Pendientes</span>
             {pendingBusinesses.length > 0 && (
               <span style={{
@@ -370,6 +403,29 @@ export const AdminModal: React.FC<AdminModalProps> = ({ currentUser, initialTab 
                 {pendingBusinesses.length}
               </span>
             )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('all-services')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '9px 16px',
+              borderRadius: '8px',
+              border: activeTab === 'all-services' ? '1px solid #0284c7' : '1px solid transparent',
+              background: activeTab === 'all-services' ? '#ffffff' : 'transparent',
+              color: activeTab === 'all-services' ? '#0369a1' : '#64748b',
+              fontWeight: 700,
+              fontSize: '0.84rem',
+              cursor: 'pointer',
+              boxShadow: activeTab === 'all-services' ? '0 2px 6px rgba(0,0,0,0.06)' : 'none',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            <Building2 size={16} />
+            <span>Directorio Completo ({allBusinesses.length})</span>
           </button>
 
           <button
@@ -602,6 +658,141 @@ export const AdminModal: React.FC<AdminModalProps> = ({ currentUser, initialTab 
                             </a>
                           </div>
                         )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : activeTab === 'all-services' ? (
+            /* TAB: DIRECTORIO COMPLETO / ELIMINACIÓN */
+            <div>
+              <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                <div>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                    Directorio General de Comercios ({allBusinesses.length})
+                  </h3>
+                  <p style={{ fontSize: '0.82rem', color: '#64748b', margin: '2px 0 0 0' }}>
+                    Supervisa, cambia de estado o elimina permanentemente comercios del sistema.
+                  </p>
+                </div>
+              </div>
+
+              {allBusinesses.length === 0 ? (
+                <div style={{
+                  textAlign: 'center',
+                  padding: '48px 24px',
+                  background: '#f8fafc',
+                  border: '1px dashed #cbd5e1',
+                  borderRadius: '12px'
+                }}>
+                  <Building2 size={40} color="#64748b" style={{ margin: '0 auto 8px auto', display: 'block' }} />
+                  <h4 style={{ fontSize: '1.15rem', fontWeight: 800, marginBottom: '4px', color: '#1e293b' }}>
+                    Catálogo 100% Limpio
+                  </h4>
+                  <p style={{ color: '#64748b', fontSize: '0.88rem', maxWidth: '440px', margin: '0 auto' }}>
+                    No hay ningún comercio registrado en la plataforma. Cuando los usuarios registren sus negocios o des de alta comercios, aparecerán aquí para tu gestión.
+                  </p>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {allBusinesses.map((b) => (
+                    <div key={b.id} style={{
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '12px',
+                      padding: '16px',
+                      background: '#ffffff',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      gap: '12px',
+                      flexWrap: 'wrap'
+                    }}>
+                      <div style={{ flex: 1, minWidth: '220px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                          <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                            {b.name}
+                          </h4>
+                          <span style={{
+                            fontSize: '0.7rem',
+                            fontWeight: 800,
+                            padding: '2px 8px',
+                            borderRadius: '10px',
+                            background: b.status === 'approved' ? '#dcfce7' : b.status === 'rejected' ? '#fee2e2' : '#fef3c7',
+                            color: b.status === 'approved' ? '#16a34a' : b.status === 'rejected' ? '#b91c1c' : '#b45309'
+                          }}>
+                            {b.status === 'approved' ? 'Aprobado' : b.status === 'rejected' ? 'Pausado/Rechazado' : 'Pendiente'}
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', gap: '12px', fontSize: '0.82rem', color: '#64748b', flexWrap: 'wrap' }}>
+                          <span>📍 {b.municipality} {b.locality ? `• ${b.locality}` : ''}</span>
+                          {b.category?.name && <span>🏷️ {b.category.name}</span>}
+                          {b.phone && <span>📞 {b.phone}</span>}
+                          {b.whatsapp && <span>💬 WA: {b.whatsapp}</span>}
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {b.status !== 'approved' && (
+                          <button
+                            type="button"
+                            onClick={() => handleAction(b.id, 'approved')}
+                            disabled={processingId === b.id}
+                            style={{
+                              padding: '7px 12px',
+                              borderRadius: '8px',
+                              border: '1px solid #16a34a',
+                              background: '#f0fdf4',
+                              color: '#15803d',
+                              fontSize: '0.78rem',
+                              fontWeight: 700,
+                              cursor: 'pointer'
+                            }}
+                          >
+                            Aprobar
+                          </button>
+                        )}
+                        {b.status === 'approved' && (
+                          <button
+                            type="button"
+                            onClick={() => handleAction(b.id, 'rejected')}
+                            disabled={processingId === b.id}
+                            style={{
+                              padding: '7px 12px',
+                              borderRadius: '8px',
+                              border: '1px solid #d97706',
+                              background: '#fffbeb',
+                              color: '#b45309',
+                              fontSize: '0.78rem',
+                              fontWeight: 700,
+                              cursor: 'pointer'
+                            }}
+                          >
+                            Pausar
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteBusiness(b.id, b.name)}
+                          disabled={processingId === b.id}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            padding: '7px 12px',
+                            borderRadius: '8px',
+                            border: '1px solid #ef4444',
+                            background: '#fef2f2',
+                            color: '#b91c1c',
+                            fontSize: '0.78rem',
+                            fontWeight: 700,
+                            cursor: 'pointer'
+                          }}
+                          title="Eliminar permanentemente este comercio"
+                        >
+                          <Trash2 size={13} />
+                          <span>Eliminar</span>
+                        </button>
                       </div>
                     </div>
                   ))}
