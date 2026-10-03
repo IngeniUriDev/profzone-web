@@ -252,6 +252,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <img
                     src={currentUser.avatar_url}
                     alt={currentUser.full_name}
+                    referrerPolicy="no-referrer"
                     style={{
                       width: '28px',
                       height: '28px',
@@ -334,6 +335,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       <img
                         src={currentUser.avatar_url}
                         alt={currentUser.full_name}
+                        referrerPolicy="no-referrer"
                         style={{
                           width: '38px',
                           height: '38px',
@@ -773,50 +775,6 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           )}
 
-          {/* Botón Mis Negocios (Solo visible si hay sesión iniciada) */}
-          {currentUser && onOpenMyBusinesses && (
-            <button
-              id="btn-my-businesses"
-              type="button"
-              className={`btn ${activeView === 'my-businesses' ? 'btn-primary' : 'btn-secondary'}`}
-              onClick={onOpenMyBusinesses}
-              style={{
-                fontSize: '0.8rem',
-                padding: '6px 12px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                fontWeight: 700,
-                whiteSpace: 'nowrap',
-                flexShrink: 0,
-                ...(activeView === 'my-businesses' ? {
-                  background: 'var(--primary)',
-                  color: '#ffffff'
-                } : {
-                  background: 'var(--surface-secondary)',
-                  color: 'var(--primary)',
-                  borderColor: 'var(--primary)'
-                })
-              }}
-              title="Ver y editar mis publicaciones de negocios"
-            >
-              <Briefcase size={14} />
-              <span>Mis Negocios</span>
-              {myBusinessesCount > 0 && (
-                <span style={{
-                  background: activeView === 'my-businesses' ? '#ffffff' : 'var(--primary)',
-                  color: activeView === 'my-businesses' ? 'var(--primary)' : '#ffffff',
-                  fontSize: '0.68rem',
-                  fontWeight: 800,
-                  padding: '1px 6px',
-                  borderRadius: '999px'
-                }}>
-                  {myBusinessesCount}
-                </span>
-              )}
-            </button>
-          )}
-
           {/* Registrar Servicio */}
           <button
             id="btn-register-service"
@@ -854,6 +812,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <img
                   src={currentUser.avatar_url}
                   alt={currentUser.full_name}
+                  referrerPolicy="no-referrer"
                   style={{
                     width: '24px',
                     height: '24px',
@@ -955,6 +914,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       <img
                         src={currentUser.avatar_url}
                         alt={currentUser.full_name}
+                        referrerPolicy="no-referrer"
                         style={{
                           width: '38px',
                           height: '38px',
@@ -1324,7 +1284,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 background: '#e0f2fe'
               }}>
                 {currentUser.avatar_url ? (
-                  <img src={currentUser.avatar_url} alt={currentUser.full_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <img src={currentUser.avatar_url} alt={currentUser.full_name} referrerPolicy="no-referrer" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 ) : (
                   <span style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--primary)' }}>
                     {currentUser.full_name.charAt(0).toUpperCase()}

@@ -215,16 +215,18 @@ export const authService = {
 
     // Extraer avatar de Facebook / Google / Azure
     let avatarUrl: string | undefined = undefined;
-    if (typeof meta.avatar_url === 'string') {
-      avatarUrl = meta.avatar_url;
-    } else if (typeof meta.picture === 'string') {
-      avatarUrl = meta.picture;
+    if (typeof meta.avatar_url === 'string' && meta.avatar_url.trim()) {
+      avatarUrl = meta.avatar_url.trim();
+    } else if (typeof meta.picture === 'string' && meta.picture.trim()) {
+      avatarUrl = meta.picture.trim();
     } else if (meta.picture?.data?.url && typeof meta.picture.data.url === 'string') {
-      avatarUrl = meta.picture.data.url;
-    } else if (typeof meta.picture_url === 'string') {
-      avatarUrl = meta.picture_url;
-    } else if (identityData.avatar_url) {
-      avatarUrl = identityData.avatar_url;
+      avatarUrl = meta.picture.data.url.trim();
+    } else if (typeof meta.picture_url === 'string' && meta.picture_url.trim()) {
+      avatarUrl = meta.picture_url.trim();
+    } else if (typeof identityData.avatar_url === 'string' && identityData.avatar_url.trim()) {
+      avatarUrl = identityData.avatar_url.trim();
+    } else if (typeof identityData.picture === 'string' && identityData.picture.trim()) {
+      avatarUrl = identityData.picture.trim();
     }
 
     const providerRaw = sbUser.app_metadata?.provider || 'phone';

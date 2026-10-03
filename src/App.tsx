@@ -1,4 +1,4 @@
-import { Search, MapPin, Building2, Briefcase } from 'lucide-react';
+import { Search, MapPin, Building2, ArrowLeft } from 'lucide-react';
 import './App.css';
 import { NotificationCenterModal } from './components/common/NotificationCenterModal';
 import { feedbackService } from './services/feedbackService';
@@ -381,76 +381,50 @@ export function App() {
           </div>
         </section>
 
-        {/* Pestañas Principales: Solo visible si el usuario tiene sesión iniciada */}
-        {currentUser && (
-          <div style={{
-            display: 'flex',
-            gap: '10px',
-            margin: '20px 0 16px 0',
-            borderBottom: '1px solid var(--border)',
-            paddingBottom: '12px'
-          }}>
-            <button
-              id="tab-explore-directory"
-              type="button"
-              className={`btn ${activeMainTab === 'directory' ? 'btn-primary' : 'btn-secondary'}`}
-              onClick={() => setActiveMainTab('directory')}
-              style={{
-                padding: '9px 18px',
-                fontSize: '0.9rem',
-                fontWeight: 700,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}
-            >
-              <Building2 size={16} />
-              <span>Explorar Directorio</span>
-            </button>
-
-            <button
-              id="tab-my-businesses"
-              type="button"
-              className={`btn ${activeMainTab === 'my-businesses' ? 'btn-primary' : 'btn-secondary'}`}
-              onClick={() => setActiveMainTab('my-businesses')}
-              style={{
-                padding: '9px 18px',
-                fontSize: '0.9rem',
-                fontWeight: 700,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}
-            >
-              <Briefcase size={16} />
-              <span>Mis Negocios</span>
-              {myBusinesses.length > 0 && (
-                <span style={{
-                  background: activeMainTab === 'my-businesses' ? '#ffffff' : 'var(--primary)',
-                  color: activeMainTab === 'my-businesses' ? 'var(--primary)' : '#ffffff',
-                  fontSize: '0.72rem',
-                  fontWeight: 800,
-                  padding: '2px 8px',
-                  borderRadius: '999px'
-                }}>
-                  {myBusinesses.length}
-                </span>
-              )}
-            </button>
-          </div>
-        )}
-
         {currentUser && activeMainTab === 'my-businesses' ? (
-          <MyBusinessesView
-            businesses={myBusinesses}
-            currentUser={currentUser}
-            onEditBusiness={(b) => setEditingBusiness(b)}
-            onSelectBusiness={(b) => setSelectedBusiness(b)}
-            onOpenRegister={handleOpenRegister}
-            onOpenAuth={() => setShowAuthModal(true)}
-            categoriesMap={categoriesObjMap}
-            onBusinessLinked={() => loadData()}
-          />
+          <div>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              margin: '16px 0',
+              paddingBottom: '12px',
+              borderBottom: '1px solid var(--border)'
+            }}>
+              <button
+                id="btn-back-to-directory"
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setActiveMainTab('directory')}
+                style={{
+                  fontSize: '0.85rem',
+                  padding: '7px 14px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  cursor: 'pointer'
+                }}
+              >
+                <ArrowLeft size={16} />
+                <span>Volver al Directorio</span>
+              </button>
+
+              <span style={{ fontSize: '0.83rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                {myBusinesses.length === 1 ? '1 negocio registrado' : `${myBusinesses.length} negocios registrados`}
+              </span>
+            </div>
+
+            <MyBusinessesView
+              businesses={myBusinesses}
+              currentUser={currentUser}
+              onEditBusiness={(b) => setEditingBusiness(b)}
+              onSelectBusiness={(b) => setSelectedBusiness(b)}
+              onOpenRegister={handleOpenRegister}
+              onOpenAuth={() => setShowAuthModal(true)}
+              categoriesMap={categoriesObjMap}
+              onBusinessLinked={() => loadData()}
+            />
+          </div>
         ) : (
           <>
             {/* Barra Unificada de Filtros: Municipio, Especialidad, Ordenamiento y GPS */}
