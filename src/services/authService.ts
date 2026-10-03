@@ -206,10 +206,12 @@ export const authService = {
       meta.name ||
       identityData.full_name ||
       identityData.name ||
+      (meta.given_name ? `${meta.given_name} ${meta.family_name || ''}`.trim() : '') ||
+      (identityData.given_name ? `${identityData.given_name} ${identityData.family_name || ''}`.trim() : '') ||
       meta.user_name ||
       meta.preferred_username ||
       (email ? email.split('@')[0] : '') ||
-      (cleanPhone ? `Usuario (${cleanPhone.slice(-4)})` : 'Usuario Facebook');
+      (cleanPhone ? `Usuario (${cleanPhone.slice(-4)})` : 'Usuario Google');
 
     // Extraer avatar de Facebook / Google / Azure
     let avatarUrl: string | undefined = undefined;

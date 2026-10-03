@@ -502,11 +502,11 @@ export const BusinessDetailModal: React.FC<BusinessDetailModalProps> = ({
               {currentUser ? (
                 <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <UserCheck size={14} color="#16a34a" />
-                  <span>Publicando como: <strong>{currentUser.full_name}</strong> ({currentUser.provider === 'facebook' ? 'Facebook' : 'SMS'})</span>
+                  <span>Publicando como: <strong>{currentUser.full_name}</strong> (✓ {currentUser.provider === 'google' ? 'Google' : 'Cuenta Verificada'})</span>
                 </div>
               ) : (
                 <div style={{ fontSize: '0.8rem', color: 'var(--primary)' }}>
-                  * Se requiere inicio de sesión con Facebook o Celular para publicar tu reseña.
+                  * Inicia sesión con tu cuenta de Google para publicar tu reseña con tu nombre.
                 </div>
               )}
 
