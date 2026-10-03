@@ -1,11 +1,12 @@
 import React from 'react';
-import { Star, MapPin, Clock, Phone, MessageCircle, Navigation2, Globe, ArrowRight } from 'lucide-react';
+import { Star, MapPin, Clock, Phone, MessageCircle, Navigation2, Globe, ArrowRight, Edit3 } from 'lucide-react';
 import type { Business } from '../../types/database';
 
 interface BusinessCardProps {
   business: Business;
   categoryName?: string;
   onClick: () => void;
+  onEdit?: () => void;
 }
 
 function checkIsOpenNow(schedule?: string): { isOpen: boolean; label: string } {
@@ -35,7 +36,8 @@ function checkIsOpenNow(schedule?: string): { isOpen: boolean; label: string } {
 export const BusinessCard: React.FC<BusinessCardProps> = ({
   business,
   categoryName,
-  onClick
+  onClick,
+  onEdit
 }) => {
   const status = checkIsOpenNow(business.schedule);
 
@@ -210,6 +212,40 @@ export const BusinessCard: React.FC<BusinessCardProps> = ({
             </span>
           </div>
         </div>
+
+        {/* Botón flotante Editar si es propietario */}
+        {onEdit && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit();
+            }}
+            title="Editar mi publicación"
+            style={{
+              position: 'absolute',
+              bottom: '12px',
+              left: '12px',
+              zIndex: 3,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px',
+              padding: '4px 10px',
+              borderRadius: '9999px',
+              background: 'rgba(255, 255, 255, 0.95)',
+              color: '#0284c7',
+              border: '1px solid rgba(2, 132, 199, 0.3)',
+              fontSize: '0.74rem',
+              fontWeight: 700,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
+              cursor: 'pointer',
+              backdropFilter: 'blur(8px)'
+            }}
+          >
+            <Edit3 size={12} />
+            <span>Editar</span>
+          </button>
+        )}
       </div>
 
       {/* Contenido de la Tarjeta */}

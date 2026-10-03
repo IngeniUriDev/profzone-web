@@ -144,5 +144,39 @@ export const businessService = {
     const current = getLocalBusinesses();
     const updated = current.map(b => b.id === id ? { ...b, status } : b);
     saveLocalBusinesses(updated);
+  },
+
+  async updateBusiness(id: string, updates: Partial<Business>): Promise<void> {
+    if (isSupabaseConfigured && supabase) {
+      const { error } = await supabase
+        .from('pz_businesses')
+        .update({
+          name: updates.name,
+          category_id: updates.category_id,
+          municipality: updates.municipality,
+          locality: updates.locality,
+          address: updates.address,
+          phone: updates.phone,
+          whatsapp: updates.whatsapp,
+          website_url: updates.website_url,
+          schedule: updates.schedule,
+          description: updates.description,
+          image_url: updates.image_url,
+          latitude: updates.latitude,
+          longitude: updates.longitude,
+          ...(updates.status ? { status: updates.status } : {})
+        })
+        .eq('id', id);
+
+      if (error) {
+        console.error('Error updating business in Supabase:', error);
+        throw error;
+      }
+      return;
+    }
+
+    const current = getLocalBusinesses();
+    const updated = current.map(b => b.id === id ? { ...b, ...updates } : b);
+    saveLocalBusinesses(updated);
   }
 };

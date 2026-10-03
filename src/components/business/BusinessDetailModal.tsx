@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, MapPin, Clock, Phone, MessageCircle, Navigation, MessageSquarePlus, Star, UserCheck, Stethoscope, Globe } from 'lucide-react';
+import { X, MapPin, Clock, Phone, MessageCircle, Edit3, MessageSquarePlus, Star, UserCheck, Stethoscope, Globe } from 'lucide-react';
 import type { Business, Review, UserProfile } from '../../types/database';
 import { StarRating } from '../common/StarRating';
 import { reviewService } from '../../services/reviewService';
@@ -11,6 +11,7 @@ interface BusinessDetailModalProps {
   onRequireAuth: () => void;
   onClose: () => void;
   onReviewAdded?: () => void;
+  onEditBusiness?: (business: Business) => void;
 }
 
 export const BusinessDetailModal: React.FC<BusinessDetailModalProps> = ({
@@ -19,7 +20,8 @@ export const BusinessDetailModal: React.FC<BusinessDetailModalProps> = ({
   currentUser,
   onRequireAuth,
   onClose,
-  onReviewAdded
+  onReviewAdded,
+  onEditBusiness
 }) => {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loadingReviews, setLoadingReviews] = useState(false);
@@ -57,14 +59,18 @@ export const BusinessDetailModal: React.FC<BusinessDetailModalProps> = ({
     window.open(`https://wa.me/${cleanNumber}?text=${message}`, '_blank');
   };
 
-  const handleGoogleMaps = () => {
-    if (business.google_maps_url) {
-      window.open(business.google_maps_url, '_blank');
-    } else {
-      const query = encodeURIComponent(`${business.name}, ${business.address}, ${business.municipality}`);
-      window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank');
-    }
-  };
+  const isOwner = Boolean(
+    currentUser && (
+      currentUser.role === 'admin' ||
+      (business.submitted_by && (
+        business.submitted_by === currentUser.id ||
+        business.submitted_by === currentUser.email ||
+        business.submitted_by === currentUser.phone ||
+        business.submitted_by === currentUser.full_name ||
+        (currentUser.full_name && business.submitted_by.toLowerCase().includes(currentUser.full_name.toLowerCase()))
+      ))
+    )
+  );
 
   const handlePhone = () => {
     if (!business.phone) return;
@@ -250,6 +256,29 @@ export const BusinessDetailModal: React.FC<BusinessDetailModalProps> = ({
                 <span>Sitio Web</span>
               </button>
             )}
+            {isOwner && onEditBusiness && (
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => {
+                  onClose();
+                  onEditBusiness(business);
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  color: 'var(--primary)',
+                  borderColor: 'var(--primary)',
+                  fontWeight: 700,
+                  background: 'var(--surface-secondary)'
+                }}
+                title="Editar datos de mi servicio o consultorio"
+              >
+                <Edit3 size={15} />
+                <span>Editar Publicación</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -283,15 +312,6 @@ export const BusinessDetailModal: React.FC<BusinessDetailModalProps> = ({
                   </div>
                 </div>
               </div>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={handleGoogleMaps}
-                style={{ fontSize: '0.78rem', padding: '6px 10px', flexShrink: 0 }}
-              >
-                <Navigation size={13} />
-                <span>Cómo llegar</span>
-              </button>
             </div>
 
             {business.schedule && (
