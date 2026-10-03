@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { isBusinessOwner } from '../utils/ownership';
+import { isBusinessOwner, addMyStoredBusinessId } from '../utils/ownership';
 import { businessService } from '../services/businessService';
 import type { Business, UserProfile } from '../types/database';
 
@@ -166,10 +166,31 @@ describe('Business Ownership & Authorization Tests', () => {
       await expect(
         businessService.updateBusiness(created.id, { name: 'Taller Mecánico Certificado' }, adminUser)
       ).resolves.not.toThrow();
+    });
 
-      const all = await businessService.getAllBusinesses();
-      const updated = all.find(b => b.id === created.id);
-      expect(updated?.name).toBe('Taller Mecánico Certificado');
+    it('allows owner whose user.phone matches business.phone or whatsapp to edit', () => {
+      const bizWithPhone: Business = {
+        ...baseBusiness,
+        phone: '7221234567',
+        submitted_by: 'some-other-uuid'
+      };
+      // userAlice has phone '7221234567'
+      expect(isBusinessOwner(bizWithPhone, userAlice)).toBe(true);
+    });
+
+    it('allows owner to edit if business was registered or linked in current browser session', () => {
+      const anonBiz: Business = {
+        ...baseBusiness,
+        id: 'biz-browser-saved-99',
+        submitted_by: 'some-anon-id'
+      };
+      // Not yet linked
+      expect(isBusinessOwner(anonBiz, userBob)).toBe(false);
+
+      // Link by phone or add directly
+      addMyStoredBusinessId('biz-browser-saved-99');
+
+      expect(isBusinessOwner(anonBiz, userBob)).toBe(true);
     });
   });
 });

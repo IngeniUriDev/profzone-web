@@ -1,5 +1,5 @@
 import React from 'react';
-import { Star, MapPin, Clock, Phone, MessageCircle, Navigation2, Globe, ArrowRight, Edit3 } from 'lucide-react';
+import { Star, MapPin, Clock, Phone, MessageCircle, Navigation2, Globe, ArrowRight, Edit3, Sparkles } from 'lucide-react';
 import { FacebookIcon, InstagramIcon, TikTokIcon } from '../common/SocialIcons';
 import type { Business } from '../../types/database';
 
@@ -119,6 +119,23 @@ export const BusinessCard: React.FC<BusinessCardProps> = ({
         
         {/* Badges superiores: Categoría y Municipio */}
         <div style={{ position: 'absolute', top: '12px', left: '12px', display: 'flex', gap: '6px', flexWrap: 'wrap', zIndex: 2 }}>
+          {isOwner && (
+            <span className="badge" style={{
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)',
+              background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+              color: '#ffffff',
+              fontWeight: 800,
+              boxShadow: '0 2px 6px rgba(2, 132, 199, 0.4)',
+              border: '1px solid rgba(255, 255, 255, 0.4)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}>
+              <Sparkles size={11} fill="#fff" />
+              <span>Mi Negocio</span>
+            </span>
+          )}
           <span className="badge" style={{
             backdropFilter: 'blur(10px)',
             WebkitBackdropFilter: 'blur(10px)',
@@ -426,6 +443,31 @@ export const BusinessCard: React.FC<BusinessCardProps> = ({
             >
               <Globe size={14} />
               <span>Web</span>
+            </button>
+          )}
+
+          {onEdit && (
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit();
+              }}
+              style={{
+                fontSize: '0.8rem',
+                padding: '7px 8px',
+                width: '100%',
+                justifyContent: 'center',
+                color: 'var(--primary)',
+                borderColor: 'var(--primary)',
+                fontWeight: 700,
+                background: 'var(--surface-secondary)'
+              }}
+              title={isOwner ? "Editar los datos de mi negocio" : "Editar publicación (Administrador)"}
+            >
+              <Edit3 size={14} />
+              <span>Editar</span>
             </button>
           )}
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { MapPin, PlusCircle, ShieldCheck, User, LogOut, MessageSquareHeart, Menu, X, ChevronDown, Info, PhoneCall, KeyRound, Crown, CheckCircle2, Bell, Sun, Moon } from 'lucide-react';
+import { MapPin, PlusCircle, ShieldCheck, User, LogOut, MessageSquareHeart, Menu, X, ChevronDown, Info, PhoneCall, KeyRound, Crown, CheckCircle2, Bell, Sun, Moon, Briefcase } from 'lucide-react';
 import type { UserProfile } from '../../types/database';
 import { authService } from '../../services/authService';
 
@@ -12,6 +12,9 @@ interface NavbarProps {
   onOpenAbout: () => void;
   onOpenContact: () => void;
   onGoHome: () => void;
+  onOpenMyBusinesses?: () => void;
+  myBusinessesCount?: number;
+  activeView?: 'all' | 'my-businesses';
   currentUser: UserProfile | null;
   onSignOut: () => void;
   pendingCount: number;
@@ -30,6 +33,9 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenAbout,
   onOpenContact,
   onGoHome,
+  onOpenMyBusinesses,
+  myBusinessesCount = 0,
+  activeView = 'all',
   currentUser,
   onSignOut,
   pendingCount,
@@ -394,8 +400,49 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           )}
 
-          {/* Registrar Servicio */}
+          {/* Botón Mis Negocios */}
+          {onOpenMyBusinesses && (
+            <button
+              id="btn-my-businesses"
+              type="button"
+              className={`btn ${activeView === 'my-businesses' ? 'btn-primary' : 'btn-secondary'}`}
+              onClick={onOpenMyBusinesses}
+              style={{
+                fontSize: '0.8rem',
+                padding: '6px 12px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                fontWeight: 700,
+                ...(activeView === 'my-businesses' ? {
+                  background: 'var(--primary)',
+                  color: '#ffffff'
+                } : {
+                  background: 'var(--surface-secondary)',
+                  color: 'var(--primary)',
+                  borderColor: 'var(--primary)'
+                })
+              }}
+              title="Ver y editar mis publicaciones de negocios"
+            >
+              <Briefcase size={14} />
+              <span>Mis Negocios</span>
+              {myBusinessesCount > 0 && (
+                <span style={{
+                  background: activeView === 'my-businesses' ? '#ffffff' : 'var(--primary)',
+                  color: activeView === 'my-businesses' ? 'var(--primary)' : '#ffffff',
+                  fontSize: '0.68rem',
+                  fontWeight: 800,
+                  padding: '1px 6px',
+                  borderRadius: '999px'
+                }}>
+                  {myBusinessesCount}
+                </span>
+              )}
+            </button>
+          )}
 
+          {/* Registrar Servicio */}
           <button
             id="btn-register-service"
             type="button"
@@ -594,6 +641,46 @@ export const Navbar: React.FC<NavbarProps> = ({
                   >
                     <User size={15} />
                     <span>Iniciar Sesión / Registro</span>
+                  </button>
+                )}
+
+                {/* Botón Mis Negocios en Menú Móvil */}
+                {onOpenMyBusinesses && (
+                  <button
+                    type="button"
+                    onClick={() => { closeMenu(); onOpenMyBusinesses(); }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      width: '100%',
+                      padding: '9px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid var(--primary)',
+                      background: activeView === 'my-businesses' ? 'var(--primary)' : 'rgba(2, 132, 199, 0.08)',
+                      color: activeView === 'my-businesses' ? '#ffffff' : 'var(--primary)',
+                      fontSize: '0.84rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      marginBottom: '6px'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Briefcase size={16} />
+                      <span>Mis Negocios</span>
+                    </div>
+                    {myBusinessesCount > 0 && (
+                      <span style={{
+                        background: activeView === 'my-businesses' ? '#ffffff' : 'var(--primary)',
+                        color: activeView === 'my-businesses' ? 'var(--primary)' : '#ffffff',
+                        fontSize: '0.7rem',
+                        fontWeight: 800,
+                        padding: '1px 7px',
+                        borderRadius: '10px'
+                      }}>
+                        {myBusinessesCount}
+                      </span>
+                    )}
                   </button>
                 )}
 

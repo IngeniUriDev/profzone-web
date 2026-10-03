@@ -1,4 +1,4 @@
-import { Search, MapPin, Building2 } from 'lucide-react';
+import { Search, MapPin, Building2, Briefcase } from 'lucide-react';
 import './App.css';
 import { NotificationCenterModal } from './components/common/NotificationCenterModal';
 import { feedbackService } from './services/feedbackService';
@@ -13,6 +13,7 @@ import { MunicipalityFilter } from './components/common/MunicipalityFilter';
 import { BusinessCard } from './components/business/BusinessCard';
 import { BusinessDetailModal } from './components/business/BusinessDetailModal';
 import { RegisterBusinessModal } from './components/business/RegisterBusinessModal';
+import { MyBusinessesView } from './components/business/MyBusinessesView';
 import { AdminModal } from './components/admin/AdminModal';
 import { AuthModal } from './components/auth/AuthModal';
 import { FeedbackModal } from './components/common/FeedbackModal';
@@ -36,6 +37,7 @@ export function App() {
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(() => authService.getCurrentUser());
 
   // Filtros principales
+  const [activeMainTab, setActiveMainTab] = useState<'directory' | 'my-businesses'>('directory');
   const [selectedMunicipality, setSelectedMunicipality] = useState<string>('TODOS');
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -158,6 +160,7 @@ export function App() {
 
   // Función para restablecer filtros e ir al inicio
   const handleGoHome = () => {
+    setActiveMainTab('directory');
     setSearchQuery('');
     setSelectedCategoryId(null);
     setSelectedMunicipality('TODOS');
@@ -274,6 +277,11 @@ export function App() {
     });
   }, [businesses, selectedMunicipality, selectedCategoryId, searchQuery, sortBy, referenceCoords, categoriesObjMap]);
 
+  // Negocios del usuario actual (creados o administrados)
+  const myBusinesses = useMemo(() => {
+    return businesses.filter(b => isBusinessAuthorized(b));
+  }, [businesses, currentUser]);
+
   const handleSignOut = () => {
     authService.signOut();
     setCurrentUser(null);
@@ -294,6 +302,11 @@ export function App() {
         onOpenAbout={() => setShowAboutModal(true)}
         onOpenContact={() => setShowContactModal(true)}
         onGoHome={handleGoHome}
+        onOpenMyBusinesses={() => {
+          setActiveMainTab(prev => prev === 'my-businesses' ? 'directory' : 'my-businesses');
+        }}
+        myBusinessesCount={myBusinesses.length}
+        activeView={activeMainTab === 'my-businesses' ? 'my-businesses' : 'all'}
         currentUser={currentUser}
         onUserUpdated={setCurrentUser}
         onSignOut={handleSignOut}
@@ -357,78 +370,150 @@ export function App() {
           </div>
         </section>
 
-        {/* Barra Unificada de Filtros: Municipio, Especialidad, Ordenamiento y GPS */}
-        <MunicipalityFilter
-          municipalities={availableMunicipalities}
-          selectedMunicipality={selectedMunicipality}
-          onSelectMunicipality={setSelectedMunicipality}
-          categories={categories}
-          selectedCategoryId={selectedCategoryId}
-          onSelectCategory={setSelectedCategoryId}
-          sortBy={sortBy}
-          onSelectSortBy={setSortBy}
-          onDetectLocation={handleDetectGPS}
-          detectingLocation={detectingLocation}
-          userCoords={userCoords}
-        />
+        {/* Pestañas Principales: Explorar Directorio vs Mis Negocios */}
+        <div style={{
+          display: 'flex',
+          gap: '10px',
+          margin: '20px 0 16px 0',
+          borderBottom: '1px solid var(--border)',
+          paddingBottom: '12px'
+        }}>
+          <button
+            id="tab-explore-directory"
+            type="button"
+            className={`btn ${activeMainTab === 'directory' ? 'btn-primary' : 'btn-secondary'}`}
+            onClick={() => setActiveMainTab('directory')}
+            style={{
+              padding: '9px 18px',
+              fontSize: '0.9rem',
+              fontWeight: 700,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+          >
+            <Building2 size={16} />
+            <span>Explorar Directorio</span>
+          </button>
 
-        {/* Grid de Negocios y Servicios */}
-        <section>
-          {loading ? (
-            <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-muted)' }}>
-              Cargando catálogo de servicios de la región...
-            </div>
-          ) : processedBusinesses.length === 0 ? (
-            <div style={{
-              textAlign: 'center',
-              padding: '60px 20px',
-              background: 'var(--surface)',
-              borderRadius: 'var(--radius-md)',
-              border: '1px solid var(--border)'
-            }}>
-              <Building2 size={40} color="var(--primary)" style={{ margin: '0 auto 12px auto' }} />
-              <h3 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '6px' }}>
-                No se encontraron servicios en esta búsqueda
-              </h3>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '16px', maxWidth: '500px', margin: '0 auto 16px auto' }}>
-                {selectedMunicipality !== 'TODOS'
-                  ? `No encontramos registros para "${selectedMunicipality}". Puedes cambiar a "Todos los municipios" para ver opciones en municipios vecinos como Santiago Tianguistenco o Capulhuac.`
-                  : 'Aún no hay servicios registrados con esos criterios.'}
-              </p>
-              <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
-                {selectedMunicipality !== 'TODOS' && (
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={() => setSelectedMunicipality('TODOS')}
-                  >
-                    Ver Toda la Región
-                  </button>
-                )}
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={handleOpenRegister}
-                >
-                  + Registrar un servicio aquí
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="business-grid">
-              {processedBusinesses.map((b) => (
-                <BusinessCard
-                  key={b.id}
-                  business={b}
-                  categoryName={b.category_id ? categoriesObjMap.get(b.category_id)?.name : undefined}
-                  onClick={() => setSelectedBusiness(b)}
-                  onEdit={isBusinessAuthorized(b) ? () => setEditingBusiness(b) : undefined}
-                  isOwner={isBusinessAuthorized(b)}
-                />
-              ))}
-            </div>
-          )}
-        </section>
+          <button
+            id="tab-my-businesses"
+            type="button"
+            className={`btn ${activeMainTab === 'my-businesses' ? 'btn-primary' : 'btn-secondary'}`}
+            onClick={() => setActiveMainTab('my-businesses')}
+            style={{
+              padding: '9px 18px',
+              fontSize: '0.9rem',
+              fontWeight: 700,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+          >
+            <Briefcase size={16} />
+            <span>Mis Negocios</span>
+            {myBusinesses.length > 0 && (
+              <span style={{
+                background: activeMainTab === 'my-businesses' ? '#ffffff' : 'var(--primary)',
+                color: activeMainTab === 'my-businesses' ? 'var(--primary)' : '#ffffff',
+                fontSize: '0.72rem',
+                fontWeight: 800,
+                padding: '2px 8px',
+                borderRadius: '999px'
+              }}>
+                {myBusinesses.length}
+              </span>
+            )}
+          </button>
+        </div>
+
+        {activeMainTab === 'my-businesses' ? (
+          <MyBusinessesView
+            businesses={myBusinesses}
+            currentUser={currentUser}
+            onEditBusiness={(b) => setEditingBusiness(b)}
+            onSelectBusiness={(b) => setSelectedBusiness(b)}
+            onOpenRegister={handleOpenRegister}
+            onOpenAuth={() => setShowAuthModal(true)}
+            categoriesMap={categoriesObjMap}
+            onBusinessLinked={() => loadData()}
+          />
+        ) : (
+          <>
+            {/* Barra Unificada de Filtros: Municipio, Especialidad, Ordenamiento y GPS */}
+            <MunicipalityFilter
+              municipalities={availableMunicipalities}
+              selectedMunicipality={selectedMunicipality}
+              onSelectMunicipality={setSelectedMunicipality}
+              categories={categories}
+              selectedCategoryId={selectedCategoryId}
+              onSelectCategory={setSelectedCategoryId}
+              sortBy={sortBy}
+              onSelectSortBy={setSortBy}
+              onDetectLocation={handleDetectGPS}
+              detectingLocation={detectingLocation}
+              userCoords={userCoords}
+            />
+
+            {/* Grid de Negocios y Servicios */}
+            <section>
+              {loading ? (
+                <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-muted)' }}>
+                  Cargando catálogo de servicios de la región...
+                </div>
+              ) : processedBusinesses.length === 0 ? (
+                <div style={{
+                  textAlign: 'center',
+                  padding: '60px 20px',
+                  background: 'var(--surface)',
+                  borderRadius: 'var(--radius-md)',
+                  border: '1px solid var(--border)'
+                }}>
+                  <Building2 size={40} color="var(--primary)" style={{ margin: '0 auto 12px auto' }} />
+                  <h3 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '6px' }}>
+                    No se encontraron servicios en esta búsqueda
+                  </h3>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '16px', maxWidth: '500px', margin: '0 auto 16px auto' }}>
+                    {selectedMunicipality !== 'TODOS'
+                      ? `No encontramos registros para "${selectedMunicipality}". Puedes cambiar a "Todos los municipios" para ver opciones en municipios vecinos como Santiago Tianguistenco o Capulhuac.`
+                      : 'Aún no hay servicios registrados con esos criterios.'}
+                  </p>
+                  <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+                    {selectedMunicipality !== 'TODOS' && (
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        onClick={() => setSelectedMunicipality('TODOS')}
+                      >
+                        Ver Toda la Región
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      onClick={handleOpenRegister}
+                    >
+                      + Registrar un servicio aquí
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="business-grid">
+                  {processedBusinesses.map((b) => (
+                    <BusinessCard
+                      key={b.id}
+                      business={b}
+                      categoryName={b.category_id ? categoriesObjMap.get(b.category_id)?.name : undefined}
+                      onClick={() => setSelectedBusiness(b)}
+                      onEdit={isBusinessAuthorized(b) ? () => setEditingBusiness(b) : undefined}
+                      isOwner={isBusinessAuthorized(b)}
+                    />
+                  ))}
+                </div>
+              )}
+            </section>
+          </>
+        )}
       </main>
 
       {/* Patrocinador Oficial al pie de página */}

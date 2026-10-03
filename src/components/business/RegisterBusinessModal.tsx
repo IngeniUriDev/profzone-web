@@ -6,7 +6,7 @@ import { businessService } from '../../services/businessService';
 import { categoryService } from '../../services/categoryService';
 import { REGIONAL_MUNICIPALITIES } from '../../lib/geo';
 import { DigitalSchedulePicker } from '../common/DigitalSchedulePicker';
-import { isBusinessOwner } from '../../utils/ownership';
+import { isBusinessOwner, addMyStoredBusinessId } from '../../utils/ownership';
 
 interface RegisterBusinessModalProps {
   categories: Category[];
@@ -136,9 +136,10 @@ export const RegisterBusinessModal: React.FC<RegisterBusinessModalProps> = ({
           longitude: matchedMuniGeo?.lng,
           ...(isCategoryChanged ? { status: 'pending' } : {})
         }, currentUser);
+        addMyStoredBusinessId(initialBusiness.id);
       } else {
         // Crear nuevo negocio
-        await businessService.createBusiness({
+        const created = await businessService.createBusiness({
           name: name.trim(),
           category_id: finalCategoryId || undefined,
           municipality: finalMunicipality,
@@ -157,6 +158,9 @@ export const RegisterBusinessModal: React.FC<RegisterBusinessModalProps> = ({
           longitude: matchedMuniGeo?.lng,
           submitted_by: currentUser.id || currentUser.email || currentUser.phone || currentUser.full_name
         });
+        if (created?.id) {
+          addMyStoredBusinessId(created.id);
+        }
       }
 
       setSubmitted(true);
