@@ -143,3 +143,18 @@ WHERE a.created_at < b.created_at
 -- Paso B: Crear índice único para impedir duplicados a nivel de motor de base de datos
 CREATE UNIQUE INDEX IF NOT EXISTS pz_businesses_unique_name_muni 
 ON public.pz_businesses (LOWER(TRIM(name)), LOWER(TRIM(municipality)));
+
+-- 10. Bucket de almacenamiento público para fotos de negocios (Opcional en Supabase Storage)
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('pz-business-images', 'pz-business-images', true)
+ON CONFLICT (id) DO UPDATE SET public = true;
+
+-- Políticas de acceso para el bucket
+CREATE POLICY "Public Read Business Images" 
+ON storage.objects FOR SELECT 
+USING (bucket_id = 'pz-business-images');
+
+CREATE POLICY "Allow Uploads Business Images" 
+ON storage.objects FOR INSERT 
+WITH CHECK (bucket_id = 'pz-business-images');
+

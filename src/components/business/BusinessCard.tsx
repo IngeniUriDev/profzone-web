@@ -100,6 +100,10 @@ export const BusinessCard: React.FC<BusinessCardProps> = ({
         <img
           src={business.image_url || 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=80'}
           alt={business.name}
+          referrerPolicy="no-referrer"
+          onError={(e) => {
+            (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=80';
+          }}
           style={{
             width: '100%',
             height: '100%',

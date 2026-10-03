@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Send, AlertCircle, CheckCircle2, MapPin, Globe, Lock, LogIn, UserCheck, Layers, Sparkles, Lightbulb, Share2 } from 'lucide-react';
+import { X, Send, AlertCircle, CheckCircle2, MapPin, Globe, Lock, LogIn, UserCheck, Layers, Sparkles, Lightbulb, Share2, Upload, Image, Camera, Link, Trash2, Loader2 } from 'lucide-react';
 import { FacebookIcon, InstagramIcon, TikTokIcon } from '../common/SocialIcons';
 import type { Business, Category, UserProfile } from '../../types/database';
 import { businessService } from '../../services/businessService';
@@ -7,6 +7,7 @@ import { categoryService } from '../../services/categoryService';
 import { REGIONAL_MUNICIPALITIES } from '../../lib/geo';
 import { DigitalSchedulePicker } from '../common/DigitalSchedulePicker';
 import { isBusinessOwner, addMyStoredBusinessId } from '../../utils/ownership';
+import { processAndUploadBusinessImage, normalizeImageUrl, DEFAULT_BUSINESS_IMAGE } from '../../utils/imageUpload';
 
 interface RegisterBusinessModalProps {
   categories: Category[];
@@ -56,6 +57,31 @@ export const RegisterBusinessModal: React.FC<RegisterBusinessModalProps> = ({
   const [schedule, setSchedule] = useState(initialBusiness?.schedule || '');
   const [description, setDescription] = useState(initialBusiness?.description || '');
   const [imageUrl, setImageUrl] = useState(initialBusiness?.image_url || '');
+  const [imageUploadLoading, setImageUploadLoading] = useState(false);
+  const [imageTab, setImageTab] = useState<'upload' | 'url'>('upload');
+  const [imageLoadError, setImageLoadError] = useState(false);
+
+  const handleImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('Por favor selecciona un archivo de imagen válido (JPG, PNG, WebP).');
+      return;
+    }
+
+    setImageUploadLoading(true);
+    setImageLoadError(false);
+    try {
+      const processedUrl = await processAndUploadBusinessImage(file);
+      setImageUrl(processedUrl);
+    } catch (err: any) {
+      console.error('Error al procesar la imagen:', err);
+      alert(err.message || 'Ocurrió un error al procesar la imagen. Intenta con otra.');
+    } finally {
+      setImageUploadLoading(false);
+    }
+  };
 
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -132,7 +158,7 @@ export const RegisterBusinessModal: React.FC<RegisterBusinessModalProps> = ({
           tiktok_url: formatSocialUrl(tiktokUrl, 'tiktok') || undefined,
           schedule: schedule.trim() || undefined,
           description: description.trim() || undefined,
-          image_url: imageUrl.trim() || 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=80',
+          image_url: normalizeImageUrl(imageUrl).trim() || DEFAULT_BUSINESS_IMAGE,
           latitude: matchedMuniGeo?.lat,
           longitude: matchedMuniGeo?.lng,
           ...(isCategoryChanged ? { status: 'pending' } : {})
@@ -154,7 +180,7 @@ export const RegisterBusinessModal: React.FC<RegisterBusinessModalProps> = ({
           tiktok_url: formatSocialUrl(tiktokUrl, 'tiktok') || undefined,
           schedule: schedule.trim() || undefined,
           description: description.trim() || undefined,
-          image_url: imageUrl.trim() || 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=80',
+          image_url: normalizeImageUrl(imageUrl).trim() || DEFAULT_BUSINESS_IMAGE,
           latitude: matchedMuniGeo?.lat,
           longitude: matchedMuniGeo?.lng,
           submitted_by: currentUser.id || currentUser.email || currentUser.phone || currentUser.full_name
@@ -755,25 +781,255 @@ export const RegisterBusinessModal: React.FC<RegisterBusinessModalProps> = ({
                 </div>
               </div>
 
-              <div>
-                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '4px' }}>
-                  URL de Foto o Fachada (opcional)
-                </label>
-                <input
-                  type="url"
-                  placeholder="https://images.unsplash.com/..."
-                  value={imageUrl}
-                  onChange={(e) => setImageUrl(e.target.value)}
-                  style={{
+              {/* Sección de Imagen del Negocio */}
+              <div style={{
+                background: 'var(--surface-secondary)',
+                border: '1px solid var(--border)',
+                borderRadius: '12px',
+                padding: '14px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <label style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Camera size={16} color="var(--primary)" />
+                    <span>Foto de Fachada o Logo del Negocio</span>
+                  </label>
+                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Opcional</span>
+                </div>
+
+                {/* Pestañas: Subir archivo vs Pegar enlace */}
+                <div style={{ display: 'flex', gap: '6px', background: 'var(--surface)', padding: '3px', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                  <button
+                    type="button"
+                    onClick={() => { setImageTab('upload'); setImageLoadError(false); }}
+                    style={{
+                      flex: 1,
+                      padding: '7px 10px',
+                      fontSize: '0.8rem',
+                      fontWeight: 600,
+                      borderRadius: '6px',
+                      border: 'none',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      background: imageTab === 'upload' ? 'var(--primary)' : 'transparent',
+                      color: imageTab === 'upload' ? '#ffffff' : 'var(--text-muted)',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    <Upload size={14} />
+                    <span>Subir desde mi celular / PC</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => { setImageTab('url'); setImageLoadError(false); }}
+                    style={{
+                      flex: 1,
+                      padding: '7px 10px',
+                      fontSize: '0.8rem',
+                      fontWeight: 600,
+                      borderRadius: '6px',
+                      border: 'none',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      background: imageTab === 'url' ? 'var(--primary)' : 'transparent',
+                      color: imageTab === 'url' ? '#ffffff' : 'var(--text-muted)',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    <Link size={14} />
+                    <span>Pegar enlace o URL</span>
+                  </button>
+                </div>
+
+                {/* Contenido según pestaña seleccionada */}
+                {imageTab === 'upload' ? (
+                  <div>
+                    <label
+                      htmlFor="business-image-file-input"
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '18px 12px',
+                        border: '2px dashed var(--border)',
+                        borderRadius: '10px',
+                        cursor: imageUploadLoading ? 'not-allowed' : 'pointer',
+                        background: 'var(--surface)',
+                        transition: 'border-color 0.2s ease',
+                        textAlign: 'center'
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--primary)')}
+                      onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--border)')}
+                    >
+                      {imageUploadLoading ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                          <Loader2 size={24} className="animate-spin" color="var(--primary)" />
+                          <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--primary)' }}>
+                            Procesando y optimizando imagen...
+                          </span>
+                        </div>
+                      ) : (
+                        <>
+                          <div style={{
+                            width: '42px',
+                            height: '42px',
+                            borderRadius: '50%',
+                            background: '#e0f2fe',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'var(--primary)',
+                            marginBottom: '8px'
+                          }}>
+                            <Image size={22} />
+                          </div>
+                          <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '2px' }}>
+                            Toca aquí para seleccionar una foto
+                          </span>
+                          <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
+                            De tu galería, cámara o archivos (JPG, PNG, WebP)
+                          </span>
+                        </>
+                      )}
+                      <input
+                        id="business-image-file-input"
+                        type="file"
+                        accept="image/png, image/jpeg, image/jpg, image/webp"
+                        disabled={imageUploadLoading}
+                        style={{ display: 'none' }}
+                        onChange={handleImageFileChange}
+                      />
+                    </label>
+                  </div>
+                ) : (
+                  <div>
+                    <input
+                      type="url"
+                      placeholder="https://ejemplo.com/foto-negocio.jpg o link de Google Drive"
+                      value={imageUrl}
+                      onChange={(e) => {
+                        setImageUrl(e.target.value);
+                        setImageLoadError(false);
+                      }}
+                      style={{
+                        width: '100%',
+                        padding: '9px 12px',
+                        borderRadius: '8px',
+                        border: imageLoadError ? '1px solid #ef4444' : '1px solid var(--border)',
+                        fontSize: '0.85rem',
+                        background: 'var(--surface)',
+                        color: 'var(--text-main)'
+                      }}
+                    />
+                    {imageLoadError && (
+                      <p style={{ fontSize: '0.75rem', color: '#ef4444', marginTop: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <AlertCircle size={13} />
+                        El enlace no carga una imagen pública válida o está protegido. Te sugerimos subir el archivo directamente con la opción "Subir desde mi celular".
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* Previsualización de la Imagen */}
+                {imageUrl && (
+                  <div style={{
+                    position: 'relative',
                     width: '100%',
-                    padding: '9px 12px',
+                    height: '140px',
                     borderRadius: '8px',
+                    overflow: 'hidden',
                     border: '1px solid var(--border)',
-                    fontSize: '0.9rem',
-                    background: 'var(--surface)',
-                    color: 'var(--text-main)'
-                  }}
-                />
+                    background: '#0f172a'
+                  }}>
+                    <img
+                      src={imageUrl}
+                      alt="Previsualización"
+                      referrerPolicy="no-referrer"
+                      onError={() => setImageLoadError(true)}
+                      onLoad={() => setImageLoadError(false)}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover'
+                      }}
+                    />
+                    <div style={{
+                      position: 'absolute',
+                      bottom: '8px',
+                      left: '8px',
+                      background: 'rgba(0,0,0,0.65)',
+                      backdropFilter: 'blur(4px)',
+                      color: '#ffffff',
+                      fontSize: '0.72rem',
+                      fontWeight: 600,
+                      padding: '3px 8px',
+                      borderRadius: '6px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}>
+                      <CheckCircle2 size={12} color="#22c55e" />
+                      <span>Foto lista para publicar</span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setImageUrl('');
+                        setImageLoadError(false);
+                      }}
+                      title="Quitar foto"
+                      style={{
+                        position: 'absolute',
+                        top: '8px',
+                        right: '8px',
+                        background: 'rgba(239, 68, 68, 0.85)',
+                        border: 'none',
+                        color: '#fff',
+                        borderRadius: '6px',
+                        padding: '4px 8px',
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}
+                    >
+                      <Trash2 size={12} />
+                      <span>Quitar</span>
+                    </button>
+                  </div>
+                )}
+
+                {/* Consejo para fotos de redes sociales */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '8px',
+                  background: 'rgba(2, 132, 199, 0.08)',
+                  border: '1px solid rgba(2, 132, 199, 0.18)',
+                  borderRadius: '8px',
+                  padding: '8px 10px',
+                  fontSize: '0.75rem',
+                  color: 'var(--text-muted)',
+                  lineHeight: 1.4
+                }}>
+                  <Lightbulb size={14} color="var(--primary)" style={{ flexShrink: 0, marginTop: '2px' }} />
+                  <div>
+                    <strong style={{ color: 'var(--primary)' }}>¿Cómo usar fotos de Facebook o Instagram?</strong> Las redes sociales cambian o expiran los enlaces de sus fotos a los pocos días. Te sugerimos <strong>descargar la foto a tu celular o PC</strong> y subirla aquí con <em>"Subir desde mi celular"</em> para que se conserve siempre.
+                  </div>
+                </div>
               </div>
 
               <div>

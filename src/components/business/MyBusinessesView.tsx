@@ -219,6 +219,10 @@ export const MyBusinessesView: React.FC<MyBusinessesViewProps> = ({
                   <img
                     src={b.image_url || 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=400&q=80'}
                     alt={b.name}
+                    referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=400&q=80';
+                    }}
                     style={{
                       width: '68px',
                       height: '68px',
