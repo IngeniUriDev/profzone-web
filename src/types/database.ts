@@ -37,6 +37,9 @@ export interface Business {
   address: string;
   google_maps_url?: string;
   website_url?: string;
+  facebook_url?: string;
+  instagram_url?: string;
+  tiktok_url?: string;
   phone?: string;
   whatsapp?: string;
   schedule?: string;

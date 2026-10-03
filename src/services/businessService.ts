@@ -85,28 +85,48 @@ export const businessService = {
     };
 
     if (isSupabaseConfigured && supabase) {
-      const { data, error } = await supabase
+      const payload: any = {
+        name: business.name,
+        category_id: business.category_id,
+        municipality: business.municipality || 'Santiago Tianguistenco',
+        locality: business.locality,
+        address: business.address,
+        google_maps_url: business.google_maps_url,
+        phone: business.phone,
+        whatsapp: business.whatsapp,
+        schedule: business.schedule,
+        description: business.description,
+        image_url: business.image_url,
+        latitude: business.latitude,
+        longitude: business.longitude,
+        website_url: business.website_url,
+        facebook_url: business.facebook_url,
+        instagram_url: business.instagram_url,
+        tiktok_url: business.tiktok_url,
+        submitted_by: business.submitted_by,
+        status: 'pending'
+      };
+
+      let { data, error } = await supabase
         .from('pz_businesses')
-        .insert([{
-          name: business.name,
-          category_id: business.category_id,
-          municipality: business.municipality || 'Santiago Tianguistenco',
-          locality: business.locality,
-          address: business.address,
-          google_maps_url: business.google_maps_url,
-          phone: business.phone,
-          whatsapp: business.whatsapp,
-          schedule: business.schedule,
-          description: business.description,
-          image_url: business.image_url,
-          latitude: business.latitude,
-          longitude: business.longitude,
-          website_url: business.website_url,
-          submitted_by: business.submitted_by,
-          status: 'pending'
-        }])
+        .insert([payload])
         .select()
         .single();
+
+      if (error && (error.message?.includes('facebook_url') || error.message?.includes('instagram_url') || error.message?.includes('tiktok_url'))) {
+        console.warn('Columnas de redes sociales aún no migradas en Supabase. Reintentando inserción básica...');
+        delete payload.facebook_url;
+        delete payload.instagram_url;
+        delete payload.tiktok_url;
+        const retry = await supabase.from('pz_businesses').insert([payload]).select().single();
+        data = retry.data ? {
+          ...retry.data,
+          facebook_url: business.facebook_url,
+          instagram_url: business.instagram_url,
+          tiktok_url: business.tiktok_url
+        } : null;
+        error = retry.error;
+      }
 
       if (error) {
         console.error('Error creating business in Supabase:', error);
@@ -142,25 +162,38 @@ export const businessService = {
 
   async updateBusiness(id: string, updates: Partial<Business>): Promise<void> {
     if (isSupabaseConfigured && supabase) {
-      const { error } = await supabase
+      const updatePayload: any = {
+        name: updates.name,
+        category_id: updates.category_id,
+        municipality: updates.municipality,
+        locality: updates.locality,
+        address: updates.address,
+        phone: updates.phone,
+        whatsapp: updates.whatsapp,
+        website_url: updates.website_url,
+        facebook_url: updates.facebook_url,
+        instagram_url: updates.instagram_url,
+        tiktok_url: updates.tiktok_url,
+        schedule: updates.schedule,
+        description: updates.description,
+        image_url: updates.image_url,
+        latitude: updates.latitude,
+        longitude: updates.longitude,
+        ...(updates.status ? { status: updates.status } : {})
+      };
+
+      let { error } = await supabase
         .from('pz_businesses')
-        .update({
-          name: updates.name,
-          category_id: updates.category_id,
-          municipality: updates.municipality,
-          locality: updates.locality,
-          address: updates.address,
-          phone: updates.phone,
-          whatsapp: updates.whatsapp,
-          website_url: updates.website_url,
-          schedule: updates.schedule,
-          description: updates.description,
-          image_url: updates.image_url,
-          latitude: updates.latitude,
-          longitude: updates.longitude,
-          ...(updates.status ? { status: updates.status } : {})
-        })
+        .update(updatePayload)
         .eq('id', id);
+
+      if (error && (error.message?.includes('facebook_url') || error.message?.includes('instagram_url') || error.message?.includes('tiktok_url'))) {
+        delete updatePayload.facebook_url;
+        delete updatePayload.instagram_url;
+        delete updatePayload.tiktok_url;
+        const retry = await supabase.from('pz_businesses').update(updatePayload).eq('id', id);
+        error = retry.error;
+      }
 
       if (error) {
         console.error('Error updating business in Supabase:', error);

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { X, Send, AlertCircle, CheckCircle2, MapPin, Globe, Lock, LogIn, UserCheck, Layers, Sparkles, Lightbulb } from 'lucide-react';
+import { X, Send, AlertCircle, CheckCircle2, MapPin, Globe, Lock, LogIn, UserCheck, Layers, Sparkles, Lightbulb, Share2 } from 'lucide-react';
+import { FacebookIcon, InstagramIcon, TikTokIcon } from '../common/SocialIcons';
 import type { Business, Category, UserProfile } from '../../types/database';
 import { businessService } from '../../services/businessService';
 import { categoryService } from '../../services/categoryService';
@@ -48,6 +49,9 @@ export const RegisterBusinessModal: React.FC<RegisterBusinessModalProps> = ({
   const [phone, setPhone] = useState(initialBusiness?.phone || '');
   const [whatsapp, setWhatsapp] = useState(initialBusiness?.whatsapp || '');
   const [websiteUrl, setWebsiteUrl] = useState(initialBusiness?.website_url || '');
+  const [facebookUrl, setFacebookUrl] = useState(initialBusiness?.facebook_url || '');
+  const [instagramUrl, setInstagramUrl] = useState(initialBusiness?.instagram_url || '');
+  const [tiktokUrl, setTiktokUrl] = useState(initialBusiness?.tiktok_url || '');
   const [schedule, setSchedule] = useState(initialBusiness?.schedule || '');
   const [description, setDescription] = useState(initialBusiness?.description || '');
   const [imageUrl, setImageUrl] = useState(initialBusiness?.image_url || '');
@@ -60,6 +64,17 @@ export const RegisterBusinessModal: React.FC<RegisterBusinessModalProps> = ({
     : selectedMunicipality;
 
   const matchedMuniGeo = REGIONAL_MUNICIPALITIES.find(m => m.name === finalMunicipality);
+
+  const formatSocialUrl = (input: string, platform: 'facebook' | 'instagram' | 'tiktok' | 'web') => {
+    let val = input.trim();
+    if (!val) return '';
+    if (val.startsWith('http://') || val.startsWith('https://')) return val;
+    val = val.replace(/^@/, '');
+    if (platform === 'facebook') return `https://facebook.com/${val}`;
+    if (platform === 'instagram') return `https://instagram.com/${val}`;
+    if (platform === 'tiktok') return `https://tiktok.com/@${val}`;
+    return `https://${val}`;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -103,7 +118,10 @@ export const RegisterBusinessModal: React.FC<RegisterBusinessModalProps> = ({
           address: address.trim(),
           phone: phone.trim() || undefined,
           whatsapp: whatsapp.trim() || undefined,
-          website_url: websiteUrl.trim() || undefined,
+          website_url: formatSocialUrl(websiteUrl, 'web') || undefined,
+          facebook_url: formatSocialUrl(facebookUrl, 'facebook') || undefined,
+          instagram_url: formatSocialUrl(instagramUrl, 'instagram') || undefined,
+          tiktok_url: formatSocialUrl(tiktokUrl, 'tiktok') || undefined,
           schedule: schedule.trim() || undefined,
           description: description.trim() || undefined,
           image_url: imageUrl.trim() || 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=80',
@@ -121,7 +139,10 @@ export const RegisterBusinessModal: React.FC<RegisterBusinessModalProps> = ({
           address: address.trim(),
           phone: phone.trim() || undefined,
           whatsapp: whatsapp.trim() || undefined,
-          website_url: websiteUrl.trim() || undefined,
+          website_url: formatSocialUrl(websiteUrl, 'web') || undefined,
+          facebook_url: formatSocialUrl(facebookUrl, 'facebook') || undefined,
+          instagram_url: formatSocialUrl(instagramUrl, 'instagram') || undefined,
+          tiktok_url: formatSocialUrl(tiktokUrl, 'tiktok') || undefined,
           schedule: schedule.trim() || undefined,
           description: description.trim() || undefined,
           image_url: imageUrl.trim() || 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=80',
@@ -579,26 +600,114 @@ export const RegisterBusinessModal: React.FC<RegisterBusinessModalProps> = ({
                 onChange={setSchedule}
               />
 
-              <div>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.85rem', fontWeight: 600, marginBottom: '4px' }}>
-                  <Globe size={14} color="var(--primary)" />
-                  <span>Sitio Web / Red Social (opcional)</span>
-                </label>
-                <input
-                  type="url"
-                  placeholder="https://miexample.com o perfil de Facebook/Instagram"
-                  value={websiteUrl}
-                  onChange={(e) => setWebsiteUrl(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '9px 12px',
-                    borderRadius: '8px',
-                    border: '1px solid var(--border)',
-                    fontSize: '0.9rem',
-                    background: 'var(--surface)',
-                    color: 'var(--text-main)'
-                  }}
-                />
+              {/* Redes Sociales y Enlaces Oficiales */}
+              <div style={{
+                background: 'var(--surface-secondary)',
+                border: '1px solid var(--border)',
+                borderRadius: '12px',
+                padding: '14px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.86rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                  <Share2 size={16} color="var(--primary)" />
+                  <span>Redes Sociales y Enlaces Oficiales (Opcional)</span>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '10px' }}>
+                  {/* Facebook */}
+                  <div>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', fontWeight: 600, marginBottom: '4px', color: '#1877F2' }}>
+                      <FacebookIcon size={14} color="#1877F2" />
+                      <span>Facebook</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="facebook.com/minegocio o @usuario"
+                      value={facebookUrl}
+                      onChange={(e) => setFacebookUrl(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '8px 12px',
+                        borderRadius: '8px',
+                        border: '1px solid var(--border)',
+                        fontSize: '0.85rem',
+                        background: 'var(--surface)',
+                        color: 'var(--text-main)'
+                      }}
+                    />
+                  </div>
+
+                  {/* Instagram */}
+                  <div>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', fontWeight: 600, marginBottom: '4px', color: '#E1306C' }}>
+                      <InstagramIcon size={14} color="#E1306C" />
+                      <span>Instagram</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="instagram.com/minegocio o @usuario"
+                      value={instagramUrl}
+                      onChange={(e) => setInstagramUrl(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '8px 12px',
+                        borderRadius: '8px',
+                        border: '1px solid var(--border)',
+                        fontSize: '0.85rem',
+                        background: 'var(--surface)',
+                        color: 'var(--text-main)'
+                      }}
+                    />
+                  </div>
+
+                  {/* TikTok */}
+                  <div>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', fontWeight: 600, marginBottom: '4px', color: 'var(--text-main)' }}>
+                      <TikTokIcon size={14} color="var(--text-main)" />
+                      <span>TikTok</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="tiktok.com/@minegocio o @usuario"
+                      value={tiktokUrl}
+                      onChange={(e) => setTiktokUrl(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '8px 12px',
+                        borderRadius: '8px',
+                        border: '1px solid var(--border)',
+                        fontSize: '0.85rem',
+                        background: 'var(--surface)',
+                        color: 'var(--text-main)'
+                      }}
+                    />
+                  </div>
+
+                  {/* Sitio Web Oficial */}
+                  <div>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', fontWeight: 600, marginBottom: '4px', color: 'var(--primary)' }}>
+                      <Globe size={14} color="var(--primary)" />
+                      <span>Sitio Web / Linktree</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="https://minegocio.com"
+                      value={websiteUrl}
+                      onChange={(e) => setWebsiteUrl(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '8px 12px',
+                        borderRadius: '8px',
+                        border: '1px solid var(--border)',
+                        fontSize: '0.85rem',
+                        background: 'var(--surface)',
+                        color: 'var(--text-main)'
+                      }}
+                    />
+                  </div>
+                </div>
               </div>
 
               <div>

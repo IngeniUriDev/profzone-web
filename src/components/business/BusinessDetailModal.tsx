@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, MapPin, Clock, Phone, MessageCircle, Edit3, MessageSquarePlus, Star, UserCheck, Stethoscope, Globe, ShieldCheck } from 'lucide-react';
+import { FacebookIcon, InstagramIcon, TikTokIcon } from '../common/SocialIcons';
 import type { Business, Review, UserProfile } from '../../types/database';
 import { StarRating } from '../common/StarRating';
 import { reviewService } from '../../services/reviewService';
@@ -82,6 +83,24 @@ export const BusinessDetailModal: React.FC<BusinessDetailModalProps> = ({
     const url = business.website_url.startsWith('http')
       ? business.website_url
       : `https://${business.website_url}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleFacebook = () => {
+    if (!business.facebook_url) return;
+    const url = business.facebook_url.startsWith('http') ? business.facebook_url : `https://${business.facebook_url}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleInstagram = () => {
+    if (!business.instagram_url) return;
+    const url = business.instagram_url.startsWith('http') ? business.instagram_url : `https://${business.instagram_url}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleTikTok = () => {
+    if (!business.tiktok_url) return;
+    const url = business.tiktok_url.startsWith('http') ? business.tiktok_url : `https://${business.tiktok_url}`;
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
@@ -256,6 +275,42 @@ export const BusinessDetailModal: React.FC<BusinessDetailModalProps> = ({
                 <span>Sitio Web</span>
               </button>
             )}
+            {business.facebook_url && (
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={handleFacebook}
+                style={{ color: '#1877F2', borderColor: '#bfdbfe' }}
+                title="Página oficial de Facebook"
+              >
+                <FacebookIcon size={16} color="#1877F2" />
+                <span>Facebook</span>
+              </button>
+            )}
+            {business.instagram_url && (
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={handleInstagram}
+                style={{ color: '#E1306C', borderColor: '#fbcfe8' }}
+                title="Perfil de Instagram"
+              >
+                <InstagramIcon size={16} color="#E1306C" />
+                <span>Instagram</span>
+              </button>
+            )}
+            {business.tiktok_url && (
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={handleTikTok}
+                style={{ color: 'var(--text-main)', borderColor: 'var(--border)' }}
+                title="Perfil de TikTok"
+              >
+                <TikTokIcon size={16} color="currentColor" />
+                <span>TikTok</span>
+              </button>
+            )}
             {isOwner && onEditBusiness && (
               <button
                 type="button"
@@ -341,6 +396,78 @@ export const BusinessDetailModal: React.FC<BusinessDetailModalProps> = ({
                   style={{ fontSize: '0.75rem', padding: '4px 8px', flexShrink: 0 }}
                 >
                   Abrir
+                </button>
+              </div>
+            )}
+
+            {business.facebook_url && (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', borderTop: '1px solid var(--border)', paddingTop: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
+                  <FacebookIcon size={16} color="#1877F2" />
+                  <a
+                    href={business.facebook_url.startsWith('http') ? business.facebook_url : `https://${business.facebook_url}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ color: '#1877F2', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'underline', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                  >
+                    {business.facebook_url.replace(/^https?:\/\/(www\.)?facebook\.com\/?/, '@')}
+                  </a>
+                </div>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={handleFacebook}
+                  style={{ fontSize: '0.75rem', padding: '4px 8px', flexShrink: 0, color: '#1877F2', borderColor: '#bfdbfe' }}
+                >
+                  Facebook
+                </button>
+              </div>
+            )}
+
+            {business.instagram_url && (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', borderTop: '1px solid var(--border)', paddingTop: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
+                  <InstagramIcon size={16} color="#E1306C" />
+                  <a
+                    href={business.instagram_url.startsWith('http') ? business.instagram_url : `https://${business.instagram_url}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ color: '#E1306C', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'underline', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                  >
+                    {business.instagram_url.replace(/^https?:\/\/(www\.)?instagram\.com\/?/, '@')}
+                  </a>
+                </div>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={handleInstagram}
+                  style={{ fontSize: '0.75rem', padding: '4px 8px', flexShrink: 0, color: '#E1306C', borderColor: '#fbcfe8' }}
+                >
+                  Instagram
+                </button>
+              </div>
+            )}
+
+            {business.tiktok_url && (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', borderTop: '1px solid var(--border)', paddingTop: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
+                  <TikTokIcon size={16} color="currentColor" />
+                  <a
+                    href={business.tiktok_url.startsWith('http') ? business.tiktok_url : `https://${business.tiktok_url}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ color: 'var(--text-main)', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'underline', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                  >
+                    {business.tiktok_url.replace(/^https?:\/\/(www\.)?tiktok\.com\/?/, '')}
+                  </a>
+                </div>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={handleTikTok}
+                  style={{ fontSize: '0.75rem', padding: '4px 8px', flexShrink: 0 }}
+                >
+                  TikTok
                 </button>
               </div>
             )}

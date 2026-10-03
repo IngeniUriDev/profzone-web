@@ -1,5 +1,6 @@
 import React from 'react';
 import { Star, MapPin, Clock, Phone, MessageCircle, Navigation2, Globe, ArrowRight, Edit3 } from 'lucide-react';
+import { FacebookIcon, InstagramIcon, TikTokIcon } from '../common/SocialIcons';
 import type { Business } from '../../types/database';
 
 interface BusinessCardProps {
@@ -288,6 +289,83 @@ export const BusinessCard: React.FC<BusinessCardProps> = ({
               <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {business.schedule}
               </span>
+            </div>
+          )}
+
+          {(business.facebook_url || business.instagram_url || business.tiktok_url) && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingTop: '2px' }}>
+              <span style={{ fontSize: '0.74rem', fontWeight: 600, color: 'var(--text-muted)' }}>Redes:</span>
+              <div style={{ display: 'flex', gap: '6px' }}>
+                {business.facebook_url && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const url = business.facebook_url!.startsWith('http') ? business.facebook_url! : `https://${business.facebook_url}`;
+                      window.open(url, '_blank', 'noopener,noreferrer');
+                    }}
+                    title="Ver Facebook"
+                    style={{
+                      border: '1px solid #bfdbfe',
+                      background: '#eff6ff',
+                      color: '#1877F2',
+                      borderRadius: '6px',
+                      padding: '3px 6px',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center'
+                    }}
+                  >
+                    <FacebookIcon size={13} color="#1877F2" />
+                  </button>
+                )}
+                {business.instagram_url && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const url = business.instagram_url!.startsWith('http') ? business.instagram_url! : `https://${business.instagram_url}`;
+                      window.open(url, '_blank', 'noopener,noreferrer');
+                    }}
+                    title="Ver Instagram"
+                    style={{
+                      border: '1px solid #fbcfe8',
+                      background: '#fdf2f8',
+                      color: '#E1306C',
+                      borderRadius: '6px',
+                      padding: '3px 6px',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center'
+                    }}
+                  >
+                    <InstagramIcon size={13} color="#E1306C" />
+                  </button>
+                )}
+                {business.tiktok_url && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const url = business.tiktok_url!.startsWith('http') ? business.tiktok_url! : `https://${business.tiktok_url}`;
+                      window.open(url, '_blank', 'noopener,noreferrer');
+                    }}
+                    title="Ver TikTok"
+                    style={{
+                      border: '1px solid var(--border)',
+                      background: 'var(--surface-secondary)',
+                      color: 'var(--text-main)',
+                      borderRadius: '6px',
+                      padding: '3px 6px',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center'
+                    }}
+                  >
+                    <TikTokIcon size={13} color="currentColor" />
+                  </button>
+                )}
+              </div>
             </div>
           )}
         </div>

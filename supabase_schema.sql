@@ -22,6 +22,9 @@ CREATE TABLE IF NOT EXISTS public.pz_businesses (
   address TEXT NOT NULL,
   google_maps_url TEXT,
   website_url TEXT,
+  facebook_url TEXT,
+  instagram_url TEXT,
+  tiktok_url TEXT,
   phone TEXT,
   whatsapp TEXT,
   schedule TEXT,
@@ -123,3 +126,8 @@ INSERT INTO public.pz_categories (name, icon, description) VALUES
   ('Psicología y Salud Mental', 'HeartHandshake', 'Terapia infantil, juvenil, familiar y acompañamiento psicológico'),
   ('Servicios Legales y Asesoría', 'Scale', 'Abogados, notarías, asesoría jurídica y trámites civiles o mercantiles')
 ON CONFLICT (name) DO NOTHING;
+
+-- 8. Migración para habilitar redes sociales en tablas existentes:
+ALTER TABLE public.pz_businesses ADD COLUMN IF NOT EXISTS facebook_url TEXT;
+ALTER TABLE public.pz_businesses ADD COLUMN IF NOT EXISTS instagram_url TEXT;
+ALTER TABLE public.pz_businesses ADD COLUMN IF NOT EXISTS tiktok_url TEXT;
