@@ -25,11 +25,12 @@ export const ContactModal: React.FC<ContactModalProps> = ({ onClose, currentUser
       if (isSupabaseConfigured && supabase) {
         await supabase.from('pz_feedback').insert([
           {
-            user_id: currentUser?.id || null,
+            type: 'other',
+            title: `Contacto: ${subject || 'Consulta General'}`,
+            message: `[Contacto: ${subject}] ${message.trim()}`,
             user_name: name.trim() || 'Visitante',
-            contact_info: contactInfo.trim() || null,
-            type: 'consulta',
-            message: `[Contacto: ${subject}] ${message.trim()}`
+            user_contact: contactInfo.trim() || null,
+            status: 'pending'
           }
         ]);
       }

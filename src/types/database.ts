@@ -78,6 +78,7 @@ export interface UserProfile {
   phone?: string;
   avatar_url?: string;
   role: 'admin' | 'user';
+  created_at?: string;
 }
 
 export interface FeedbackSuggestion {
@@ -87,6 +88,8 @@ export interface FeedbackSuggestion {
   contact?: string;
   message: string;
   created_at: string;
+  status?: 'pending' | 'reviewed' | 'implemented';
+  title?: string;
 }
 
 export type SortOption = 'rating' | 'reviews' | 'distance' | 'recent';

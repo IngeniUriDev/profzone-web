@@ -79,6 +79,7 @@ export const RegisterBusinessModal: React.FC<RegisterBusinessModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
     if (!currentUser) {
       onRequireAuth();
       return;
@@ -165,9 +166,9 @@ export const RegisterBusinessModal: React.FC<RegisterBusinessModalProps> = ({
 
       setSubmitted(true);
       onSuccess();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert('Error al guardar la información. Por favor intenta nuevamente.');
+      alert(err?.message || 'Error al guardar la información. Por favor intenta nuevamente.');
     } finally {
       setLoading(false);
     }

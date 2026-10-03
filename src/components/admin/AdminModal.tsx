@@ -3,7 +3,7 @@ import {
   X, Check, Trash2, Clock, MapPin, Phone, Shield,
   MessageSquareHeart, Building2, Layers, Plus, Lightbulb, Globe,
   UserPlus, Crown, Users, Lock, Mail, CheckCircle2,
-  Sparkles, Award, Edit2, MessageCircle, AlertCircle
+  Sparkles, Award, Edit2, MessageCircle, AlertCircle, RotateCcw
 } from 'lucide-react';
 import type { Business, FeedbackSuggestion, Category, UserProfile } from '../../types/database';
 import { businessService } from '../../services/businessService';
@@ -34,6 +34,8 @@ export const AdminModal: React.FC<AdminModalProps> = ({ currentUser, initialTab 
   
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [processingFeedbackId, setProcessingFeedbackId] = useState<string | null>(null);
+  const [feedbackFilter, setFeedbackFilter] = useState<'all' | 'pending' | 'reviewed'>('all');
 
   // Formulario nueva categoría
   const [newCatName, setNewCatName] = useState('');
@@ -91,6 +93,35 @@ export const AdminModal: React.FC<AdminModalProps> = ({ currentUser, initialTab 
       alert('Error al actualizar el estado del servicio.');
     } finally {
       setProcessingId(null);
+    }
+  };
+
+  const handleUpdateFeedbackStatus = async (id: string, status: 'pending' | 'reviewed') => {
+    setProcessingFeedbackId(id);
+    try {
+      await feedbackService.updateFeedbackStatus(id, status);
+      await loadAll();
+      onUpdate();
+    } catch (err) {
+      console.error(err);
+      alert('Error al actualizar el estado de la sugerencia.');
+    } finally {
+      setProcessingFeedbackId(null);
+    }
+  };
+
+  const handleDeleteFeedback = async (id: string) => {
+    if (!window.confirm('¿Deseas eliminar este comentario del buzón de forma permanente?')) return;
+    setProcessingFeedbackId(id);
+    try {
+      await feedbackService.deleteFeedback(id);
+      await loadAll();
+      onUpdate();
+    } catch (err) {
+      console.error(err);
+      alert('Error al eliminar la sugerencia.');
+    } finally {
+      setProcessingFeedbackId(null);
     }
   };
 
@@ -497,7 +528,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({ currentUser, initialTab 
           >
             <MessageSquareHeart size={16} />
             <span>Buzón de Sugerencias</span>
-            {feedbacks.length > 0 && (
+            {feedbacks.filter(f => !f.status || f.status === 'pending').length > 0 && (
               <span style={{
                 background: '#f59e0b',
                 color: '#fff',
@@ -505,7 +536,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({ currentUser, initialTab 
                 padding: '1px 6px',
                 borderRadius: '10px'
               }}>
-                {feedbacks.length}
+                {feedbacks.filter(f => !f.status || f.status === 'pending').length}
               </span>
             )}
           </button>
@@ -868,6 +899,75 @@ export const AdminModal: React.FC<AdminModalProps> = ({ currentUser, initialTab 
           ) : activeTab === 'feedback' ? (
             /* TAB 2: BUZÓN DE SUGERENCIAS */
             <div>
+              {/* Barra de Filtros de Sugerencias */}
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '8px',
+                marginBottom: '14px',
+                background: '#f8fafc',
+                padding: '8px 12px',
+                borderRadius: '8px',
+                border: '1px solid #e2e8f0'
+              }}>
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setFeedbackFilter('all')}
+                    style={{
+                      padding: '4px 10px',
+                      borderRadius: '6px',
+                      border: 'none',
+                      fontSize: '0.78rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      background: feedbackFilter === 'all' ? '#0f172a' : '#e2e8f0',
+                      color: feedbackFilter === 'all' ? '#ffffff' : '#475569'
+                    }}
+                  >
+                    Todas ({feedbacks.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFeedbackFilter('pending')}
+                    style={{
+                      padding: '4px 10px',
+                      borderRadius: '6px',
+                      border: 'none',
+                      fontSize: '0.78rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      background: feedbackFilter === 'pending' ? '#d97706' : '#fef3c7',
+                      color: feedbackFilter === 'pending' ? '#ffffff' : '#92400e'
+                    }}
+                  >
+                    Pendientes ({feedbacks.filter(f => !f.status || f.status === 'pending').length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFeedbackFilter('reviewed')}
+                    style={{
+                      padding: '4px 10px',
+                      borderRadius: '6px',
+                      border: 'none',
+                      fontSize: '0.78rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      background: feedbackFilter === 'reviewed' ? '#16a34a' : '#dcfce7',
+                      color: feedbackFilter === 'reviewed' ? '#ffffff' : '#166534'
+                    }}
+                  >
+                    Atendidas ({feedbacks.filter(f => f.status === 'reviewed' || f.status === 'implemented').length})
+                  </button>
+                </div>
+
+                <span style={{ fontSize: '0.78rem', color: '#64748b' }}>
+                  Marcar como atendido retira la notificación pendiente
+                </span>
+              </div>
+
               {feedbacks.length === 0 ? (
                 <div style={{
                   textAlign: 'center',
@@ -886,54 +986,185 @@ export const AdminModal: React.FC<AdminModalProps> = ({ currentUser, initialTab 
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  {feedbacks.map((f) => (
-                    <div key={f.id} style={{
-                      border: '1px solid #e2e8f0',
-                      borderRadius: '10px',
-                      padding: '16px',
-                      background: '#ffffff',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '8px'
-                    }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{
-                          fontSize: '0.72rem',
-                          fontWeight: 800,
-                          padding: '3px 9px',
-                          borderRadius: '6px',
-                          background: '#fef3c7',
-                          color: '#92400e',
-                          textTransform: 'uppercase',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '5px'
+                  {feedbacks
+                    .filter(f => {
+                      if (feedbackFilter === 'pending') return !f.status || f.status === 'pending';
+                      if (feedbackFilter === 'reviewed') return f.status === 'reviewed' || f.status === 'implemented';
+                      return true;
+                    })
+                    .map((f) => {
+                      const isReviewed = f.status === 'reviewed' || f.status === 'implemented';
+                      return (
+                        <div key={f.id} style={{
+                          border: `1px solid ${isReviewed ? '#e2e8f0' : '#fde68a'}`,
+                          borderRadius: '10px',
+                          padding: '16px',
+                          background: isReviewed ? '#fafafa' : '#ffffff',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '10px'
                         }}>
-                          {f.type === 'category' ? <Lightbulb size={12} /> :
-                           f.type === 'municipality' ? <MapPin size={12} /> :
-                           f.type === 'feature' ? <Sparkles size={12} /> :
-                           f.type === 'correction' ? <AlertCircle size={12} /> : <MessageCircle size={12} />}
-                          <span>
-                            {f.type === 'category' ? 'Nueva Categoría' :
-                             f.type === 'municipality' ? 'Municipio/Zona' :
-                             f.type === 'feature' ? 'Mejora App' :
-                             f.type === 'correction' ? 'Corrección' : 'Comentario'}
-                          </span>
-                        </span>
-                        <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>
-                          {new Date(f.created_at).toLocaleDateString('es-MX')}
-                        </span>
-                      </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <span style={{
+                                fontSize: '0.72rem',
+                                fontWeight: 800,
+                                padding: '3px 9px',
+                                borderRadius: '6px',
+                                background: '#fef3c7',
+                                color: '#92400e',
+                                textTransform: 'uppercase',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '5px'
+                              }}>
+                                {f.type === 'category' ? <Lightbulb size={12} /> :
+                                 f.type === 'municipality' ? <MapPin size={12} /> :
+                                 f.type === 'feature' ? <Sparkles size={12} /> :
+                                 f.type === 'correction' ? <AlertCircle size={12} /> : <MessageCircle size={12} />}
+                                <span>
+                                  {f.type === 'category' ? 'Nueva Categoría' :
+                                   f.type === 'municipality' ? 'Municipio/Zona' :
+                                   f.type === 'feature' ? 'Mejora App' :
+                                   f.type === 'correction' ? 'Corrección' : 'Comentario'}
+                                </span>
+                              </span>
 
-                      <p style={{ fontSize: '0.92rem', color: '#1e293b', margin: '4px 0', lineHeight: 1.5 }}>
-                        "{f.message}"
-                      </p>
+                              {isReviewed ? (
+                                <span style={{
+                                  fontSize: '0.72rem',
+                                  fontWeight: 700,
+                                  padding: '2px 8px',
+                                  borderRadius: '6px',
+                                  background: '#dcfce7',
+                                  color: '#166534',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px'
+                                }}>
+                                  <CheckCircle2 size={12} />
+                                  <span>Atendido</span>
+                                </span>
+                              ) : (
+                                <span style={{
+                                  fontSize: '0.72rem',
+                                  fontWeight: 700,
+                                  padding: '2px 8px',
+                                  borderRadius: '6px',
+                                  background: '#fffbeb',
+                                  color: '#b45309',
+                                  border: '1px solid #fde68a',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px'
+                                }}>
+                                  <Clock size={12} />
+                                  <span>Pendiente</span>
+                                </span>
+                              )}
+                            </div>
 
-                      <div style={{ fontSize: '0.8rem', color: '#64748b' }}>
-                        Enviado por: <strong>{f.author_name}</strong> {f.contact ? `• Contacto: ${f.contact}` : ''}
-                      </div>
-                    </div>
-                  ))}
+                            <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>
+                              {new Date(f.created_at).toLocaleDateString('es-MX', {
+                                day: '2-digit',
+                                month: 'short',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </span>
+                          </div>
+
+                          <p style={{ fontSize: '0.94rem', color: isReviewed ? '#475569' : '#0f172a', margin: '4px 0', lineHeight: 1.5, fontWeight: isReviewed ? 400 : 500 }}>
+                            "{f.message}"
+                          </p>
+
+                          <div style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            flexWrap: 'wrap',
+                            gap: '10px',
+                            paddingTop: '8px',
+                            borderTop: '1px solid #f1f5f9'
+                          }}>
+                            <div style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                              Enviado por: <strong>{f.author_name}</strong> {f.contact ? `• Contacto: ${f.contact}` : ''}
+                            </div>
+
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              {!isReviewed ? (
+                                <button
+                                  type="button"
+                                  onClick={() => handleUpdateFeedbackStatus(f.id, 'reviewed')}
+                                  disabled={processingFeedbackId === f.id}
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '5px',
+                                    padding: '6px 12px',
+                                    borderRadius: '8px',
+                                    border: '1px solid #16a34a',
+                                    background: '#f0fdf4',
+                                    color: '#15803d',
+                                    fontSize: '0.78rem',
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                    transition: 'all 0.15s ease'
+                                  }}
+                                >
+                                  <Check size={14} />
+                                  <span>Marcar como Atendido</span>
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => handleUpdateFeedbackStatus(f.id, 'pending')}
+                                  disabled={processingFeedbackId === f.id}
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '5px',
+                                    padding: '6px 12px',
+                                    borderRadius: '8px',
+                                    border: '1px solid #cbd5e1',
+                                    background: '#ffffff',
+                                    color: '#64748b',
+                                    fontSize: '0.78rem',
+                                    fontWeight: 600,
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  <RotateCcw size={13} />
+                                  <span>Reabrir</span>
+                                </button>
+                              )}
+
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteFeedback(f.id)}
+                                disabled={processingFeedbackId === f.id}
+                                title="Eliminar del buzón"
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                  padding: '6px 10px',
+                                  borderRadius: '8px',
+                                  border: '1px solid #fecaca',
+                                  background: '#fef2f2',
+                                  color: '#dc2626',
+                                  fontSize: '0.78rem',
+                                  cursor: 'pointer'
+                                }}
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                 </div>
               )}
             </div>

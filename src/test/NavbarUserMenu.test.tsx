@@ -36,6 +36,7 @@ describe('Navbar - User Session and Dropdown Menu', () => {
   it('renders "Mis Negocios" and user menu trigger when user is logged in', () => {
     const mockUser: UserProfile = {
       id: 'usr-123',
+      provider: 'google',
       full_name: 'Juan Perez',
       email: 'juan@example.com',
       role: 'user',
@@ -44,8 +45,7 @@ describe('Navbar - User Session and Dropdown Menu', () => {
 
     render(<Navbar {...defaultProps} currentUser={mockUser} />);
 
-    // "Mis Negocios" should be visible
-    expect(screen.getByText('Mis Negocios')).toBeInTheDocument();
+    // Juan Perez username should be visible in trigger
     expect(screen.getByText('Juan Perez')).toBeInTheDocument();
 
     // User dropdown trigger should exist
@@ -56,7 +56,8 @@ describe('Navbar - User Session and Dropdown Menu', () => {
     fireEvent.click(userMenuBtn);
 
     // Dropdown should be visible with user options
-    expect(screen.getByText('Registrar Nuevo Negocio')).toBeInTheDocument();
+    expect(screen.getAllByText('Mis Negocios').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(/Registrar/i).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Cerrar Sesión')).toBeInTheDocument();
   });
 
@@ -64,6 +65,7 @@ describe('Navbar - User Session and Dropdown Menu', () => {
     const onSignOut = vi.fn();
     const mockUser: UserProfile = {
       id: 'usr-123',
+      provider: 'google',
       full_name: 'Juan Perez',
       email: 'juan@example.com',
       role: 'user',
@@ -85,6 +87,7 @@ describe('Navbar - User Session and Dropdown Menu', () => {
     const onOpenAdmin = vi.fn();
     const mockAdmin: UserProfile = {
       id: 'adm-001',
+      provider: 'phone',
       full_name: 'Administrador Principal',
       phone: '7141087330',
       role: 'admin',

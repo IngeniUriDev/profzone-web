@@ -131,3 +131,15 @@ ON CONFLICT (name) DO NOTHING;
 ALTER TABLE public.pz_businesses ADD COLUMN IF NOT EXISTS facebook_url TEXT;
 ALTER TABLE public.pz_businesses ADD COLUMN IF NOT EXISTS instagram_url TEXT;
 ALTER TABLE public.pz_businesses ADD COLUMN IF NOT EXISTS tiktok_url TEXT;
+
+-- 9. Limpieza de negocios duplicados y protección de unicidad (Anti-duplicados)
+-- Paso A: Eliminar duplicados previos manteniendo únicamente el registro más reciente
+DELETE FROM public.pz_businesses a
+USING public.pz_businesses b
+WHERE a.created_at < b.created_at
+  AND LOWER(TRIM(a.name)) = LOWER(TRIM(b.name))
+  AND LOWER(TRIM(a.municipality)) = LOWER(TRIM(b.municipality));
+
+-- Paso B: Crear índice único para impedir duplicados a nivel de motor de base de datos
+CREATE UNIQUE INDEX IF NOT EXISTS pz_businesses_unique_name_muni 
+ON public.pz_businesses (LOWER(TRIM(name)), LOWER(TRIM(municipality)));

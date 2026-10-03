@@ -1,7 +1,12 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { isBusinessOwner, addMyStoredBusinessId } from '../utils/ownership';
 import { businessService } from '../services/businessService';
 import type { Business, UserProfile } from '../types/database';
+
+vi.mock('../lib/supabase', () => ({
+  supabase: null,
+  isSupabaseConfigured: false
+}));
 
 describe('Business Ownership & Authorization Tests', () => {
   const adminUser: UserProfile = {
@@ -120,9 +125,10 @@ describe('Business Ownership & Authorization Tests', () => {
 
   describe('businessService.updateBusiness ownership enforcement', () => {
     it('allows owner to update their own business in service layer', async () => {
+      const uniqueName = `Pastelería de Alice ${Date.now()}`;
       // Create business registered by Alice
       const created = await businessService.createBusiness({
-        name: 'Pastelería de Alice',
+        name: uniqueName,
         municipality: 'Santiago Tianguistenco',
         address: 'Calle Hidalgo #5',
         submitted_by: userAlice.id
@@ -132,17 +138,20 @@ describe('Business Ownership & Authorization Tests', () => {
 
       // Alice updates her business
       await expect(
-        businessService.updateBusiness(created.id, { name: 'Pastelería Gourmet de Alice' }, userAlice)
+        businessService.updateBusiness(created.id, { name: `${uniqueName} Gourmet` }, userAlice)
       ).resolves.not.toThrow();
 
       const all = await businessService.getAllBusinesses();
       const updated = all.find(b => b.id === created.id);
-      expect(updated?.name).toBe('Pastelería Gourmet de Alice');
+      expect(updated?.name).toBe(`${uniqueName} Gourmet`);
+
+      if (created.id) await businessService.deleteBusiness(created.id);
     });
 
     it('prevents another user from updating Alice\'s business in service layer', async () => {
+      const uniqueName = `Boutique de Alice ${Date.now()}`;
       const created = await businessService.createBusiness({
-        name: 'Boutique de Alice',
+        name: uniqueName,
         municipality: 'Santiago Tianguistenco',
         address: 'Calle Morelos #8',
         submitted_by: userAlice.id
@@ -152,11 +161,14 @@ describe('Business Ownership & Authorization Tests', () => {
       await expect(
         businessService.updateBusiness(created.id, { name: 'Hackeado por Bob' }, userBob)
       ).rejects.toThrow(/No tienes permisos para editar esta publicación/);
+
+      if (created.id) await businessService.deleteBusiness(created.id);
     });
 
     it('allows admin to update any business in service layer', async () => {
+      const uniqueName = `Taller Mecánico ${Date.now()}`;
       const created = await businessService.createBusiness({
-        name: 'Taller Mecánico',
+        name: uniqueName,
         municipality: 'Santiago Tianguistenco',
         address: 'Carretera Federal #1',
         submitted_by: userAlice.id
@@ -164,8 +176,10 @@ describe('Business Ownership & Authorization Tests', () => {
 
       // Admin updates it
       await expect(
-        businessService.updateBusiness(created.id, { name: 'Taller Mecánico Certificado' }, adminUser)
+        businessService.updateBusiness(created.id, { name: `${uniqueName} Certificado` }, adminUser)
       ).resolves.not.toThrow();
+
+      if (created.id) await businessService.deleteBusiness(created.id);
     });
 
     it('allows owner whose user.phone matches business.phone or whatsapp to edit', () => {

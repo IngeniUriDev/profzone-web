@@ -1,5 +1,10 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { businessService } from '../services/businessService';
+
+vi.mock('../lib/supabase', () => ({
+  supabase: null,
+  isSupabaseConfigured: false
+}));
 
 describe('Business Service Tests', () => {
   beforeEach(() => {

@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import {
   X, Bell, MessageSquareHeart, CheckCheck, Lightbulb, MapPin,
   Sparkles, AlertCircle, MessageCircle, ExternalLink,
-  Calendar, Phone
+  Calendar, Phone, Check, CheckCircle2
 
 } from 'lucide-react';
 import type { FeedbackSuggestion } from '../../types/database';
@@ -44,6 +44,11 @@ export const NotificationCenterModal: React.FC<NotificationCenterModalProps> = (
     onFeedbacksUpdated();
     onClose();
     onOpenAdminFeedback();
+  };
+
+  const handleMarkAttended = async (id: string) => {
+    await feedbackService.updateFeedbackStatus(id, 'reviewed');
+    onFeedbacksUpdated();
   };
 
   const getTypeBadge = (type: FeedbackSuggestion['type']) => {
@@ -366,7 +371,45 @@ export const NotificationCenterModal: React.FC<NotificationCenterModalProps> = (
                       )}
 
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        {!isRead && (
+                        {f.status !== 'reviewed' ? (
+                          <button
+                            type="button"
+                            onClick={() => handleMarkAttended(f.id)}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              background: '#f0fdf4',
+                              border: '1px solid #86efac',
+                              borderRadius: '6px',
+                              padding: '4px 8px',
+                              fontSize: '0.74rem',
+                              fontWeight: 700,
+                              color: '#15803d',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            <Check size={12} />
+                            <span>Atendido</span>
+                          </button>
+                        ) : (
+                          <span style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            background: '#dcfce7',
+                            color: '#166534',
+                            padding: '3px 8px',
+                            borderRadius: '6px',
+                            fontSize: '0.72rem',
+                            fontWeight: 700
+                          }}>
+                            <CheckCircle2 size={12} />
+                            <span>Atendido</span>
+                          </span>
+                        )}
+
+                        {!isRead && f.status !== 'reviewed' && (
                           <button
                             type="button"
                             onClick={() => handleMarkSingleRead(f.id)}
