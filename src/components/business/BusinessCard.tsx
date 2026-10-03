@@ -8,6 +8,7 @@ interface BusinessCardProps {
   categoryName?: string;
   onClick: () => void;
   onEdit?: () => void;
+  isOwner?: boolean;
 }
 
 function checkIsOpenNow(schedule?: string): { isOpen: boolean; label: string } {
@@ -38,7 +39,8 @@ export const BusinessCard: React.FC<BusinessCardProps> = ({
   business,
   categoryName,
   onClick,
-  onEdit
+  onEdit,
+  isOwner
 }) => {
   const status = checkIsOpenNow(business.schedule);
 
@@ -214,7 +216,7 @@ export const BusinessCard: React.FC<BusinessCardProps> = ({
           </div>
         </div>
 
-        {/* Botón flotante Editar si es propietario */}
+        {/* Botón flotante Editar si es propietario o admin */}
         {onEdit && (
           <button
             type="button"
@@ -222,7 +224,7 @@ export const BusinessCard: React.FC<BusinessCardProps> = ({
               e.stopPropagation();
               onEdit();
             }}
-            title="Editar mi publicación"
+            title={isOwner ? "Editar los datos de mi negocio" : "Editar publicación (Administrador)"}
             style={{
               position: 'absolute',
               bottom: '12px',
@@ -244,7 +246,7 @@ export const BusinessCard: React.FC<BusinessCardProps> = ({
             }}
           >
             <Edit3 size={12} />
-            <span>Editar</span>
+            <span>{isOwner ? 'Mi Negocio' : 'Editar'}</span>
           </button>
         )}
       </div>

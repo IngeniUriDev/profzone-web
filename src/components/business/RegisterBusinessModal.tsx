@@ -6,6 +6,7 @@ import { businessService } from '../../services/businessService';
 import { categoryService } from '../../services/categoryService';
 import { REGIONAL_MUNICIPALITIES } from '../../lib/geo';
 import { DigitalSchedulePicker } from '../common/DigitalSchedulePicker';
+import { isBusinessOwner } from '../../utils/ownership';
 
 interface RegisterBusinessModalProps {
   categories: Category[];
@@ -109,6 +110,12 @@ export const RegisterBusinessModal: React.FC<RegisterBusinessModalProps> = ({
       }
 
       if (isEditing && initialBusiness) {
+        if (!isBusinessOwner(initialBusiness, currentUser)) {
+          alert('Acceso no autorizado: Solo el usuario que registró este negocio o un administrador pueden editarlo.');
+          setLoading(false);
+          return;
+        }
+
         // Actualizar negocio existente
         await businessService.updateBusiness(initialBusiness.id, {
           name: name.trim(),
@@ -128,7 +135,7 @@ export const RegisterBusinessModal: React.FC<RegisterBusinessModalProps> = ({
           latitude: matchedMuniGeo?.lat,
           longitude: matchedMuniGeo?.lng,
           ...(isCategoryChanged ? { status: 'pending' } : {})
-        });
+        }, currentUser);
       } else {
         // Crear nuevo negocio
         await businessService.createBusiness({
@@ -228,6 +235,39 @@ export const RegisterBusinessModal: React.FC<RegisterBusinessModalProps> = ({
               >
                 <LogIn size={16} />
                 <span>Iniciar Sesión / Registrarme</span>
+              </button>
+            </div>
+          </div>
+        ) : isEditing && initialBusiness && !isBusinessOwner(initialBusiness, currentUser) ? (
+          <div style={{ textAlign: 'center', padding: '36px 12px' }}>
+            <div style={{
+              width: '64px',
+              height: '64px',
+              borderRadius: '50%',
+              background: '#fee2e2',
+              color: '#dc2626',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 16px auto',
+              boxShadow: '0 4px 12px rgba(220, 38, 38, 0.15)'
+            }}>
+              <Lock size={30} />
+            </div>
+            <h3 style={{ fontSize: '1.3rem', fontWeight: 800, marginBottom: '8px', color: 'var(--text-main)' }}>
+              Edición Restringida
+            </h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '24px', lineHeight: 1.6, maxWidth: '440px', margin: '0 auto 24px auto' }}>
+              Solo el usuario que registró esta publicación o un administrador con credenciales autorizadas tienen permiso para editar su información.
+            </p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={onClose}
+                style={{ padding: '8px 24px' }}
+              >
+                Entendido
               </button>
             </div>
           </div>

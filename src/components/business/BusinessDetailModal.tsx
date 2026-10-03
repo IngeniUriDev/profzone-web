@@ -4,6 +4,7 @@ import { FacebookIcon, InstagramIcon, TikTokIcon } from '../common/SocialIcons';
 import type { Business, Review, UserProfile } from '../../types/database';
 import { StarRating } from '../common/StarRating';
 import { reviewService } from '../../services/reviewService';
+import { isBusinessOwner } from '../../utils/ownership';
 
 interface BusinessDetailModalProps {
   business: Business | null;
@@ -60,18 +61,7 @@ export const BusinessDetailModal: React.FC<BusinessDetailModalProps> = ({
     window.open(`https://wa.me/${cleanNumber}?text=${message}`, '_blank');
   };
 
-  const isOwner = Boolean(
-    currentUser && (
-      currentUser.role === 'admin' ||
-      (business.submitted_by && (
-        business.submitted_by === currentUser.id ||
-        business.submitted_by === currentUser.email ||
-        business.submitted_by === currentUser.phone ||
-        business.submitted_by === currentUser.full_name ||
-        (currentUser.full_name && business.submitted_by.toLowerCase().includes(currentUser.full_name.toLowerCase()))
-      ))
-    )
-  );
+  const isOwner = isBusinessOwner(business, currentUser);
 
   const handlePhone = () => {
     if (!business.phone) return;
@@ -328,10 +318,10 @@ export const BusinessDetailModal: React.FC<BusinessDetailModalProps> = ({
                   fontWeight: 700,
                   background: 'var(--surface-secondary)'
                 }}
-                title="Editar datos de mi servicio o consultorio"
+                title={currentUser?.role === 'admin' ? "Editar publicación (Administrador)" : "Editar datos de mi servicio o consultorio"}
               >
                 <Edit3 size={15} />
-                <span>Editar Publicación</span>
+                <span>{currentUser?.role === 'admin' ? "Editar Publicación (Admin)" : "Editar mi Negocio"}</span>
               </button>
             )}
           </div>

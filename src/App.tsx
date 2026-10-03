@@ -24,6 +24,8 @@ import { CURRENT_SPONSOR } from './data/sponsorData';
 import { supabase, isSupabaseConfigured } from './lib/supabase';
 import { useState, useEffect, useMemo } from 'react';
 
+import { isBusinessOwner } from './utils/ownership';
+
 export function App() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [businesses, setBusinesses] = useState<Business[]>([]);
@@ -60,18 +62,7 @@ export function App() {
   const [openRegisterAfterAuth, setOpenRegisterAfterAuth] = useState(false);
 
   // Helper para verificar si el usuario conectado es propietario de un negocio
-  const isBusinessOwner = (b: Business) => {
-    if (!currentUser) return false;
-    if (currentUser.role === 'admin') return true;
-    if (!b.submitted_by) return false;
-    return (
-      b.submitted_by === currentUser.id ||
-      b.submitted_by === currentUser.email ||
-      b.submitted_by === currentUser.phone ||
-      b.submitted_by === currentUser.full_name ||
-      (currentUser.full_name && b.submitted_by.toLowerCase().includes(currentUser.full_name.toLowerCase()))
-    );
-  };
+  const isBusinessAuthorized = (b: Business) => isBusinessOwner(b, currentUser);
 
   // Tema Claro / Oscuro con persistencia en localStorage
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
@@ -431,7 +422,8 @@ export function App() {
                   business={b}
                   categoryName={b.category_id ? categoriesObjMap.get(b.category_id)?.name : undefined}
                   onClick={() => setSelectedBusiness(b)}
-                  onEdit={isBusinessOwner(b) ? () => setEditingBusiness(b) : undefined}
+                  onEdit={isBusinessAuthorized(b) ? () => setEditingBusiness(b) : undefined}
+                  isOwner={isBusinessAuthorized(b)}
                 />
               ))}
             </div>
@@ -551,6 +543,10 @@ export function App() {
           onClose={() => setSelectedBusiness(null)}
           onReviewAdded={() => loadData()}
           onEditBusiness={(b) => {
+            if (!isBusinessAuthorized(b)) {
+              alert('Solo el usuario que registró este negocio o un administrador pueden editarlo.');
+              return;
+            }
             setSelectedBusiness(null);
             setEditingBusiness(b);
           }}

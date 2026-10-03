@@ -1,6 +1,9 @@
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
-import type { Business, BusinessStatus } from '../types/database';
+import type { Business, BusinessStatus, UserProfile } from '../types/database';
 import { INITIAL_BUSINESSES } from '../data/mockData';
+import { isBusinessOwner } from '../utils/ownership';
+
+export { isBusinessOwner };
 
 const LOCAL_STORAGE_KEY = 'profzone_businesses_v6';
 
@@ -160,8 +163,19 @@ export const businessService = {
     saveLocalBusinesses(updated);
   },
 
-  async updateBusiness(id: string, updates: Partial<Business>): Promise<void> {
+  async updateBusiness(id: string, updates: Partial<Business>, user?: UserProfile | null): Promise<void> {
     if (isSupabaseConfigured && supabase) {
+      if (user && user.role !== 'admin') {
+        const { data: existingBiz, error: fetchErr } = await supabase
+          .from('pz_businesses')
+          .select('id, submitted_by')
+          .eq('id', id)
+          .single();
+        if (fetchErr || !existingBiz || !isBusinessOwner(existingBiz as Business, user)) {
+          throw new Error('No tienes permisos para editar esta publicación. Solo el creador o un administrador pueden modificarla.');
+        }
+      }
+
       const updatePayload: any = {
         name: updates.name,
         category_id: updates.category_id,
@@ -203,6 +217,11 @@ export const businessService = {
     }
 
     const current = getLocalBusinesses();
+    const existing = current.find(b => b.id === id);
+    if (user && user.role !== 'admin' && existing && !isBusinessOwner(existing, user)) {
+      throw new Error('No tienes permisos para editar esta publicación. Solo el creador o un administrador pueden modificarla.');
+    }
+
     const updated = current.map(b => b.id === id ? { ...b, ...updates } : b);
     saveLocalBusinesses(updated);
   },
