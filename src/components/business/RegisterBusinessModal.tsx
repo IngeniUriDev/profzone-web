@@ -4,6 +4,7 @@ import type { Business, Category, UserProfile } from '../../types/database';
 import { businessService } from '../../services/businessService';
 import { categoryService } from '../../services/categoryService';
 import { REGIONAL_MUNICIPALITIES } from '../../lib/geo';
+import { DigitalSchedulePicker } from '../common/DigitalSchedulePicker';
 
 interface RegisterBusinessModalProps {
   categories: Category[];
@@ -527,7 +528,7 @@ export const RegisterBusinessModal: React.FC<RegisterBusinessModalProps> = ({
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '4px' }}>
                     Teléfono fijo o celular
@@ -569,28 +570,13 @@ export const RegisterBusinessModal: React.FC<RegisterBusinessModalProps> = ({
                     }}
                   />
                 </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '4px' }}>
-                    Horario de atención
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Lun-Vie: 9am-6pm"
-                    value={schedule}
-                    onChange={(e) => setSchedule(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '9px 12px',
-                      borderRadius: '8px',
-                      border: '1px solid var(--border)',
-                      fontSize: '0.9rem',
-                      background: 'var(--surface)',
-                      color: 'var(--text-main)'
-                    }}
-                  />
-                </div>
               </div>
+
+              {/* Selector con Reloj Digital Interactivo para el Horario */}
+              <DigitalSchedulePicker
+                value={schedule}
+                onChange={setSchedule}
+              />
 
               <div>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.85rem', fontWeight: 600, marginBottom: '4px' }}>
