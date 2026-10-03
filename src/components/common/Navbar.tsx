@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { MapPin, PlusCircle, ShieldCheck, User, LogOut, MessageSquareHeart, Menu, X, ChevronDown, Info, PhoneCall, KeyRound, Crown, CheckCircle2, Bell, Sun, Moon, Briefcase } from 'lucide-react';
 import type { UserProfile } from '../../types/database';
@@ -46,12 +46,31 @@ export const Navbar: React.FC<NavbarProps> = ({
   onToggleTheme,
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const userDropdownRef = useRef<HTMLDivElement>(null);
   const [showAccountModal, setShowAccountModal] = useState(false);
   const [pinInput, setPinInput] = useState('');
   const [pinError, setPinError] = useState('');
   const [pinSuccess, setPinSuccess] = useState('');
 
-  const closeMenu = () => setMobileMenuOpen(false);
+  const closeMenu = () => {
+    setMobileMenuOpen(false);
+    setUserDropdownOpen(false);
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userDropdownRef.current && !userDropdownRef.current.contains(event.target as Node)) {
+        setUserDropdownOpen(false);
+      }
+    };
+    if (userDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [userDropdownOpen]);
 
   const handleClaimAdmin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -206,22 +225,26 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           )}
 
-          {/* Estado de Usuario / Login */}
+          {/* Estado de Usuario / Menú Desplegable con Funciones de Usuario */}
           {currentUser ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <div
-                onClick={() => setShowAccountModal(true)}
-                title="Ver mi perfil y opciones de cuenta"
+            <div ref={userDropdownRef} style={{ position: 'relative' }}>
+              <button
+                id="btn-user-menu"
+                type="button"
+                aria-label="Menú de funciones de usuario"
+                onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                title="Menú de funciones de usuario"
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: '8px',
                   padding: '4px 10px',
-                  background: 'var(--surface-secondary)',
-                  borderRadius: '8px',
-                  border: '1px solid var(--border)',
+                  background: userDropdownOpen ? 'var(--surface)' : 'var(--surface-secondary)',
+                  borderRadius: '10px',
+                  border: userDropdownOpen ? '1px solid var(--primary)' : '1px solid var(--border)',
                   cursor: 'pointer',
-                  transition: 'background 0.2s ease'
+                  transition: 'all 0.2s ease',
+                  boxShadow: userDropdownOpen ? '0 0 0 2px rgba(2, 132, 199, 0.2)' : 'none'
                 }}
               >
                 {currentUser.avatar_url ? (
@@ -253,7 +276,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   </div>
                 )}
                 <div style={{ textAlign: 'left', lineHeight: 1.15 }}>
-                  <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                  <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-main)', maxWidth: '120px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {currentUser.full_name}
                   </div>
                   <div style={{ fontSize: '0.68rem', color: currentUser.role === 'admin' ? '#15803d' : '#64748b', fontWeight: currentUser.role === 'admin' ? 700 : 500, display: 'flex', alignItems: 'center', gap: '3px' }}>
@@ -263,42 +286,387 @@ export const Navbar: React.FC<NavbarProps> = ({
                         <span>Superadmin</span>
                       </>
                     ) : (
-                      currentUser.provider === 'facebook' 
-                        ? `Facebook (${currentUser.full_name})` 
-                        : (currentUser.provider === 'google'
-                            ? `Google (${currentUser.full_name})`
-                            : (currentUser.email || currentUser.phone || 'Conectado'))
+                      <span>Usuario</span>
                     )}
                   </div>
                 </div>
-              </div>
-
-              {currentUser.role !== 'admin' && (
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => setShowAccountModal(true)}
-                  title="Vincular permisos de Superadministrador"
+                <ChevronDown
+                  size={14}
                   style={{
-                    padding: '6px 8px',
-                    color: '#d97706',
-                    borderColor: '#fde68a',
-                    background: '#fffbeb'
+                    color: 'var(--text-muted)',
+                    transform: userDropdownOpen ? 'rotate(180deg)' : 'none',
+                    transition: 'transform 0.2s ease'
+                  }}
+                />
+              </button>
+
+              {/* Menú Desplegable con Funciones de Usuario */}
+              {userDropdownOpen && (
+                <div
+                  id="user-dropdown-menu"
+                  style={{
+                    position: 'absolute',
+                    top: 'calc(100% + 8px)',
+                    right: 0,
+                    width: '280px',
+                    background: 'var(--surface)',
+                    border: '1px solid var(--border)',
+                    borderRadius: '14px',
+                    boxShadow: '0 12px 30px rgba(0, 0, 0, 0.18)',
+                    padding: '8px',
+                    zIndex: 210,
+                    backdropFilter: 'blur(16px)',
+                    animation: 'fadeIn 0.15s ease-out'
                   }}
                 >
-                  <KeyRound size={13} />
-                </button>
-              )}
+                  {/* Tarjeta de perfil en la cabecera */}
+                  <div style={{
+                    padding: '10px',
+                    borderRadius: '10px',
+                    background: 'var(--surface-secondary)',
+                    marginBottom: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px'
+                  }}>
+                    {currentUser.avatar_url ? (
+                      <img
+                        src={currentUser.avatar_url}
+                        alt={currentUser.full_name}
+                        style={{
+                          width: '38px',
+                          height: '38px',
+                          borderRadius: '50%',
+                          objectFit: 'cover',
+                          border: '2px solid var(--primary)'
+                        }}
+                      />
+                    ) : (
+                      <div style={{
+                        width: '38px',
+                        height: '38px',
+                        borderRadius: '50%',
+                        background: currentUser.provider === 'facebook' ? '#1877F2' : (currentUser.provider === 'google' ? '#ea4335' : '#16a34a'),
+                        color: '#fff',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '1rem',
+                        fontWeight: 700
+                      }}>
+                        {currentUser.full_name.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
+                      <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {currentUser.full_name}
+                      </div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {currentUser.email || currentUser.phone || 'Cuenta activa'}
+                      </div>
+                      <div style={{ marginTop: '3px' }}>
+                        {currentUser.role === 'admin' ? (
+                          <span style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '3px',
+                            background: '#dcfce7',
+                            color: '#15803d',
+                            fontSize: '0.65rem',
+                            fontWeight: 700,
+                            padding: '1px 6px',
+                            borderRadius: '4px'
+                          }}>
+                            <Crown size={10} /> Superadmin
+                          </span>
+                        ) : (
+                          <span style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '3px',
+                            background: 'var(--surface)',
+                            color: 'var(--text-muted)',
+                            fontSize: '0.65rem',
+                            fontWeight: 600,
+                            padding: '1px 6px',
+                            borderRadius: '4px',
+                            border: '1px solid var(--border)'
+                          }}>
+                            Usuario
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
 
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={onSignOut}
-                title="Cerrar sesión"
-                style={{ padding: '6px 8px' }}
-              >
-                <LogOut size={13} />
-              </button>
+                  {/* Acciones principales del usuario */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                    {/* Mis Negocios */}
+                    {onOpenMyBusinesses && (
+                      <button
+                        id="user-menu-my-businesses"
+                        type="button"
+                        onClick={() => {
+                          setUserDropdownOpen(false);
+                          onOpenMyBusinesses();
+                        }}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          width: '100%',
+                          padding: '8px 10px',
+                          borderRadius: '8px',
+                          border: 'none',
+                          background: activeView === 'my-businesses' ? 'rgba(2, 132, 199, 0.12)' : 'transparent',
+                          color: activeView === 'my-businesses' ? 'var(--primary)' : 'var(--text-main)',
+                          fontSize: '0.83rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          transition: 'background 0.15s ease'
+                        }}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface-secondary)')}
+                        onMouseLeave={(e) => (e.currentTarget.style.background = activeView === 'my-businesses' ? 'rgba(2, 132, 199, 0.12)' : 'transparent')}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <Briefcase size={15} color="var(--primary)" />
+                          <span>Mis Negocios</span>
+                        </div>
+                        {myBusinessesCount > 0 && (
+                          <span style={{
+                            background: 'var(--primary)',
+                            color: '#ffffff',
+                            fontSize: '0.68rem',
+                            fontWeight: 800,
+                            padding: '1px 6px',
+                            borderRadius: '999px'
+                          }}>
+                            {myBusinessesCount}
+                          </span>
+                        )}
+                      </button>
+                    )}
+
+                    {/* Registrar Nuevo Negocio */}
+                    <button
+                      id="user-menu-register"
+                      type="button"
+                      onClick={() => {
+                        setUserDropdownOpen(false);
+                        onOpenRegister();
+                      }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        width: '100%',
+                        padding: '8px 10px',
+                        borderRadius: '8px',
+                        border: 'none',
+                        background: 'transparent',
+                        color: 'var(--text-main)',
+                        fontSize: '0.83rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        transition: 'background 0.15s ease'
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface-secondary)')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                    >
+                      <PlusCircle size={15} color="#059669" />
+                      <span>Registrar Nuevo Negocio</span>
+                    </button>
+
+                    {/* Buzón de Sugerencias */}
+                    <button
+                      id="user-menu-feedback"
+                      type="button"
+                      onClick={() => {
+                        setUserDropdownOpen(false);
+                        onOpenFeedback();
+                      }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        width: '100%',
+                        padding: '8px 10px',
+                        borderRadius: '8px',
+                        border: 'none',
+                        background: 'transparent',
+                        color: 'var(--text-main)',
+                        fontSize: '0.83rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        transition: 'background 0.15s ease'
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface-secondary)')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                    >
+                      <MessageSquareHeart size={15} color="#d97706" />
+                      <span>Buzón de Sugerencias</span>
+                    </button>
+
+                    {/* Funciones de Admin si aplica */}
+                    {currentUser.role === 'admin' && (
+                      <>
+                        <div style={{ height: '1px', background: 'var(--border)', margin: '4px 0' }} />
+                        <div style={{ fontSize: '0.68rem', fontWeight: 800, color: 'var(--text-muted)', padding: '2px 8px', letterSpacing: '0.04em' }}>
+                          ADMINISTRACIÓN
+                        </div>
+
+                        <button
+                          id="user-menu-admin-panel"
+                          type="button"
+                          onClick={() => {
+                            setUserDropdownOpen(false);
+                            onOpenAdmin();
+                          }}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            width: '100%',
+                            padding: '8px 10px',
+                            borderRadius: '8px',
+                            border: 'none',
+                            background: 'transparent',
+                            color: '#15803d',
+                            fontSize: '0.83rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            transition: 'background 0.15s ease'
+                          }}
+                          onMouseEnter={(e) => (e.currentTarget.style.background = '#f0fdf4')}
+                          onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <Crown size={15} color="#16a34a" />
+                            <span>Panel Administrador</span>
+                          </div>
+                          {pendingCount > 0 && (
+                            <span style={{
+                              background: '#ef4444',
+                              color: '#fff',
+                              fontSize: '0.68rem',
+                              fontWeight: 800,
+                              padding: '1px 6px',
+                              borderRadius: '999px'
+                            }}>
+                              {pendingCount}
+                            </span>
+                          )}
+                        </button>
+
+                        <button
+                          id="user-menu-notifications"
+                          type="button"
+                          onClick={() => {
+                            setUserDropdownOpen(false);
+                            onOpenNotifications && onOpenNotifications();
+                          }}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            width: '100%',
+                            padding: '8px 10px',
+                            borderRadius: '8px',
+                            border: 'none',
+                            background: 'transparent',
+                            color: '#b45309',
+                            fontSize: '0.83rem',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            transition: 'background 0.15s ease'
+                          }}
+                          onMouseEnter={(e) => (e.currentTarget.style.background = '#fffbeb')}
+                          onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <Bell size={15} color="#d97706" />
+                            <span>Notificaciones Buzón</span>
+                          </div>
+                          {unreadFeedbackCount > 0 && (
+                            <span style={{
+                              background: '#ef4444',
+                              color: '#fff',
+                              fontSize: '0.68rem',
+                              fontWeight: 800,
+                              padding: '1px 6px',
+                              borderRadius: '999px'
+                            }}>
+                              {unreadFeedbackCount}
+                            </span>
+                          )}
+                        </button>
+                      </>
+                    )}
+
+                    <div style={{ height: '1px', background: 'var(--border)', margin: '4px 0' }} />
+
+                    {/* Vincular superadmin / Opciones de cuenta */}
+                    <button
+                      id="user-menu-account"
+                      type="button"
+                      onClick={() => {
+                        setUserDropdownOpen(false);
+                        setShowAccountModal(true);
+                      }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        width: '100%',
+                        padding: '8px 10px',
+                        borderRadius: '8px',
+                        border: 'none',
+                        background: 'transparent',
+                        color: 'var(--text-main)',
+                        fontSize: '0.83rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        transition: 'background 0.15s ease'
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface-secondary)')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                    >
+                      <KeyRound size={15} color="#64748b" />
+                      <span>{currentUser.role === 'admin' ? 'Opciones de Cuenta' : 'Vincular Clave Maestra'}</span>
+                    </button>
+
+                    {/* Cerrar Sesión */}
+                    <button
+                      id="user-menu-logout"
+                      type="button"
+                      onClick={() => {
+                        setUserDropdownOpen(false);
+                        onSignOut();
+                      }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        width: '100%',
+                        padding: '8px 10px',
+                        borderRadius: '8px',
+                        border: 'none',
+                        background: 'transparent',
+                        color: '#ef4444',
+                        fontSize: '0.83rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        transition: 'background 0.15s ease'
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = '#fef2f2')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                    >
+                      <LogOut size={15} color="#ef4444" />
+                      <span>Cerrar Sesión</span>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <button
@@ -400,8 +768,8 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           )}
 
-          {/* Botón Mis Negocios */}
-          {onOpenMyBusinesses && (
+          {/* Botón Mis Negocios (Solo visible si hay sesión iniciada) */}
+          {currentUser && onOpenMyBusinesses && (
             <button
               id="btn-my-businesses"
               type="button"
@@ -644,8 +1012,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                   </button>
                 )}
 
-                {/* Botón Mis Negocios en Menú Móvil */}
-                {onOpenMyBusinesses && (
+                {/* Botón Mis Negocios en Menú Móvil (Solo si hay sesión iniciada) */}
+                {currentUser && onOpenMyBusinesses && (
                   <button
                     type="button"
                     onClick={() => { closeMenu(); onOpenMyBusinesses(); }}

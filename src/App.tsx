@@ -158,6 +158,13 @@ export function App() {
 
   }, []);
 
+  // Si el usuario no tiene sesión activa o cierra sesión, forzar la pestaña al directorio público
+  useEffect(() => {
+    if (!currentUser && activeMainTab === 'my-businesses') {
+      setActiveMainTab('directory');
+    }
+  }, [currentUser, activeMainTab]);
+
   // Función para restablecer filtros e ir al inicio
   const handleGoHome = () => {
     setActiveMainTab('directory');
@@ -303,6 +310,10 @@ export function App() {
         onOpenContact={() => setShowContactModal(true)}
         onGoHome={handleGoHome}
         onOpenMyBusinesses={() => {
+          if (!currentUser) {
+            setShowAuthModal(true);
+            return;
+          }
           setActiveMainTab(prev => prev === 'my-businesses' ? 'directory' : 'my-businesses');
         }}
         myBusinessesCount={myBusinesses.length}
@@ -370,64 +381,66 @@ export function App() {
           </div>
         </section>
 
-        {/* Pestañas Principales: Explorar Directorio vs Mis Negocios */}
-        <div style={{
-          display: 'flex',
-          gap: '10px',
-          margin: '20px 0 16px 0',
-          borderBottom: '1px solid var(--border)',
-          paddingBottom: '12px'
-        }}>
-          <button
-            id="tab-explore-directory"
-            type="button"
-            className={`btn ${activeMainTab === 'directory' ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => setActiveMainTab('directory')}
-            style={{
-              padding: '9px 18px',
-              fontSize: '0.9rem',
-              fontWeight: 700,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}
-          >
-            <Building2 size={16} />
-            <span>Explorar Directorio</span>
-          </button>
+        {/* Pestañas Principales: Solo visible si el usuario tiene sesión iniciada */}
+        {currentUser && (
+          <div style={{
+            display: 'flex',
+            gap: '10px',
+            margin: '20px 0 16px 0',
+            borderBottom: '1px solid var(--border)',
+            paddingBottom: '12px'
+          }}>
+            <button
+              id="tab-explore-directory"
+              type="button"
+              className={`btn ${activeMainTab === 'directory' ? 'btn-primary' : 'btn-secondary'}`}
+              onClick={() => setActiveMainTab('directory')}
+              style={{
+                padding: '9px 18px',
+                fontSize: '0.9rem',
+                fontWeight: 700,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+            >
+              <Building2 size={16} />
+              <span>Explorar Directorio</span>
+            </button>
 
-          <button
-            id="tab-my-businesses"
-            type="button"
-            className={`btn ${activeMainTab === 'my-businesses' ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => setActiveMainTab('my-businesses')}
-            style={{
-              padding: '9px 18px',
-              fontSize: '0.9rem',
-              fontWeight: 700,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}
-          >
-            <Briefcase size={16} />
-            <span>Mis Negocios</span>
-            {myBusinesses.length > 0 && (
-              <span style={{
-                background: activeMainTab === 'my-businesses' ? '#ffffff' : 'var(--primary)',
-                color: activeMainTab === 'my-businesses' ? 'var(--primary)' : '#ffffff',
-                fontSize: '0.72rem',
-                fontWeight: 800,
-                padding: '2px 8px',
-                borderRadius: '999px'
-              }}>
-                {myBusinesses.length}
-              </span>
-            )}
-          </button>
-        </div>
+            <button
+              id="tab-my-businesses"
+              type="button"
+              className={`btn ${activeMainTab === 'my-businesses' ? 'btn-primary' : 'btn-secondary'}`}
+              onClick={() => setActiveMainTab('my-businesses')}
+              style={{
+                padding: '9px 18px',
+                fontSize: '0.9rem',
+                fontWeight: 700,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+            >
+              <Briefcase size={16} />
+              <span>Mis Negocios</span>
+              {myBusinesses.length > 0 && (
+                <span style={{
+                  background: activeMainTab === 'my-businesses' ? '#ffffff' : 'var(--primary)',
+                  color: activeMainTab === 'my-businesses' ? 'var(--primary)' : '#ffffff',
+                  fontSize: '0.72rem',
+                  fontWeight: 800,
+                  padding: '2px 8px',
+                  borderRadius: '999px'
+                }}>
+                  {myBusinesses.length}
+                </span>
+              )}
+            </button>
+          </div>
+        )}
 
-        {activeMainTab === 'my-businesses' ? (
+        {currentUser && activeMainTab === 'my-businesses' ? (
           <MyBusinessesView
             businesses={myBusinesses}
             currentUser={currentUser}
