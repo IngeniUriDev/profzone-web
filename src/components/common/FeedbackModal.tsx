@@ -175,13 +175,13 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
               <span style={{
                 fontSize: '0.72rem',
                 fontWeight: 700,
-                color: currentUser.provider === 'facebook' ? '#1877F2' : '#16a34a',
+                color: currentUser.provider === 'google' ? '#ea4335' : '#0284c7',
                 background: '#fff',
                 padding: '2px 8px',
                 borderRadius: '4px',
                 border: '1px solid #cbd5e1'
               }}>
-                {currentUser.provider === 'facebook' ? 'Facebook' : 'Teléfono SMS'}
+                {currentUser.provider === 'google' ? 'Google' : 'Cuenta Verificada'}
               </span>
             </div>
 

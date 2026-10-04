@@ -825,7 +825,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   width: '24px',
                   height: '24px',
                   borderRadius: '50%',
-                  background: currentUser.provider === 'facebook' ? '#1877F2' : '#16a34a',
+                  background: currentUser.provider === 'google' ? '#ea4335' : (currentUser.provider === 'facebook' ? '#1877F2' : '#0284c7'),
                   color: '#fff',
                   display: 'flex',
                   alignItems: 'center',
