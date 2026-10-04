@@ -119,6 +119,15 @@ export const businessService = {
     const cleanMuni = (business.municipality || 'Santiago Tianguistenco').trim();
     const cleanAddress = (business.address || '').trim();
 
+    // Verificación de límite de 3 negocios al día por usuario
+    const ownerId = business.user_id || business.submitted_by;
+    if (ownerId) {
+      const dailyCount = await this.getUserDailyBusinessCount(ownerId);
+      if (dailyCount >= 3) {
+        throw new Error('Has alcanzado el límite diario permitido de 3 negocios registrados por día. Por seguridad y calidad comunitaria, podrás registrar más negocios en 24 horas.');
+      }
+    }
+
     const newRecord: Business = {
       ...business,
       name: trimmedName,
@@ -433,6 +442,28 @@ export const businessService = {
     const current = getLocalBusinesses();
     const updated = current.filter(b => b.id !== id);
     saveLocalBusinesses(updated);
+  },
+
+  async getUserDailyBusinessCount(userId: string): Promise<number> {
+    if (!userId) return 0;
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+        const { count, error } = await supabase
+          .from('pz_businesses')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', userId)
+          .gte('created_at', since24h);
+        if (!error && typeof count === 'number') {
+          return count;
+        }
+      } catch (err) {
+        console.warn('Error checking daily count in Supabase:', err);
+      }
+    }
+    const sinceTime = Date.now() - 24 * 60 * 60 * 1000;
+    const current = getLocalBusinesses();
+    return current.filter(b => (b.user_id === userId || b.submitted_by === userId) && b.created_at && new Date(b.created_at).getTime() >= sinceTime).length;
   },
 
   async clearAllBusinesses(): Promise<void> {

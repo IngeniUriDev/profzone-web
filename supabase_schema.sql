@@ -250,3 +250,33 @@ CREATE POLICY "Allow Uploads Business Images"
 ON storage.objects FOR INSERT 
 WITH CHECK (bucket_id = 'pz-business-images');
 
+-- 11. Restricción Anti-Spam: Máximo 3 negocios registrados por usuario al día (24h)
+CREATE OR REPLACE FUNCTION public.pz_check_daily_business_limit()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  daily_count INTEGER;
+BEGIN
+  IF NEW.user_id IS NOT NULL THEN
+    SELECT COUNT(*) INTO daily_count
+    FROM public.pz_businesses
+    WHERE user_id = NEW.user_id
+      AND created_at >= NOW() - INTERVAL '24 hours';
+
+    IF daily_count >= 3 THEN
+      RAISE EXCEPTION 'Has alcanzado el límite diario permitido de 3 negocios registrados por día. Podrás registrar más en 24 horas.';
+    END IF;
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_check_daily_business_limit ON public.pz_businesses;
+CREATE TRIGGER trg_check_daily_business_limit
+BEFORE INSERT ON public.pz_businesses
+FOR EACH ROW
+EXECUTE FUNCTION public.pz_check_daily_business_limit();
+

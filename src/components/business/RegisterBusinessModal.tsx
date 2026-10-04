@@ -87,6 +87,15 @@ export const RegisterBusinessModal: React.FC<RegisterBusinessModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [isCaptchaValid, setIsCaptchaValid] = useState(false);
+  const [dailyCount, setDailyCount] = useState<number>(0);
+
+  React.useEffect(() => {
+    if (currentUser && !isEditing) {
+      businessService.getUserDailyBusinessCount(currentUser.id)
+        .then(count => setDailyCount(count))
+        .catch(() => {});
+    }
+  }, [currentUser, isEditing]);
 
   const finalMunicipality = selectedMunicipality === 'OTRO' 
     ? (customMunicipality.trim() || 'Santiago Tianguistenco')
@@ -110,6 +119,10 @@ export const RegisterBusinessModal: React.FC<RegisterBusinessModalProps> = ({
     if (loading) return;
     if (!currentUser) {
       onRequireAuth();
+      return;
+    }
+    if (!isEditing && dailyCount >= 3) {
+      alert('Has alcanzado el límite diario permitido de 3 comercios por día. Podrás registrar más después de 24 horas.');
       return;
     }
     if (!isEditing && !isCaptchaValid) {
@@ -385,6 +398,49 @@ export const RegisterBusinessModal: React.FC<RegisterBusinessModalProps> = ({
                 {currentUser.role === 'admin' ? 'Superadmin' : 'Usuario Verificado'}
               </span>
             </div>
+
+            {/* Aviso de Límite Diario de 3 Comercios por Usuario */}
+            {!isEditing && (
+              dailyCount >= 3 ? (
+                <div style={{
+                  background: '#fef2f2',
+                  border: '1px solid #fecaca',
+                  borderRadius: '10px',
+                  padding: '12px 14px',
+                  marginBottom: '14px',
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '10px',
+                  color: '#991b1b',
+                  fontSize: '0.85rem',
+                  lineHeight: 1.45
+                }}>
+                  <AlertCircle size={20} color="#dc2626" style={{ flexShrink: 0, marginTop: '2px' }} />
+                  <div>
+                    <strong>Límite diario alcanzado (3 de 3 comercios):</strong>
+                    <div style={{ marginTop: '2px', color: '#b91c1c' }}>
+                      Has alcanzado el límite máximo permitido de 3 publicaciones por día. Podrás registrar nuevos comercios después de 24 horas.
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div style={{
+                  background: 'rgba(2, 132, 199, 0.06)',
+                  border: '1px solid rgba(2, 132, 199, 0.2)',
+                  borderRadius: '8px',
+                  padding: '6px 12px',
+                  marginBottom: '12px',
+                  fontSize: '0.78rem',
+                  color: 'var(--primary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between'
+                }}>
+                  <span>Cuota diaria anti-spam:</span>
+                  <strong>{dailyCount} de 3 registros utilizados hoy</strong>
+                </div>
+              )
+            )}
 
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div>
@@ -1068,9 +1124,23 @@ export const RegisterBusinessModal: React.FC<RegisterBusinessModalProps> = ({
                 <button type="button" className="btn btn-secondary" onClick={onClose}>
                   Cancelar
                 </button>
-                <button type="submit" disabled={loading} className="btn btn-primary">
+                <button 
+                  type="submit" 
+                  disabled={loading || (!isEditing && dailyCount >= 3)} 
+                  className="btn btn-primary"
+                  style={{
+                    opacity: (!isEditing && dailyCount >= 3) ? 0.5 : 1,
+                    cursor: (!isEditing && dailyCount >= 3) ? 'not-allowed' : 'pointer'
+                  }}
+                >
                   <Send size={15} />
-                  <span>{loading ? 'Guardando...' : (isEditing ? 'Guardar Cambios' : 'Enviar Solicitud')}</span>
+                  <span>
+                    {loading ? 'Guardando...' : (
+                      isEditing ? 'Guardar Cambios' : (
+                        dailyCount >= 3 ? 'Límite Diario Alcanzado (3/3)' : 'Enviar Solicitud'
+                      )
+                    )}
+                  </span>
                 </button>
               </div>
             </form>

@@ -49,6 +49,7 @@ export interface Business {
   rating_count: number;
   status: BusinessStatus;
   submitted_by?: string;
+  user_id?: string;
   latitude?: number;
   longitude?: number;
   distanceKm?: number;

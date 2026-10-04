@@ -114,4 +114,49 @@ describe('Business Service Tests', () => {
     expect(list.some(b => b.name === 'Consultorio Dental Sonrisas')).toBe(true);
     expect(list.some(b => b.name === 'Despacho Contable López')).toBe(true);
   });
+
+  it('should enforce maximum 3 businesses per user per day', async () => {
+    const userId = 'user-limit-test-123';
+
+    // 1er negocio
+    await businessService.createBusiness({
+      name: 'Negocio Uno',
+      municipality: 'Almoloya del Río',
+      address: 'Calle 1',
+      user_id: userId,
+      submitted_by: userId
+    });
+
+    // 2do negocio
+    await businessService.createBusiness({
+      name: 'Negocio Dos',
+      municipality: 'Almoloya del Río',
+      address: 'Calle 2',
+      user_id: userId,
+      submitted_by: userId
+    });
+
+    // 3er negocio
+    await businessService.createBusiness({
+      name: 'Negocio Tres',
+      municipality: 'Almoloya del Río',
+      address: 'Calle 3',
+      user_id: userId,
+      submitted_by: userId
+    });
+
+    const count = await businessService.getUserDailyBusinessCount(userId);
+    expect(count).toBe(3);
+
+    // 4to negocio -> Debe rechazar con error de límite diario
+    await expect(
+      businessService.createBusiness({
+        name: 'Negocio Cuatro Excedido',
+        municipality: 'Almoloya del Río',
+        address: 'Calle 4',
+        user_id: userId,
+        submitted_by: userId
+      })
+    ).rejects.toThrow(/límite diario permitido de 3 negocios/i);
+  });
 });
