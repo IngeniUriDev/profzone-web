@@ -20,15 +20,27 @@ function getLocalBusinesses(): Business[] {
   }
 }
 
+function normalizeText(str?: string | null): string {
+  if (!str) return '';
+  return str
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ');
+}
+
 function deduplicateBusinesses(list: Business[]): Business[] {
   const map = new Map<string, Business>();
 
   for (const b of list) {
     if (!b) continue;
 
-    const normName = (b.name || '').trim().toLowerCase();
-    const normMuni = (b.municipality || '').trim().toLowerCase();
-    const key = (normName && normMuni) ? `${normName}||${normMuni}` : (b.id || Math.random().toString());
+    const normName = normalizeText(b.name);
+    const normAddress = normalizeText(b.address);
+    const normMuni = normalizeText(b.municipality);
+    // Un negocio se considera duplicado exacto solo si coinciden nombre, dirección y municipio
+    const key = (normName && normMuni) ? `${normName}||${normAddress}||${normMuni}` : (b.id || Math.random().toString());
 
     const existing = map.get(key);
     if (!existing) {
@@ -104,12 +116,14 @@ export const businessService = {
   async createBusiness(business: Omit<Business, 'id' | 'status' | 'rating_avg' | 'rating_count' | 'created_at'>): Promise<Business> {
     const trimmedName = business.name.trim();
     const cleanMuni = (business.municipality || 'Santiago Tianguistenco').trim();
+    const cleanAddress = (business.address || '').trim();
 
     const newRecord: Business = {
       ...business,
       name: trimmedName,
       municipality: cleanMuni,
-      id: isSupabaseConfigured ? undefined as unknown as string : `biz-${Date.now()}`,
+      address: cleanAddress,
+      id: isSupabaseConfigured ? undefined as unknown as string : `biz-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       status: 'pending',
       rating_avg: 5.0,
       rating_count: 0,
@@ -117,16 +131,31 @@ export const businessService = {
     };
 
     if (isSupabaseConfigured && supabase) {
-      // 1. Verificación defensiva contra duplicados antes de insertar en Supabase
-      const { data: existingMatches } = await supabase
+      // 1. Verificación contra duplicados: Solo se rechaza si coinciden NOMBRE y DIRECCIÓN en el mismo municipio.
+      // Si tienen el mismo nombre pero diferente dirección, o la misma dirección pero diferente nombre, sí se permite el registro.
+      let query = supabase
         .from('pz_businesses')
-        .select('id, name, municipality')
+        .select('id, name, address, municipality')
         .ilike('name', trimmedName)
-        .ilike('municipality', cleanMuni)
-        .limit(1);
+        .ilike('municipality', cleanMuni);
+
+      if (cleanAddress) {
+        query = query.ilike('address', cleanAddress);
+      }
+
+      const { data: existingMatches } = await query;
 
       if (existingMatches && existingMatches.length > 0) {
-        throw new Error(`El servicio "${trimmedName}" ya se encuentra registrado en ${cleanMuni}. No es necesario volver a darlo de alta.`);
+        const hasExactDuplicate = existingMatches.some(found => {
+          const sameName = normalizeText(found.name) === normalizeText(trimmedName);
+          const sameMuni = normalizeText(found.municipality) === normalizeText(cleanMuni);
+          const sameAddress = normalizeText(found.address) === normalizeText(cleanAddress);
+          return sameName && sameMuni && sameAddress;
+        });
+
+        if (hasExactDuplicate) {
+          throw new Error(`El negocio "${trimmedName}" ya se encuentra registrado con la dirección "${cleanAddress || 'esta ubicación'}" en ${cleanMuni}. No es necesario volver a darlo de alta.`);
+        }
       }
 
       const payload: any = {
@@ -134,7 +163,7 @@ export const businessService = {
         category_id: business.category_id,
         municipality: cleanMuni,
         locality: business.locality,
-        address: business.address,
+        address: cleanAddress,
         google_maps_url: business.google_maps_url,
         phone: business.phone,
         whatsapp: business.whatsapp,
@@ -179,13 +208,18 @@ export const businessService = {
       return data;
     }
 
+    // Modo local / Fallback
     const current = getLocalBusinesses();
-    const isDuplicate = current.some(
-      b => b.name.trim().toLowerCase() === trimmedName.toLowerCase() &&
-           b.municipality.trim().toLowerCase() === cleanMuni.toLowerCase()
-    );
+    const isDuplicate = current.some(b => {
+      const sameName = normalizeText(b.name) === normalizeText(trimmedName);
+      const sameMuni = normalizeText(b.municipality) === normalizeText(cleanMuni);
+      const sameAddress = normalizeText(b.address) === normalizeText(cleanAddress);
+      // Solo es duplicado si coinciden nombre Y dirección en el mismo municipio
+      return sameName && sameMuni && sameAddress;
+    });
+
     if (isDuplicate) {
-      throw new Error(`El servicio "${trimmedName}" ya se encuentra registrado en ${cleanMuni}.`);
+      throw new Error(`El negocio "${trimmedName}" ya se encuentra registrado con la dirección "${cleanAddress || 'esta ubicación'}" en ${cleanMuni}.`);
     }
 
     const updated = [newRecord, ...current];
@@ -195,10 +229,9 @@ export const businessService = {
 
   async updateBusinessStatus(id: string, status: BusinessStatus): Promise<void> {
     if (isSupabaseConfigured && supabase) {
-      // Obtener datos del negocio para detectar duplicados por nombre y municipio
       const { data: targetBiz } = await supabase
         .from('pz_businesses')
-        .select('name, municipality')
+        .select('name, municipality, address')
         .eq('id', id)
         .maybeSingle();
 
@@ -212,13 +245,19 @@ export const businessService = {
         throw error;
       }
 
-      // Si existen filas duplicadas con el mismo nombre y municipio, sincronizarlas
+      // Si existen filas duplicadas exactas con el mismo nombre, dirección y municipio, sincronizarlas
       if (targetBiz?.name) {
-        await supabase
+        let updateQuery = supabase
           .from('pz_businesses')
           .update({ status })
           .ilike('name', targetBiz.name.trim())
           .ilike('municipality', (targetBiz.municipality || '').trim());
+
+        if (targetBiz.address?.trim()) {
+          updateQuery = updateQuery.ilike('address', targetBiz.address.trim());
+        }
+
+        await updateQuery;
       }
 
       return;
@@ -313,7 +352,7 @@ export const businessService = {
     if (isSupabaseConfigured && supabase) {
       const { data: targetBiz } = await supabase
         .from('pz_businesses')
-        .select('name, municipality')
+        .select('name, municipality, address')
         .eq('id', id)
         .maybeSingle();
 
@@ -329,13 +368,19 @@ export const businessService = {
         .delete()
         .eq('id', id);
 
-      // Limpiar también duplicados por nombre y municipio si existieran
+      // Limpiar también duplicados idénticos por nombre, dirección y municipio si existieran
       if (targetBiz?.name) {
-        await supabase
+        let delQuery = supabase
           .from('pz_businesses')
           .delete()
           .ilike('name', targetBiz.name.trim())
           .ilike('municipality', (targetBiz.municipality || '').trim());
+
+        if (targetBiz.address?.trim()) {
+          delQuery = delQuery.ilike('address', targetBiz.address.trim());
+        }
+
+        await delQuery;
       }
 
       if (error) {

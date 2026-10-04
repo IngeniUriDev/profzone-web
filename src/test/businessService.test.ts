@@ -54,4 +54,64 @@ describe('Business Service Tests', () => {
       await businessService.deleteBusiness(created.id);
     }
   });
+
+  it('should prevent duplicate registration if BOTH name and address match in same municipality', async () => {
+    await businessService.createBusiness({
+      name: 'Farmacia La Paz',
+      municipality: 'Santiago Tianguistenco',
+      address: 'Av. Hidalgo 10'
+    });
+
+    // Mismo nombre y misma dirección -> Debe arrojar error
+    await expect(
+      businessService.createBusiness({
+        name: 'Farmacia La Paz',
+        municipality: 'Santiago Tianguistenco',
+        address: 'Av. Hidalgo 10'
+      })
+    ).rejects.toThrow(/ya se encuentra registrado con la dirección/);
+  });
+
+  it('should ALLOW registration if name is same but address is DIFFERENT (sucursales)', async () => {
+    const sucursal1 = await businessService.createBusiness({
+      name: 'OXXO Tianguistenco',
+      municipality: 'Santiago Tianguistenco',
+      address: 'Calle Morelos #100'
+    });
+
+    const sucursal2 = await businessService.createBusiness({
+      name: 'OXXO Tianguistenco',
+      municipality: 'Santiago Tianguistenco',
+      address: 'Av. Juárez #450'
+    });
+
+    expect(sucursal1.id).toBeDefined();
+    expect(sucursal2.id).toBeDefined();
+    expect(sucursal1.id).not.toBe(sucursal2.id);
+
+    const list = await businessService.getBusinesses({ municipality: 'Santiago Tianguistenco', status: 'pending' });
+    const oxxos = list.filter(b => b.name === 'OXXO Tianguistenco');
+    expect(oxxos.length).toBe(2);
+  });
+
+  it('should ALLOW registration if address is same but name is DIFFERENT (plazas/edificios)', async () => {
+    const negocioA = await businessService.createBusiness({
+      name: 'Consultorio Dental Sonrisas',
+      municipality: 'Capulhuac',
+      address: 'Plaza Central Local 4'
+    });
+
+    const negocioB = await businessService.createBusiness({
+      name: 'Despacho Contable López',
+      municipality: 'Capulhuac',
+      address: 'Plaza Central Local 4'
+    });
+
+    expect(negocioA.id).toBeDefined();
+    expect(negocioB.id).toBeDefined();
+
+    const list = await businessService.getBusinesses({ municipality: 'Capulhuac', status: 'pending' });
+    expect(list.some(b => b.name === 'Consultorio Dental Sonrisas')).toBe(true);
+    expect(list.some(b => b.name === 'Despacho Contable López')).toBe(true);
+  });
 });
