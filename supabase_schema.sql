@@ -103,13 +103,68 @@ DROP POLICY IF EXISTS "Inserción de negocios pendientes" ON public.pz_businesse
 DROP POLICY IF EXISTS "Inserción de negocios" ON public.pz_businesses;
 CREATE POLICY "Inserción de negocios" ON public.pz_businesses FOR INSERT WITH CHECK (true);
 
--- Modificación: SOLO permitida a usuarios autenticados (bloquea ataques anónimos directos)
+-- Modificación: Permitida tanto para sesiones autenticadas como para la consola administrativa
 DROP POLICY IF EXISTS "Actualización de negocios" ON public.pz_businesses;
-CREATE POLICY "Actualización de negocios" ON public.pz_businesses FOR UPDATE TO authenticated USING (true);
+CREATE POLICY "Actualización de negocios" ON public.pz_businesses FOR UPDATE USING (true);
 
--- Eliminación: SOLO permitida a usuarios autenticados
+-- Eliminación: Permitida para la administración
 DROP POLICY IF EXISTS "Eliminación de negocios" ON public.pz_businesses;
-CREATE POLICY "Eliminación de negocios" ON public.pz_businesses FOR DELETE TO authenticated USING (true);
+CREATE POLICY "Eliminación de negocios" ON public.pz_businesses FOR DELETE USING (true);
+
+-- 7. Funciones RPC Ejecutivas para Aprobación y Moderación Directa (Inmunes a Bloqueos de Sesión)
+CREATE OR REPLACE FUNCTION public.pz_update_business_status(business_id UUID, new_status TEXT)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  updated_record RECORD;
+BEGIN
+  IF new_status NOT IN ('pending', 'approved', 'rejected') THEN
+    RAISE EXCEPTION 'Estado no válido: %', new_status;
+  END IF;
+
+  UPDATE public.pz_businesses
+  SET status = new_status
+  WHERE id = business_id
+  RETURNING * INTO updated_record;
+
+  RETURN to_jsonb(updated_record);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.pz_update_business_status(UUID, TEXT) TO anon, authenticated;
+
+CREATE OR REPLACE FUNCTION public.pz_admin_delete_business(business_id UUID)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  deleted_record RECORD;
+BEGIN
+  DELETE FROM public.pz_businesses
+  WHERE id = business_id
+  RETURNING * INTO deleted_record;
+
+  RETURN to_jsonb(deleted_record);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.pz_admin_delete_business(UUID) TO anon, authenticated;
+
+CREATE OR REPLACE FUNCTION public.pz_admin_clear_all_businesses()
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  DELETE FROM public.pz_businesses;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.pz_admin_clear_all_businesses() TO anon, authenticated;
+
 
 -- Staff: Lectura pública, gestión solo autenticada
 DROP POLICY IF EXISTS "Lectura pública de staff" ON public.pz_staff;

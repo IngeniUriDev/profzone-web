@@ -88,9 +88,14 @@ export const AdminModal: React.FC<AdminModalProps> = ({ currentUser, initialTab 
       await businessService.updateBusinessStatus(id, status);
       await loadAll();
       onUpdate();
-    } catch (err) {
+      if (status === 'approved') {
+        alert('¡Servicio aprobado con éxito! Ya es visible públicamente en el directorio.');
+      } else {
+        alert('El servicio ha sido pausado.');
+      }
+    } catch (err: any) {
       console.error(err);
-      alert('Error al actualizar el estado del servicio.');
+      alert(err?.message || 'Error al actualizar el estado del servicio.');
     } finally {
       setProcessingId(null);
     }

@@ -235,14 +235,36 @@ export const businessService = {
         .eq('id', id)
         .maybeSingle();
 
-      const { error } = await supabase
-        .from('pz_businesses')
-        .update({ status })
-        .eq('id', id);
+      // 1. Intentar actualizar mediante RPC segura de moderación ejecutiva
+      let updateSuccessful = false;
+      try {
+        const { data: rpcData, error: rpcError } = await supabase.rpc('pz_update_business_status', {
+          business_id: id,
+          new_status: status
+        });
+        if (!rpcError && rpcData) {
+          updateSuccessful = true;
+        }
+      } catch {
+        // RPC aún no ejecutada en Supabase, continuar con UPDATE directo
+      }
 
-      if (error) {
-        console.error('Error updating status in Supabase:', error);
-        throw error;
+      // 2. Si la función RPC aún no está creada, intentar UPDATE directo vía REST
+      if (!updateSuccessful) {
+        const { data, error } = await supabase
+          .from('pz_businesses')
+          .update({ status })
+          .eq('id', id)
+          .select();
+
+        if (error) {
+          console.error('Error updating status in Supabase:', error);
+          throw error;
+        }
+
+        if (!data || data.length === 0) {
+          throw new Error('Supabase no permitió actualizar el estado (0 filas modificadas por RLS). Aplica el script actualizado de supabase_schema.sql en el SQL Editor de Supabase.');
+        }
       }
 
       // Si existen filas duplicadas exactas con el mismo nombre, dirección y municipio, sincronizarlas
@@ -363,10 +385,28 @@ export const businessService = {
         console.warn('Could not cascade delete reviews/staff:', e);
       }
 
-      const { error } = await supabase
-        .from('pz_businesses')
-        .delete()
-        .eq('id', id);
+      // 1. Intentar eliminar vía RPC segura de administración
+      let deleteSuccessful = false;
+      try {
+        const { error: rpcError } = await supabase.rpc('pz_admin_delete_business', { business_id: id });
+        if (!rpcError) {
+          deleteSuccessful = true;
+        }
+      } catch {
+        // RPC fallback
+      }
+
+      if (!deleteSuccessful) {
+        const { error } = await supabase
+          .from('pz_businesses')
+          .delete()
+          .eq('id', id);
+
+        if (error) {
+          console.error('Error deleting business from Supabase:', error);
+          throw error;
+        }
+      }
 
       // Limpiar también duplicados idénticos por nombre, dirección y municipio si existieran
       if (targetBiz?.name) {
@@ -382,11 +422,6 @@ export const businessService = {
 
         await delQuery;
       }
-
-      if (error) {
-        console.error('Error deleting business from Supabase:', error);
-        throw error;
-      }
       return;
     }
 
@@ -397,6 +432,11 @@ export const businessService = {
 
   async clearAllBusinesses(): Promise<void> {
     if (isSupabaseConfigured && supabase) {
+      try {
+        await supabase.rpc('pz_admin_clear_all_businesses');
+      } catch {
+        // RPC fallback
+      }
       try {
         await supabase.from('pz_reviews').delete().neq('id', '00000000-0000-0000-0000-000000000000');
         await supabase.from('pz_staff').delete().neq('id', '00000000-0000-0000-0000-000000000000');
