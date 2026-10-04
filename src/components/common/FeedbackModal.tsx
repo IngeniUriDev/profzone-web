@@ -24,7 +24,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentUser) {
-      alert('Debes iniciar sesión con Facebook o Teléfono para enviar una sugerencia.');
+      alert('Debes iniciar sesión con tu cuenta de Google para enviar una sugerencia.');
       onClose();
       onOpenAuth?.();
       return;
@@ -36,7 +36,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
       await feedbackService.submitFeedback({
         type,
         author_name: currentUser.full_name || 'Usuario Verificado',
-        contact: currentUser.phone || (currentUser.provider === 'facebook' ? 'Cuenta Facebook Verificada' : undefined),
+        contact: currentUser.email || currentUser.phone || 'Cuenta Google Verificada',
         message: message.trim()
       });
       setSubmitted(true);
@@ -117,7 +117,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
               Inicio de Sesión Requerido
             </h3>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '20px', lineHeight: 1.6 }}>
-              Para garantizar la calidad de las sugerencias y evitar spam, <strong>sólo las personas que hayan iniciado sesión</strong> con su cuenta de Facebook o número telefónico pueden enviar propuestas a la plataforma.
+              Para garantizar la calidad de las sugerencias y evitar spam, <strong>sólo las personas que hayan iniciado sesión</strong> con su cuenta de Google pueden enviar propuestas a la plataforma.
             </p>
             <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
               <button type="button" className="btn btn-secondary" onClick={onClose}>
@@ -132,7 +132,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
                 }}
               >
                 <User size={15} />
-                <span>Iniciar Sesión Ahora</span>
+                <span>Iniciar Sesión con Google</span>
               </button>
             </div>
           </div>
