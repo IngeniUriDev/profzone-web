@@ -143,29 +143,9 @@ export const MunicipalityFilter: React.FC<MunicipalityFilterProps> = ({
     : 'Todas las Especialidades (Buscar...)';
 
   return (
-    <div style={{
-      background: 'var(--surface)',
-      border: '1px solid var(--border)',
-      borderRadius: 'var(--radius-md)',
-      padding: '12px 18px',
-      marginBottom: '20px',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      flexWrap: 'wrap',
-      gap: '12px',
-      boxShadow: 'var(--shadow-sm)',
-      position: 'relative',
-      zIndex: 20
-    }}>
+    <div className="filter-bar-container">
       {/* 1. SECCIÓN MUNICIPIO + GPS A SU DERECHA */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px',
-        flex: '1 1 340px',
-        minWidth: '270px'
-      }}>
+      <div className="filter-muni-section">
         {/* Combobox de Municipio */}
         <div
           ref={muniComboboxRef}
@@ -413,12 +393,19 @@ export const MunicipalityFilter: React.FC<MunicipalityFilterProps> = ({
           ) : (
             <Navigation size={14} color="var(--primary)" />
           )}
-          <span>
+          <span className="gps-btn-label-desktop">
             {detectingLocation
               ? 'Localizando...'
               : userCoords
                 ? 'GPS Activo'
                 : 'Cerca de mí (GPS)'}
+          </span>
+          <span className="gps-btn-label-mobile">
+            {detectingLocation
+              ? '...'
+              : userCoords
+                ? 'GPS'
+                : 'Cerca'}
           </span>
         </button>
       </div>
@@ -426,14 +413,7 @@ export const MunicipalityFilter: React.FC<MunicipalityFilterProps> = ({
       {/* 2. SELECTOR DE ESPECIALIDAD CON BÚSQUEDA ESCRIBIBLE (COMBOBOX) */}
       <div
         ref={catComboboxRef}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          flex: '1 1 240px',
-          minWidth: '220px',
-          position: 'relative'
-        }}
+        className="filter-cat-section"
       >
         <div style={{
           display: 'flex',
@@ -640,11 +620,7 @@ export const MunicipalityFilter: React.FC<MunicipalityFilterProps> = ({
       </div>
 
       {/* 3. ORDENAMIENTO */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px'
-      }}>
+      <div className="filter-sort-section">
         <div style={{
           display: 'flex',
           alignItems: 'center',

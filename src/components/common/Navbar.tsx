@@ -888,6 +888,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                   top: 'calc(100% + 8px)',
                   right: 0,
                   width: '260px',
+                  maxWidth: 'calc(100vw - 28px)',
+                  boxSizing: 'border-box',
                   background: 'var(--surface)',
                   border: '1px solid var(--border)',
                   borderRadius: '12px',

@@ -159,6 +159,129 @@
   gap: 22px;
 }
 
+/* Card Action Buttons Grid */
+.card-actions-grid {
+  display: grid;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.card-actions-grid.has-4 {
+  grid-template-columns: 1fr 1fr;
+}
+
+.card-actions-grid.has-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.card-actions-grid.has-2 {
+  grid-template-columns: 1fr 1fr;
+}
+
+.card-actions-grid.has-1 {
+  grid-template-columns: 1fr;
+}
+
+.card-actions-grid .btn {
+  white-space: nowrap;
+  min-height: 38px;
+  padding: 7px 8px;
+  font-size: 0.82rem;
+  justify-content: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* On mobile screens, 3 action buttons in a row overlap. WhatsApp spans 2 columns, Llamar and Web share the second row */
+@media (max-width: 520px) {
+  .card-actions-grid.has-3 {
+    grid-template-columns: 1fr 1fr;
+  }
+  .card-actions-grid.has-3 .btn-whatsapp {
+    grid-column: span 2;
+  }
+  .card-actions-grid.has-2 {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Modal Action Buttons */
+.modal-primary-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.modal-social-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+@media (max-width: 520px) {
+  .modal-primary-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .modal-primary-actions .btn-whatsapp {
+    grid-column: span 2;
+  }
+  .modal-primary-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Filter Bar Container & Responsive Layout */
+.filter-bar-container {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px 18px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  z-index: 20;
+}
+
+.filter-muni-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 340px;
+  min-width: 270px;
+}
+
+.filter-cat-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 240px;
+  min-width: 220px;
+  position: relative;
+}
+
+.filter-sort-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gps-btn-label-mobile {
+  display: none;
+}
+
+.gps-btn-label-desktop {
+  display: inline;
+}
+
 /* Navbar responsive & Dropdown Menu */
 .nav-desktop-actions {
   display: flex;
@@ -171,19 +294,7 @@
   display: none;
 }
 
-@media (max-width: 768px) {
-  .hero-section {
-    padding: 20px 16px;
-    margin-bottom: 16px;
-    border-radius: var(--radius-md);
-  }
-  .search-bar-container {
-    padding: 4px 8px 4px 14px;
-  }
-  .business-grid {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
+@media (max-width: 992px) {
   .nav-desktop-actions {
     display: none !important;
   }
@@ -191,3 +302,74 @@
     display: flex !important;
   }
 }
+
+@media (max-width: 768px) {
+  .app-container {
+    padding: 0 12px 36px 12px;
+  }
+
+  .hero-section {
+    padding: 20px 14px;
+    margin-bottom: 14px;
+    border-radius: var(--radius-md);
+  }
+
+  .search-bar-container {
+    padding: 4px 8px 4px 14px;
+  }
+
+  .business-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .filter-bar-container {
+    padding: 12px;
+    gap: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filter-muni-section {
+    width: 100%;
+    min-width: 0;
+    flex: unset;
+  }
+
+  .filter-cat-section {
+    width: 100%;
+    min-width: 0;
+    flex: unset;
+  }
+
+  .filter-sort-section {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--border);
+  }
+
+  .filter-sort-section select {
+    flex: 1;
+    max-width: 220px;
+  }
+}
+
+@media (max-width: 480px) {
+  .gps-btn-label-desktop {
+    display: none;
+  }
+
+  .gps-btn-label-mobile {
+    display: inline;
+  }
+
+  .filter-sort-section select {
+    max-width: none;
+  }
+}
+

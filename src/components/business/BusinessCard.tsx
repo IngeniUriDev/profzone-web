@@ -121,71 +121,83 @@ export const BusinessCard: React.FC<BusinessCardProps> = ({
           pointerEvents: 'none'
         }} />
         
-        {/* Badges superiores: Categoría y Municipio */}
-        <div style={{ position: 'absolute', top: '12px', left: '12px', display: 'flex', gap: '6px', flexWrap: 'wrap', zIndex: 2 }}>
-          {isOwner && (
+        {/* Barra superior de Badges con distribución protegida contra encimado */}
+        <div style={{
+          position: 'absolute',
+          top: '10px',
+          left: '10px',
+          right: '10px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          gap: '6px',
+          zIndex: 2,
+          pointerEvents: 'none'
+        }}>
+          <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', flex: 1, minWidth: 0, pointerEvents: 'auto' }}>
+            {isOwner && (
+              <span className="badge" style={{
+                backdropFilter: 'blur(10px)',
+                WebkitBackdropFilter: 'blur(10px)',
+                background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+                color: '#ffffff',
+                fontWeight: 800,
+                boxShadow: '0 2px 6px rgba(2, 132, 199, 0.4)',
+                border: '1px solid rgba(255, 255, 255, 0.4)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}>
+                <Sparkles size={11} fill="#fff" />
+                <span>Mi Negocio</span>
+              </span>
+            )}
             <span className="badge" style={{
               backdropFilter: 'blur(10px)',
               WebkitBackdropFilter: 'blur(10px)',
-              background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
-              color: '#ffffff',
-              fontWeight: 800,
-              boxShadow: '0 2px 6px rgba(2, 132, 199, 0.4)',
-              border: '1px solid rgba(255, 255, 255, 0.4)',
+              background: 'rgba(255, 255, 255, 0.92)',
+              color: '#0369a1',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
+            }}>
+              {categoryName || 'Servicio Local'}
+            </span>
+            <span className="badge" style={{
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)',
+              background: 'rgba(15, 23, 42, 0.85)',
+              color: '#f8fafc',
+              border: '1px solid rgba(255,255,255,0.1)'
+            }}>
+              <MapPin size={11} color="#38bdf8" />
+              {business.municipality}
+            </span>
+          </div>
+
+          <div style={{ pointerEvents: 'auto', flexShrink: 0 }}>
+            <span style={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '4px'
+              gap: '5px',
+              padding: '3px 8px',
+              borderRadius: '9999px',
+              fontSize: '0.7rem',
+              fontWeight: 700,
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)',
+              background: status.isOpen ? 'rgba(22, 163, 74, 0.9)' : 'rgba(30, 41, 59, 0.85)',
+              color: '#ffffff',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
             }}>
-              <Sparkles size={11} fill="#fff" />
-              <span>Mi Negocio</span>
+              <span style={{
+                width: '6px',
+                height: '6px',
+                borderRadius: '50%',
+                backgroundColor: status.isOpen ? '#4ade80' : '#94a3b8',
+                boxShadow: status.isOpen ? '0 0 6px #4ade80' : 'none'
+              }} />
+              <span>{status.label}</span>
             </span>
-          )}
-          <span className="badge" style={{
-            backdropFilter: 'blur(10px)',
-            WebkitBackdropFilter: 'blur(10px)',
-            background: 'rgba(255, 255, 255, 0.92)',
-            color: '#0369a1',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
-          }}>
-            {categoryName || 'Servicio Local'}
-          </span>
-          <span className="badge" style={{
-            backdropFilter: 'blur(10px)',
-            WebkitBackdropFilter: 'blur(10px)',
-            background: 'rgba(15, 23, 42, 0.85)',
-            color: '#f8fafc',
-            border: '1px solid rgba(255,255,255,0.1)'
-          }}>
-            <MapPin size={11} color="#38bdf8" />
-            {business.municipality}
-          </span>
-        </div>
-
-        {/* Badge superior derecho: Abierto / Cerrado */}
-        <div style={{ position: 'absolute', top: '12px', right: '12px', zIndex: 2 }}>
-          <span style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '5px',
-            padding: '3px 8px',
-            borderRadius: '9999px',
-            fontSize: '0.7rem',
-            fontWeight: 700,
-            backdropFilter: 'blur(10px)',
-            WebkitBackdropFilter: 'blur(10px)',
-            background: status.isOpen ? 'rgba(22, 163, 74, 0.9)' : 'rgba(30, 41, 59, 0.85)',
-            color: '#ffffff',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
-          }}>
-            <span style={{
-              width: '6px',
-              height: '6px',
-              borderRadius: '50%',
-              backgroundColor: status.isOpen ? '#4ade80' : '#94a3b8',
-              boxShadow: status.isOpen ? '0 0 6px #4ade80' : 'none'
-            }} />
-            <span>{status.label}</span>
-          </span>
+          </div>
         </div>
 
         {/* Badge inferior: Rating y Distancia GPS */}
@@ -394,17 +406,15 @@ export const BusinessCard: React.FC<BusinessCardProps> = ({
         </div>
 
         {/* Botones de Acción Inmediata */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: [business.whatsapp, business.phone, business.website_url].filter(Boolean).length >= 3
-            ? 'repeat(3, 1fr)'
-            : [business.whatsapp, business.phone, business.website_url].filter(Boolean).length === 2
-            ? '1fr 1fr'
-            : '1fr',
-          gap: '8px',
-          paddingTop: '12px',
-          borderTop: '1px solid var(--border)'
-        }}>
+        <div className={`card-actions-grid ${
+          [business.whatsapp, business.phone, business.website_url, onEdit].filter(Boolean).length >= 4
+            ? 'has-4'
+            : [business.whatsapp, business.phone, business.website_url, onEdit].filter(Boolean).length === 3
+            ? 'has-3'
+            : [business.whatsapp, business.phone, business.website_url, onEdit].filter(Boolean).length === 2
+            ? 'has-2'
+            : 'has-1'
+        }`}>
           {business.whatsapp && (
             <button
               type="button"

@@ -264,7 +264,8 @@ export const BusinessDetailModal: React.FC<BusinessDetailModalProps> = ({
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          {/* Botones de Contacto Primario */}
+          <div className="modal-primary-actions">
             {business.whatsapp && (
               <button type="button" className="btn btn-whatsapp" onClick={handleWhatsApp}>
                 <MessageCircle size={16} />
@@ -289,86 +290,105 @@ export const BusinessDetailModal: React.FC<BusinessDetailModalProps> = ({
                 <span>Sitio Web</span>
               </button>
             )}
-            {business.facebook_url && (
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={handleFacebook}
-                style={{ color: '#1877F2', borderColor: '#bfdbfe' }}
-                title="Página oficial de Facebook"
-              >
-                <FacebookIcon size={16} color="#1877F2" />
-                <span>Facebook</span>
-              </button>
-            )}
-            {business.instagram_url && (
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={handleInstagram}
-                style={{ color: '#E1306C', borderColor: '#fbcfe8' }}
-                title="Perfil de Instagram"
-              >
-                <InstagramIcon size={16} color="#E1306C" />
-                <span>Instagram</span>
-              </button>
-            )}
-            {business.tiktok_url && (
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={handleTikTok}
-                style={{ color: 'var(--text-main)', borderColor: 'var(--border)' }}
-                title="Perfil de TikTok"
-              >
-                <TikTokIcon size={16} color="currentColor" />
-                <span>TikTok</span>
-              </button>
-            )}
-            {isOwner && onEditBusiness ? (
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() => {
-                  onClose();
-                  onEditBusiness(business);
-                }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  color: 'var(--primary)',
-                  borderColor: 'var(--primary)',
-                  fontWeight: 700,
-                  background: 'var(--surface-secondary)'
-                }}
-                title={currentUser?.role === 'admin' ? "Editar publicación (Administrador)" : "Editar datos de mi servicio o consultorio"}
-              >
-                <Edit3 size={15} />
-                <span>{currentUser?.role === 'admin' ? "Editar Publicación (Admin)" : "Editar mi Negocio"}</span>
-              </button>
-            ) : currentUser && onEditBusiness ? (
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={handleClaimAndEdit}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  color: 'var(--text-muted)',
-                  borderColor: 'var(--border)',
-                  fontSize: '0.84rem',
-                  fontWeight: 600,
-                  background: 'var(--surface)'
-                }}
-                title="Vincular este negocio a tu sesión si eres el dueño o registraste este teléfono"
-              >
-                <Link2 size={14} color="var(--primary)" />
-                <span>¿Es tu negocio? Vincular y Editar</span>
-              </button>
-            ) : null}
           </div>
+
+          {/* Redes Sociales del Negocio */}
+          {(business.facebook_url || business.instagram_url || business.tiktok_url) && (
+            <div className="modal-social-actions" style={{ marginTop: '10px' }}>
+              <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600, marginRight: '4px' }}>
+                Redes:
+              </span>
+              {business.facebook_url && (
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={handleFacebook}
+                  style={{ color: '#1877F2', borderColor: '#bfdbfe', padding: '6px 12px', fontSize: '0.82rem' }}
+                  title="Página oficial de Facebook"
+                >
+                  <FacebookIcon size={15} color="#1877F2" />
+                  <span>Facebook</span>
+                </button>
+              )}
+              {business.instagram_url && (
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={handleInstagram}
+                  style={{ color: '#E1306C', borderColor: '#fbcfe8', padding: '6px 12px', fontSize: '0.82rem' }}
+                  title="Perfil de Instagram"
+                >
+                  <InstagramIcon size={15} color="#E1306C" />
+                  <span>Instagram</span>
+                </button>
+              )}
+              {business.tiktok_url && (
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={handleTikTok}
+                  style={{ color: 'var(--text-main)', borderColor: 'var(--border)', padding: '6px 12px', fontSize: '0.82rem' }}
+                  title="Perfil de TikTok"
+                >
+                  <TikTokIcon size={15} color="currentColor" />
+                  <span>TikTok</span>
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Acciones de Edición / Propiedad */}
+          {onEditBusiness && (isOwner || currentUser) ? (
+            <div style={{ marginTop: '12px', paddingTop: '10px', borderTop: '1px dashed var(--border)' }}>
+              {isOwner ? (
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => {
+                    onClose();
+                    onEditBusiness(business);
+                  }}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    color: 'var(--primary)',
+                    borderColor: 'var(--primary)',
+                    fontWeight: 700,
+                    background: 'var(--surface-secondary)',
+                    width: '100%',
+                    justifyContent: 'center'
+                  }}
+                  title={currentUser?.role === 'admin' ? "Editar publicación (Administrador)" : "Editar datos de mi servicio o consultorio"}
+                >
+                  <Edit3 size={15} />
+                  <span>{currentUser?.role === 'admin' ? "Editar Publicación (Admin)" : "Editar mi Negocio"}</span>
+                </button>
+              ) : currentUser ? (
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={handleClaimAndEdit}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    color: 'var(--text-muted)',
+                    borderColor: 'var(--border)',
+                    fontSize: '0.84rem',
+                    fontWeight: 600,
+                    background: 'var(--surface)',
+                    width: '100%',
+                    justifyContent: 'center'
+                  }}
+                  title="Vincular este negocio a tu sesión si eres el dueño o registraste este teléfono"
+                >
+                  <Link2 size={14} color="var(--primary)" />
+                  <span>¿Es tu negocio? Vincular y Editar</span>
+                </button>
+              ) : null}
+            </div>
+          ) : null}
         </div>
 
         {/* Descripción y Ubicación */}
