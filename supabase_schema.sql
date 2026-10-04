@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS public.pz_businesses (
   rating_count INTEGER DEFAULT 0,
   status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
   submitted_by TEXT,
+  user_id TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
