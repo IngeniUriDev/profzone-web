@@ -84,36 +84,53 @@ ALTER TABLE public.pz_staff ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.pz_reviews ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.pz_feedback ENABLE ROW LEVEL SECURITY;
 
--- Políticas de lectura pública
+-- 6. Políticas de Seguridad RLS Blindadas contra Modificaciones No Autorizadas
+
+-- Categorías: Lectura pública, modificación restringida a autenticados
 DROP POLICY IF EXISTS "Lectura pública de categorías" ON public.pz_categories;
 CREATE POLICY "Lectura pública de categorías" ON public.pz_categories FOR SELECT USING (true);
 
 DROP POLICY IF EXISTS "Inserción de categorías" ON public.pz_categories;
-CREATE POLICY "Inserción de categorías" ON public.pz_categories FOR ALL USING (true);
+DROP POLICY IF EXISTS "Gestión de categorías" ON public.pz_categories;
+CREATE POLICY "Gestión de categorías" ON public.pz_categories FOR ALL TO authenticated USING (true);
 
+-- Negocios: Lectura pública de negocios
 DROP POLICY IF EXISTS "Lectura pública de negocios aprobados" ON public.pz_businesses;
 CREATE POLICY "Lectura pública de negocios aprobados" ON public.pz_businesses FOR SELECT USING (true);
 
+-- Inserción: Permitida para que nuevos usuarios puedan proponer negocios
 DROP POLICY IF EXISTS "Inserción de negocios pendientes" ON public.pz_businesses;
-CREATE POLICY "Inserción de negocios pendientes" ON public.pz_businesses FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Inserción de negocios" ON public.pz_businesses;
+CREATE POLICY "Inserción de negocios" ON public.pz_businesses FOR INSERT WITH CHECK (true);
 
+-- Modificación: SOLO permitida a usuarios autenticados (bloquea ataques anónimos directos)
 DROP POLICY IF EXISTS "Actualización de negocios" ON public.pz_businesses;
-CREATE POLICY "Actualización de negocios" ON public.pz_businesses FOR ALL USING (true);
+CREATE POLICY "Actualización de negocios" ON public.pz_businesses FOR UPDATE TO authenticated USING (true);
 
+-- Eliminación: SOLO permitida a usuarios autenticados
+DROP POLICY IF EXISTS "Eliminación de negocios" ON public.pz_businesses;
+CREATE POLICY "Eliminación de negocios" ON public.pz_businesses FOR DELETE TO authenticated USING (true);
+
+-- Staff: Lectura pública, gestión solo autenticada
 DROP POLICY IF EXISTS "Lectura pública de staff" ON public.pz_staff;
 CREATE POLICY "Lectura pública de staff" ON public.pz_staff FOR SELECT USING (true);
 
 DROP POLICY IF EXISTS "Gestión de staff" ON public.pz_staff;
-CREATE POLICY "Gestión de staff" ON public.pz_staff FOR ALL USING (true);
+CREATE POLICY "Gestión de staff" ON public.pz_staff FOR ALL TO authenticated USING (true);
 
+-- Reseñas: Lectura pública, inserción restringida a autenticados
 DROP POLICY IF EXISTS "Lectura pública de reseñas" ON public.pz_reviews;
 CREATE POLICY "Lectura pública de reseñas" ON public.pz_reviews FOR SELECT USING (true);
 
 DROP POLICY IF EXISTS "Inserción pública de reseñas" ON public.pz_reviews;
-CREATE POLICY "Inserción pública de reseñas" ON public.pz_reviews FOR INSERT WITH CHECK (true);
+CREATE POLICY "Inserción de reseñas" ON public.pz_reviews FOR INSERT TO authenticated WITH CHECK (true);
 
+-- Sugerencias de buzón: Inserción pública/autenticada, lectura y gestión solo autenticada
 DROP POLICY IF EXISTS "Inserción pública de sugerencias" ON public.pz_feedback;
-CREATE POLICY "Inserción pública de sugerencias" ON public.pz_feedback FOR ALL USING (true);
+CREATE POLICY "Inserción de sugerencias" ON public.pz_feedback FOR INSERT WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Gestión de sugerencias" ON public.pz_feedback;
+CREATE POLICY "Gestión de sugerencias" ON public.pz_feedback FOR ALL TO authenticated USING (true);
 
 -- Insertar categorías iniciales si no existen
 INSERT INTO public.pz_categories (name, icon, description) VALUES
