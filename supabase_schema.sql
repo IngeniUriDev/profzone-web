@@ -87,13 +87,12 @@ ALTER TABLE public.pz_feedback ENABLE ROW LEVEL SECURITY;
 
 -- 6. Políticas de Seguridad RLS Blindadas contra Modificaciones No Autorizadas
 
--- Categorías: Lectura pública, modificación restringida a autenticados
+-- Categorías: Lectura pública (gestión protegida)
 DROP POLICY IF EXISTS "Lectura pública de categorías" ON public.pz_categories;
 CREATE POLICY "Lectura pública de categorías" ON public.pz_categories FOR SELECT USING (true);
 
 DROP POLICY IF EXISTS "Inserción de categorías" ON public.pz_categories;
 DROP POLICY IF EXISTS "Gestión de categorías" ON public.pz_categories;
-CREATE POLICY "Gestión de categorías" ON public.pz_categories FOR ALL TO authenticated USING (true);
 
 -- Negocios: Lectura pública de negocios
 DROP POLICY IF EXISTS "Lectura pública de negocios aprobados" ON public.pz_businesses;
@@ -123,6 +122,7 @@ CREATE OR REPLACE FUNCTION public.pz_update_business_status(business_id UUID, ne
 RETURNS JSONB
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public, pg_temp
 AS $$
 DECLARE
   updated_record RECORD;
@@ -151,6 +151,7 @@ CREATE OR REPLACE FUNCTION public.pz_admin_delete_business(business_id UUID, adm
 RETURNS JSONB
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public, pg_temp
 AS $$
 DECLARE
   deleted_record RECORD;
@@ -173,6 +174,7 @@ CREATE OR REPLACE FUNCTION public.pz_admin_clear_all_businesses(admin_pin TEXT D
 RETURNS void
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public, pg_temp
 AS $$
 BEGIN
   IF admin_pin != 'Ipoduri5s' AND auth.role() != 'authenticated' THEN
@@ -186,26 +188,36 @@ $$;
 GRANT EXECUTE ON FUNCTION public.pz_admin_clear_all_businesses(TEXT) TO anon, authenticated;
 
 
--- Staff: Lectura pública, gestión solo autenticada
+-- Staff: Lectura pública
 DROP POLICY IF EXISTS "Lectura pública de staff" ON public.pz_staff;
 CREATE POLICY "Lectura pública de staff" ON public.pz_staff FOR SELECT USING (true);
-
 DROP POLICY IF EXISTS "Gestión de staff" ON public.pz_staff;
-CREATE POLICY "Gestión de staff" ON public.pz_staff FOR ALL TO authenticated USING (true);
 
--- Reseñas: Lectura pública, inserción restringida a autenticados
+-- Reseñas: Lectura pública, inserción validada a autenticados
 DROP POLICY IF EXISTS "Lectura pública de reseñas" ON public.pz_reviews;
 CREATE POLICY "Lectura pública de reseñas" ON public.pz_reviews FOR SELECT USING (true);
 
 DROP POLICY IF EXISTS "Inserción pública de reseñas" ON public.pz_reviews;
-CREATE POLICY "Inserción de reseñas" ON public.pz_reviews FOR INSERT TO authenticated WITH CHECK (true);
+DROP POLICY IF EXISTS "Inserción de reseñas" ON public.pz_reviews;
+CREATE POLICY "Inserción de reseñas" ON public.pz_reviews 
+  FOR INSERT TO authenticated 
+  WITH CHECK (rating >= 1 AND rating <= 5 AND length(trim(comment)) > 0);
 
--- Sugerencias de buzón: Inserción pública/autenticada, lectura y gestión solo autenticada
+-- Sugerencias de buzón: Lectura pública, inserción validada
+DROP POLICY IF EXISTS "Lectura de sugerencias" ON public.pz_feedback;
+CREATE POLICY "Lectura de sugerencias" ON public.pz_feedback FOR SELECT USING (true);
+
 DROP POLICY IF EXISTS "Inserción pública de sugerencias" ON public.pz_feedback;
-CREATE POLICY "Inserción de sugerencias" ON public.pz_feedback FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Inserción de sugerencias" ON public.pz_feedback;
+CREATE POLICY "Inserción de sugerencias" ON public.pz_feedback 
+  FOR INSERT 
+  WITH CHECK (
+    length(trim(title)) > 0 
+    AND length(trim(message)) > 0 
+    AND type IN ('new_profession', 'new_municipality', 'improvement', 'other')
+  );
 
 DROP POLICY IF EXISTS "Gestión de sugerencias" ON public.pz_feedback;
-CREATE POLICY "Gestión de sugerencias" ON public.pz_feedback FOR ALL TO authenticated USING (true);
 
 -- Insertar categorías iniciales si no existen
 INSERT INTO public.pz_categories (name, icon, description) VALUES
@@ -255,6 +267,7 @@ CREATE OR REPLACE FUNCTION public.pz_check_daily_business_limit()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public, pg_temp
 AS $$
 DECLARE
   daily_count INTEGER;
@@ -273,6 +286,9 @@ BEGIN
   RETURN NEW;
 END;
 $$;
+
+-- Revocar ejecución directa como RPC (solo el motor de base de datos como trigger la ejecuta)
+REVOKE ALL ON FUNCTION public.pz_check_daily_business_limit() FROM PUBLIC, anon, authenticated;
 
 DROP TRIGGER IF EXISTS trg_check_daily_business_limit ON public.pz_businesses;
 CREATE TRIGGER trg_check_daily_business_limit
