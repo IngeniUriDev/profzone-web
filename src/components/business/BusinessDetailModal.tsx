@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { X, MapPin, Clock, Phone, MessageCircle, Edit3, MessageSquarePlus, Star, UserCheck, Stethoscope, Globe, ShieldCheck } from 'lucide-react';
+import { X, MapPin, Clock, Phone, MessageCircle, Edit3, MessageSquarePlus, Star, UserCheck, Stethoscope, Globe, ShieldCheck, Link2 } from 'lucide-react';
 import { FacebookIcon, InstagramIcon, TikTokIcon } from '../common/SocialIcons';
 import type { Business, Review, UserProfile } from '../../types/database';
 import { StarRating } from '../common/StarRating';
 import { reviewService } from '../../services/reviewService';
-import { isBusinessOwner } from '../../utils/ownership';
+import { isBusinessOwner, claimBusinessByPhoneOrPin } from '../../utils/ownership';
 
 interface BusinessDetailModalProps {
   business: Business | null;
@@ -61,7 +61,27 @@ export const BusinessDetailModal: React.FC<BusinessDetailModalProps> = ({
     window.open(`https://wa.me/${cleanNumber}?text=${message}`, '_blank');
   };
 
-  const isOwner = isBusinessOwner(business, currentUser);
+  const [claimed, setClaimed] = useState(false);
+  const isOwner = claimed || isBusinessOwner(business, currentUser);
+
+  const handleClaimAndEdit = () => {
+    if (!business) return;
+    const input = window.prompt(
+      `Para vincular "${business.name}" a tu cuenta y editarlo, ingresa el teléfono o WhatsApp registrado del negocio (o el PIN de administración):`
+    );
+    if (!input || !input.trim()) return;
+
+    const ok = claimBusinessByPhoneOrPin(business, input.trim());
+    if (ok) {
+      alert(`¡"${business.name}" ha sido vinculado exitosamente a tu cuenta!`);
+      setClaimed(true);
+      onReviewAdded?.();
+      onEditBusiness?.(business);
+      onClose();
+    } else {
+      alert('El teléfono o PIN ingresado no coincide con los datos de este negocio. Verifica e intenta de nuevo.');
+    }
+  };
 
   const handlePhone = () => {
     if (!business.phone) return;
@@ -305,7 +325,7 @@ export const BusinessDetailModal: React.FC<BusinessDetailModalProps> = ({
                 <span>TikTok</span>
               </button>
             )}
-            {isOwner && onEditBusiness && (
+            {isOwner && onEditBusiness ? (
               <button
                 type="button"
                 className="btn btn-secondary"
@@ -327,7 +347,27 @@ export const BusinessDetailModal: React.FC<BusinessDetailModalProps> = ({
                 <Edit3 size={15} />
                 <span>{currentUser?.role === 'admin' ? "Editar Publicación (Admin)" : "Editar mi Negocio"}</span>
               </button>
-            )}
+            ) : currentUser && onEditBusiness ? (
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={handleClaimAndEdit}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  color: 'var(--text-muted)',
+                  borderColor: 'var(--border)',
+                  fontSize: '0.84rem',
+                  fontWeight: 600,
+                  background: 'var(--surface)'
+                }}
+                title="Vincular este negocio a tu sesión si eres el dueño o registraste este teléfono"
+              >
+                <Link2 size={14} color="var(--primary)" />
+                <span>¿Es tu negocio? Vincular y Editar</span>
+              </button>
+            ) : null}
           </div>
         </div>
 

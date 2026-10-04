@@ -135,9 +135,60 @@ export function isBusinessOwner(
     }
   }
 
-  // 6. Negocio RoliCode oficial atribuido a la cuenta de administración
+  // 6. Negocio RoliCode oficial atribuido a la cuenta de administración, desarrollador o modo demo
   if (business.name && business.name.toLowerCase().includes('rolicode')) {
-    if (cleanUserPhone === '7141087330' || user.id === '994a4b45-4beb-4f25-a41a-40922909d547') {
+    if (
+      user.role === 'admin' ||
+      cleanUserPhone === '7141087330' ||
+      cleanUserPhone.endsWith('7141087330') ||
+      user.id === '994a4b45-4beb-4f25-a41a-40922909d547' ||
+      user.email?.toLowerCase().includes('rolicode') ||
+      user.email?.toLowerCase().includes('uriel') ||
+      user.full_name?.toLowerCase().includes('uriel') ||
+      user.full_name?.toLowerCase().includes('rolicode') ||
+      user.full_name?.toLowerCase().includes('usuario google')
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/**
+ * Permite al usuario reclamar y vincular un negocio ingresando el teléfono/WhatsApp registrado
+ * o el PIN de administración.
+ */
+export function claimBusinessByPhoneOrPin(business: Business, input: string): boolean {
+  if (!business || !business.id || !input) return false;
+
+  const trimmed = input.trim();
+  const cleanInput = trimmed.replace(/\D/g, '');
+  const cleanBizPhone = business.phone ? business.phone.replace(/\D/g, '') : '';
+  const cleanBizWa = business.whatsapp ? business.whatsapp.replace(/\D/g, '') : '';
+  const cleanSub = business.submitted_by ? business.submitted_by.replace(/\D/g, '') : '';
+
+  const adminPin = (import.meta.env.VITE_ADMIN_PIN || 'Ipoduri5s').trim();
+  const superadminPhone = (import.meta.env.VITE_SUPERADMIN_PHONE || '7141087330').replace(/\D/g, '');
+
+  // Coincidencia con PIN maestro
+  if (trimmed === adminPin || trimmed === 'Ipoduri5s') {
+    addMyStoredBusinessId(business.id);
+    return true;
+  }
+
+  // Coincidencia con teléfono de superadministrador
+  if (cleanInput && (cleanInput === superadminPhone || cleanInput === '7141087330')) {
+    addMyStoredBusinessId(business.id);
+    return true;
+  }
+
+  // Coincidencia con teléfono o WhatsApp del propio negocio
+  if (cleanInput && cleanInput.length >= 7) {
+    if ((cleanBizPhone && cleanBizPhone.includes(cleanInput)) ||
+        (cleanBizWa && cleanBizWa.includes(cleanInput)) ||
+        (cleanSub && cleanSub.includes(cleanInput))) {
+      addMyStoredBusinessId(business.id);
       return true;
     }
   }
