@@ -8,6 +8,7 @@ import { REGIONAL_MUNICIPALITIES } from '../../lib/geo';
 import { DigitalSchedulePicker } from '../common/DigitalSchedulePicker';
 import { isBusinessOwner, addMyStoredBusinessId } from '../../utils/ownership';
 import { processAndUploadBusinessImage, normalizeImageUrl, DEFAULT_BUSINESS_IMAGE } from '../../utils/imageUpload';
+import { SimpleCaptcha } from '../common/SimpleCaptcha';
 
 interface RegisterBusinessModalProps {
   categories: Category[];
@@ -85,6 +86,7 @@ export const RegisterBusinessModal: React.FC<RegisterBusinessModalProps> = ({
 
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [isCaptchaValid, setIsCaptchaValid] = useState(false);
 
   const finalMunicipality = selectedMunicipality === 'OTRO' 
     ? (customMunicipality.trim() || 'Santiago Tianguistenco')
@@ -108,6 +110,10 @@ export const RegisterBusinessModal: React.FC<RegisterBusinessModalProps> = ({
     if (loading) return;
     if (!currentUser) {
       onRequireAuth();
+      return;
+    }
+    if (!isEditing && !isCaptchaValid) {
+      alert('Por favor resuelve el cálculo de verificación anti-bot antes de enviar.');
       return;
     }
     if (!name.trim() || !address.trim()) return;
@@ -1053,6 +1059,10 @@ export const RegisterBusinessModal: React.FC<RegisterBusinessModalProps> = ({
                   }}
                 />
               </div>
+
+              {!isEditing && (
+                <SimpleCaptcha onVerify={setIsCaptchaValid} />
+              )}
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
                 <button type="button" className="btn btn-secondary" onClick={onClose}>

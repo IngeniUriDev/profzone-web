@@ -571,6 +571,22 @@ export function App() {
             >
               Aviso de Privacidad
             </button>
+            <span style={{ color: '#cbd5e1' }}>•</span>
+            <button
+              type="button"
+              onClick={() => {
+                if (currentUser?.role === 'admin') {
+                  setAdminInitialTab('services');
+                  setShowAdminModal(true);
+                } else {
+                  setShowAuthModal(true);
+                }
+              }}
+              style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontWeight: 600, padding: 0 }}
+              title="Acceso restringido para administración"
+            >
+              Acceso Superadmin
+            </button>
           </div>
 
           {/* Deslinde de Responsabilidad Permanente */}

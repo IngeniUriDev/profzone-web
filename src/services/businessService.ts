@@ -2,6 +2,7 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import type { Business, BusinessStatus, UserProfile } from '../types/database';
 import { INITIAL_BUSINESSES } from '../data/mockData';
 import { isBusinessOwner } from '../utils/ownership';
+import { adminService } from './adminService';
 
 export { isBusinessOwner };
 
@@ -235,12 +236,13 @@ export const businessService = {
         .eq('id', id)
         .maybeSingle();
 
-      // 1. Intentar actualizar mediante RPC segura de moderación ejecutiva
+      // 1. Intentar actualizar mediante RPC segura de moderación ejecutiva (con PIN maestro)
       let updateSuccessful = false;
       try {
         const { data: rpcData, error: rpcError } = await supabase.rpc('pz_update_business_status', {
           business_id: id,
-          new_status: status
+          new_status: status,
+          admin_pin: adminService.getMasterPin()
         });
         if (!rpcError && rpcData) {
           updateSuccessful = true;
@@ -385,10 +387,13 @@ export const businessService = {
         console.warn('Could not cascade delete reviews/staff:', e);
       }
 
-      // 1. Intentar eliminar vía RPC segura de administración
+      // 1. Intentar eliminar vía RPC segura de administración (con PIN maestro)
       let deleteSuccessful = false;
       try {
-        const { error: rpcError } = await supabase.rpc('pz_admin_delete_business', { business_id: id });
+        const { error: rpcError } = await supabase.rpc('pz_admin_delete_business', {
+          business_id: id,
+          admin_pin: adminService.getMasterPin()
+        });
         if (!rpcError) {
           deleteSuccessful = true;
         }
@@ -433,7 +438,9 @@ export const businessService = {
   async clearAllBusinesses(): Promise<void> {
     if (isSupabaseConfigured && supabase) {
       try {
-        await supabase.rpc('pz_admin_clear_all_businesses');
+        await supabase.rpc('pz_admin_clear_all_businesses', {
+          admin_pin: adminService.getMasterPin()
+        });
       } catch {
         // RPC fallback
       }

@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, ShieldCheck } from 'lucide-react';
 import type { UserProfile } from '../../types/database';
 import { authService } from '../../services/authService';
+import { securityService } from '../../utils/security';
 
 interface AuthModalProps {
   onClose: () => void;
@@ -11,6 +12,19 @@ interface AuthModalProps {
 export const AuthModal: React.FC<AuthModalProps> = ({ onClose, onSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [showAdminInput, setShowAdminInput] = useState(false);
+  const [adminPin, setAdminPin] = useState('');
+  const [lockout, setLockout] = useState(() => securityService.getPinLockoutState());
+
+  useEffect(() => {
+    if (!lockout.isLocked) return;
+    const interval = setInterval(() => {
+      const current = securityService.getPinLockoutState();
+      setLockout(current);
+      if (!current.isLocked) setErrorMsg('');
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [lockout.isLocked]);
 
   const handleGoogleLogin = async () => {
     setLoading(true);
@@ -24,6 +38,36 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose, onSuccess }) => {
     } catch (err: unknown) {
       console.error(err);
       setErrorMsg('No se pudo conectar con Google. Intenta de nuevo.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAdminPinLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg('');
+
+    const currentLock = securityService.getPinLockoutState();
+    if (currentLock.isLocked) {
+      setLockout(currentLock);
+      setErrorMsg(`Acceso bloqueado temporalmente. Intenta en ${securityService.formatSeconds(currentLock.remainingSeconds)}.`);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const adminUser = await authService.signInWithAdminPin(adminPin);
+      securityService.resetPinAttempts();
+      onSuccess(adminUser);
+      onClose();
+    } catch {
+      const failState = securityService.recordFailedPinAttempt();
+      setLockout(failState);
+      if (failState.isLocked) {
+        setErrorMsg(`Has superado los 3 intentos. Acceso bloqueado durante 5 minutos (${securityService.formatSeconds(failState.remainingSeconds)}).`);
+      } else {
+        setErrorMsg(`Clave incorrecta. Te queda${failState.remainingAttempts === 1 ? '' : 'n'} ${failState.remainingAttempts} intento${failState.remainingAttempts === 1 ? '' : 's'}.`);
+      }
     } finally {
       setLoading(false);
     }
@@ -128,21 +172,84 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose, onSuccess }) => {
           <div style={{
             marginTop: '4px',
             padding: '12px 14px',
-            background: '#f8fafc',
+            background: 'var(--surface-secondary)',
             borderRadius: '10px',
-            border: '1px solid #e2e8f0',
+            border: '1px solid var(--border)',
             display: 'flex',
             alignItems: 'flex-start',
             gap: '10px',
             fontSize: '0.82rem',
-            color: '#475569',
+            color: 'var(--text-muted)',
             lineHeight: 1.45
           }}>
             <ShieldCheck size={18} color="var(--primary)" style={{ flexShrink: 0, marginTop: '2px' }} />
             <span>
-              Tu <strong>nombre real</strong> y foto de perfil se sincronizarán directamente de Google para respaldar tus calificaciones y comentarios comunitarios de forma transparente.
+              Tu <strong>nombre real</strong> y foto se vincularán de Google para respaldar tus calificaciones y comentarios comunitarios.
             </span>
           </div>
+
+          <div style={{ height: '1px', background: 'var(--border)', margin: '4px 0' }} />
+
+          {/* Acceso Alternativo para Administradores con Clave Maestra */}
+          {!showAdminInput ? (
+            <button
+              type="button"
+              onClick={() => setShowAdminInput(true)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--text-muted)',
+                fontSize: '0.78rem',
+                cursor: 'pointer',
+                textAlign: 'center',
+                padding: '4px'
+              }}
+            >
+              ¿Eres administrador? <span style={{ textDecoration: 'underline', color: 'var(--primary)', fontWeight: 600 }}>Acceder con Clave Maestra</span>
+            </button>
+          ) : (
+            <form onSubmit={handleAdminPinLogin} style={{ display: 'flex', flexDirection: 'column', gap: '8px', background: 'var(--surface-secondary)', padding: '12px', borderRadius: '10px', border: '1px dashed #f59e0b' }}>
+              <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#b45309' }}>
+                Acceso de Superadministrador
+              </div>
+
+              {lockout.isLocked ? (
+                <div style={{ fontSize: '0.78rem', color: '#dc2626', background: '#fef2f2', padding: '8px', borderRadius: '6px' }}>
+                  Demasiados intentos fallidos. Bloqueado temporalmente: {securityService.formatSeconds(lockout.remainingSeconds)}
+                </div>
+              ) : (
+                <>
+                  <input
+                    type="password"
+                    required
+                    placeholder="Clave Maestra..."
+                    value={adminPin}
+                    onChange={(e) => setAdminPin(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border)',
+                      fontSize: '0.85rem'
+                    }}
+                  />
+                  {lockout.remainingAttempts < 3 && (
+                    <div style={{ fontSize: '0.74rem', color: '#d97706', textAlign: 'right' }}>
+                      Intentos restantes: {lockout.remainingAttempts} de 3
+                    </div>
+                  )}
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="btn btn-primary"
+                    style={{ fontSize: '0.82rem', padding: '8px', justifyContent: 'center' }}
+                  >
+                    Entrar como Administrador
+                  </button>
+                </>
+              )}
+            </form>
+          )}
         </div>
       </div>
     </div>

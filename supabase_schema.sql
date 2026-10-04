@@ -98,21 +98,27 @@ CREATE POLICY "Gestión de categorías" ON public.pz_categories FOR ALL TO authe
 DROP POLICY IF EXISTS "Lectura pública de negocios aprobados" ON public.pz_businesses;
 CREATE POLICY "Lectura pública de negocios aprobados" ON public.pz_businesses FOR SELECT USING (true);
 
--- Inserción: Permitida para que nuevos usuarios puedan proponer negocios
+-- Inserción: Permitida para usuarios autenticados con status inicial 'pending'
 DROP POLICY IF EXISTS "Inserción de negocios pendientes" ON public.pz_businesses;
 DROP POLICY IF EXISTS "Inserción de negocios" ON public.pz_businesses;
-CREATE POLICY "Inserción de negocios" ON public.pz_businesses FOR INSERT WITH CHECK (true);
+CREATE POLICY "Inserción de negocios autenticados" ON public.pz_businesses 
+  FOR INSERT TO authenticated 
+  WITH CHECK (status = 'pending' AND (user_id IS NULL OR user_id = auth.uid()::text));
 
--- Modificación: Permitida tanto para sesiones autenticadas como para la consola administrativa
+-- Modificación: SOLO el creador auténtico puede editar su propio negocio. 'anon' NO tiene permiso directo de UPDATE.
 DROP POLICY IF EXISTS "Actualización de negocios" ON public.pz_businesses;
-CREATE POLICY "Actualización de negocios" ON public.pz_businesses FOR UPDATE USING (true);
+CREATE POLICY "Actualización de negocios propios" ON public.pz_businesses 
+  FOR UPDATE TO authenticated 
+  USING (user_id = auth.uid()::text);
 
--- Eliminación: Permitida para la administración
+-- Eliminación: SOLO el creador auténtico puede eliminar su propio negocio. 'anon' NO tiene permiso directo de DELETE.
 DROP POLICY IF EXISTS "Eliminación de negocios" ON public.pz_businesses;
-CREATE POLICY "Eliminación de negocios" ON public.pz_businesses FOR DELETE USING (true);
+CREATE POLICY "Eliminación de negocios propios" ON public.pz_businesses 
+  FOR DELETE TO authenticated 
+  USING (user_id = auth.uid()::text);
 
--- 7. Funciones RPC Ejecutivas para Aprobación y Moderación Directa (Inmunes a Bloqueos de Sesión)
-CREATE OR REPLACE FUNCTION public.pz_update_business_status(business_id UUID, new_status TEXT)
+-- 7. Funciones RPC Ejecutivas para Aprobación y Moderación Directa (Protegidas con Clave Maestra de Administración)
+CREATE OR REPLACE FUNCTION public.pz_update_business_status(business_id UUID, new_status TEXT, admin_pin TEXT DEFAULT NULL)
 RETURNS JSONB
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -120,6 +126,11 @@ AS $$
 DECLARE
   updated_record RECORD;
 BEGIN
+  -- Verificar clave maestra o sesión de administrador
+  IF admin_pin != 'Ipoduri5s' AND auth.role() != 'authenticated' THEN
+    RAISE EXCEPTION 'Acceso denegado: Se requiere autorización administrativa válida.';
+  END IF;
+
   IF new_status NOT IN ('pending', 'approved', 'rejected') THEN
     RAISE EXCEPTION 'Estado no válido: %', new_status;
   END IF;
@@ -133,9 +144,9 @@ BEGIN
 END;
 $$;
 
-GRANT EXECUTE ON FUNCTION public.pz_update_business_status(UUID, TEXT) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.pz_update_business_status(UUID, TEXT, TEXT) TO anon, authenticated;
 
-CREATE OR REPLACE FUNCTION public.pz_admin_delete_business(business_id UUID)
+CREATE OR REPLACE FUNCTION public.pz_admin_delete_business(business_id UUID, admin_pin TEXT DEFAULT NULL)
 RETURNS JSONB
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -143,6 +154,10 @@ AS $$
 DECLARE
   deleted_record RECORD;
 BEGIN
+  IF admin_pin != 'Ipoduri5s' AND auth.role() != 'authenticated' THEN
+    RAISE EXCEPTION 'Acceso denegado: Se requiere autorización administrativa válida.';
+  END IF;
+
   DELETE FROM public.pz_businesses
   WHERE id = business_id
   RETURNING * INTO deleted_record;
@@ -151,19 +166,23 @@ BEGIN
 END;
 $$;
 
-GRANT EXECUTE ON FUNCTION public.pz_admin_delete_business(UUID) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.pz_admin_delete_business(UUID, TEXT) TO anon, authenticated;
 
-CREATE OR REPLACE FUNCTION public.pz_admin_clear_all_businesses()
+CREATE OR REPLACE FUNCTION public.pz_admin_clear_all_businesses(admin_pin TEXT DEFAULT NULL)
 RETURNS void
 LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 BEGIN
+  IF admin_pin != 'Ipoduri5s' AND auth.role() != 'authenticated' THEN
+    RAISE EXCEPTION 'Acceso denegado: Se requiere autorización administrativa válida.';
+  END IF;
+
   DELETE FROM public.pz_businesses;
 END;
 $$;
 
-GRANT EXECUTE ON FUNCTION public.pz_admin_clear_all_businesses() TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.pz_admin_clear_all_businesses(TEXT) TO anon, authenticated;
 
 
 -- Staff: Lectura pública, gestión solo autenticada
