@@ -29,17 +29,35 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose, onSuccess }) => {
   const handleGoogleLogin = async () => {
     setLoading(true);
     setErrorMsg('');
+
+    // Si por alguna razón el navegador no redirige en 5 segundos, rehabilitar el botón
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 5000);
+
     try {
       const user = await authService.signInWithGoogle();
       if (user) {
+        clearTimeout(timer);
         onSuccess(user);
         onClose();
       }
     } catch (err: unknown) {
-      console.error(err);
-      setErrorMsg('No se pudo conectar con Google. Intenta de nuevo.');
+      clearTimeout(timer);
+      console.error('Google login error:', err);
+      const msg = err instanceof Error ? err.message : String(err || '');
+      if (
+        msg.toLowerCase().includes('not enabled') || 
+        msg.toLowerCase().includes('validation_failed') || 
+        msg.toLowerCase().includes('unsupported provider')
+      ) {
+        setErrorMsg('El inicio con Google aún no está activado en tu panel de Supabase. Actívalo en Authentication > Providers > Google, o ingresa abajo con tu Clave Maestra de Administrador.');
+      } else {
+        setErrorMsg('No se pudo conectar con Google. Verifica que el proveedor esté activado en Supabase o ingresa abajo con Clave Maestra.');
+      }
     } finally {
-      setLoading(false);
+      // Si no hubo redirección automática inmediata
+      setTimeout(() => setLoading(false), 1500);
     }
   };
 

@@ -114,8 +114,16 @@ export function App() {
   useEffect(() => {
     loadData();
 
-    // Sincronizar sesión activa si Supabase está conectado (ej. retorno de Facebook OAuth)
+    // Sincronizar sesión activa si Supabase está conectado (ej. retorno de Google OAuth)
     if (isSupabaseConfigured && supabase) {
+      // Limpiar y registrar posibles errores de redirección OAuth (ej. proveedor no activado)
+      if (window.location.hash.includes('error=')) {
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const errorDesc = hashParams.get('error_description') || hashParams.get('error');
+        console.warn('Supabase OAuth notice:', errorDesc);
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+
       supabase.auth.getSession().then(({ data: { session } }) => {
         if (session?.user) {
           const profile = authService.mapSupabaseUser(session.user);
