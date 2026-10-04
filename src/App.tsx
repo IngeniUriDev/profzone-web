@@ -334,13 +334,13 @@ export function App() {
           <div style={{ maxWidth: '780px', margin: '0 auto', textAlign: 'center' }}>
             <div className="hero-pill-badge">
               <span className="hero-pulse-dot" />
-              <span>Directorio Oficial de Profesionales & Comercios</span>
+              <span>Directorio Regional</span>
             </div>
 
             <h1 className="hero-title">
               Encuentra los mejores especialistas y servicios en{' '}
               <span className="hero-title-highlight">
-                {selectedMunicipality === 'TODOS' ? 'tu región' : selectedMunicipality}
+                {selectedMunicipality === 'TODOS' ? 'la Zona' : selectedMunicipality}
               </span>
             </h1>
 
