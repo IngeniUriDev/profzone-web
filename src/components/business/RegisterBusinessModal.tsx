@@ -4,6 +4,7 @@ import { FacebookIcon, InstagramIcon, TikTokIcon } from '../common/SocialIcons';
 import type { Business, Category, UserProfile } from '../../types/database';
 import { businessService } from '../../services/businessService';
 import { categoryService } from '../../services/categoryService';
+import { adminService } from '../../services/adminService';
 import { REGIONAL_MUNICIPALITIES } from '../../lib/geo';
 import { DigitalSchedulePicker } from '../common/DigitalSchedulePicker';
 import { isBusinessOwner, addMyStoredBusinessId } from '../../utils/ownership';
@@ -28,6 +29,12 @@ export const RegisterBusinessModal: React.FC<RegisterBusinessModalProps> = ({
   onSuccess
 }) => {
   const isEditing = Boolean(initialBusiness);
+  const isSuperAdmin = Boolean(
+    currentUser && (
+      currentUser.role === 'admin' ||
+      adminService.isSuperAdmin(currentUser.phone, currentUser.email, currentUser.id)
+    )
+  );
 
   const [name, setName] = useState(initialBusiness?.name || '');
   const [categoryId, setCategoryId] = useState(initialBusiness?.category_id || categories[0]?.id || '');
@@ -140,8 +147,14 @@ export const RegisterBusinessModal: React.FC<RegisterBusinessModalProps> = ({
     try {
       let finalCategoryId = categoryId;
 
-      // Si el usuario eligió crear una nueva categoría que no existía
+      // Si el usuario eligió crear una nueva categoría que no existía (solo superadmin permitido)
       if (categoryId === 'NEW_CATEGORY') {
+        if (!isSuperAdmin) {
+          alert('Solo un superadministrador tiene permisos para dar de alta nuevas categorías. Por favor selecciona una categoría existente.');
+          setCategoryId(categories[0]?.id || '');
+          setLoading(false);
+          return;
+        }
         if (!newCategoryName.trim()) {
           alert('Por favor escribe el nombre de la nueva categoría.');
           setLoading(false);
@@ -150,7 +163,7 @@ export const RegisterBusinessModal: React.FC<RegisterBusinessModalProps> = ({
         const createdCat = await categoryService.createCategory({
           name: newCategoryName.trim(),
           icon: 'Layers',
-          description: 'Categoría agregada por usuario'
+          description: 'Categoría agregada por superadministrador'
         });
         finalCategoryId = createdCat.id;
       }
@@ -202,7 +215,8 @@ export const RegisterBusinessModal: React.FC<RegisterBusinessModalProps> = ({
           image_url: normalizeImageUrl(imageUrl).trim() || DEFAULT_BUSINESS_IMAGE,
           latitude: matchedMuniGeo?.lat,
           longitude: matchedMuniGeo?.lng,
-          submitted_by: currentUser.id || currentUser.email || currentUser.phone || currentUser.full_name
+          submitted_by: currentUser.email || currentUser.phone || currentUser.full_name || currentUser.id,
+          user_id: currentUser.id
         });
         if (created?.id) {
           addMyStoredBusinessId(created.id);
@@ -352,7 +366,7 @@ export const RegisterBusinessModal: React.FC<RegisterBusinessModalProps> = ({
                 )
               ) : (
                 <>
-                  Tu registro para <strong>{name}</strong> en <strong>{finalMunicipality}</strong> fue recibido correctamente. Para garantizar la calidad en ProfZone, nuestro equipo revisará y autorizará la publicación en breve.
+                  Tu solicitud para registrar <strong>{name}</strong> en <strong>{finalMunicipality}</strong> fue enviada exitosamente y quedó en estado <strong>Pendiente de Aprobación</strong>. El Administrador Principal revisará los datos de tu cuenta verificada ({currentUser.email || currentUser.full_name}) y, en cuanto sea aprobada, aparecerá publicada en el catálogo oficial de ProfZone.
                 </>
               )}
             </p>
@@ -522,13 +536,20 @@ export const RegisterBusinessModal: React.FC<RegisterBusinessModalProps> = ({
                         {c.name}
                       </option>
                     ))}
-                    <option value="NEW_CATEGORY">+ ¿No existe tu especialidad? Agregar nueva categoría...</option>
+                    {isSuperAdmin && (
+                      <option value="NEW_CATEGORY">+ [Superadmin] Agregar nueva categoría...</option>
+                    )}
                   </select>
+                  {!isSuperAdmin && (
+                    <div style={{ marginTop: '5px', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                      ¿No encuentras tu especialidad exacta? Selecciona la categoría más afín o solicita a un administrador que la dé de alta.
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {/* Input para Nueva Categoría en caso de no existir */}
-              {categoryId === 'NEW_CATEGORY' && (
+              {/* Input para Nueva Categoría (exclusivo para Superadmin) */}
+              {isSuperAdmin && categoryId === 'NEW_CATEGORY' && (
                 <div style={{
                   background: 'var(--surface-secondary)',
                   border: '1px solid var(--primary)',

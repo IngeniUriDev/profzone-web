@@ -1,4 +1,4 @@
-import { Search, MapPin, Building2, ArrowLeft } from 'lucide-react';
+import { Search, MapPin, Building2, ArrowLeft, PlusCircle } from 'lucide-react';
 import './App.css';
 import { NotificationCenterModal } from './components/common/NotificationCenterModal';
 import { feedbackService } from './services/feedbackService';
@@ -66,16 +66,20 @@ export function App() {
   // Helper para verificar si el usuario conectado es propietario de un negocio
   const isBusinessAuthorized = (b: Business) => isBusinessOwner(b, currentUser);
 
-  // Tema Claro / Oscuro con persistencia en localStorage
+  // Tema Claro / Oscuro con persistencia en localStorage (por defecto 'light')
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     const saved = localStorage.getItem('pz_theme');
     if (saved === 'dark' || saved === 'light') return saved;
-    return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    return 'light';
   });
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('pz_theme', theme);
+    const metaTheme = document.querySelector('meta[name="theme-color"]');
+    if (metaTheme) {
+      metaTheme.setAttribute('content', theme === 'dark' ? '#090d16' : '#f8fafc');
+    }
   }, [theme]);
 
   const toggleTheme = () => {
@@ -385,6 +389,60 @@ export function App() {
                   Limpiar
                 </button>
               )}
+            </div>
+
+            {/* Banner de acceso para registrar negocio y aprobación por admin */}
+            <div style={{
+              marginTop: '18px',
+              maxWidth: '680px',
+              marginLeft: 'auto',
+              marginRight: 'auto',
+              background: 'var(--surface)',
+              border: '1px solid var(--border)',
+              borderRadius: '12px',
+              padding: '12px 18px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '14px',
+              flexWrap: 'wrap',
+              textAlign: 'left',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: '240px' }}>
+                <div style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '50%',
+                  background: 'rgba(2, 132, 199, 0.12)',
+                  color: 'var(--primary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}>
+                  <PlusCircle size={20} />
+                </div>
+                <div>
+                  <div style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                    {currentUser ? '¿Tienes un comercio, consultorio u oficio en la región?' : '¿Ofreces un servicio o tienes un negocio?'}
+                  </div>
+                  <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                    {currentUser
+                      ? 'Suma tu negocio para revisión. Al ser aprobado por el administrador, aparecerá en el catálogo oficial.'
+                      : 'Inicia sesión para registrar tu negocio. Cada solicitud es verificada y aprobada por el administrador.'}
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleOpenRegister}
+                style={{ fontSize: '0.8rem', padding: '7px 16px', fontWeight: 700, whiteSpace: 'nowrap' }}
+              >
+                {currentUser ? '+ Publicar mi Negocio' : 'Registrar mi Negocio'}
+              </button>
             </div>
           </div>
         </section>

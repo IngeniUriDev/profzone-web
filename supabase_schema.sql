@@ -117,7 +117,198 @@ CREATE POLICY "Eliminación de negocios propios" ON public.pz_businesses
   FOR DELETE TO authenticated 
   USING (user_id = auth.uid()::text);
 
--- 7. Funciones RPC Ejecutivas para Aprobación y Moderación Directa (Protegidas con Clave Maestra de Administración)
+-- 7. Funciones RPC Ejecutivas para Aprobación y Moderación Directa (Aislamiento de Base de Datos con SECURITY DEFINER)
+
+-- 7.1 Enviar Solicitud de Negocio Aislada (El cliente no hace INSERT directo a la tabla)
+CREATE OR REPLACE FUNCTION public.pz_submit_business_application(
+  p_name TEXT,
+  p_category_id UUID,
+  p_municipality TEXT,
+  p_locality TEXT DEFAULT 'Centro',
+  p_address TEXT DEFAULT '',
+  p_phone TEXT DEFAULT NULL,
+  p_whatsapp TEXT DEFAULT NULL,
+  p_schedule TEXT DEFAULT NULL,
+  p_description TEXT DEFAULT NULL,
+  p_image_url TEXT DEFAULT NULL,
+  p_website_url TEXT DEFAULT NULL,
+  p_facebook_url TEXT DEFAULT NULL,
+  p_instagram_url TEXT DEFAULT NULL,
+  p_tiktok_url TEXT DEFAULT NULL,
+  p_latitude DOUBLE PRECISION DEFAULT NULL,
+  p_longitude DOUBLE PRECISION DEFAULT NULL,
+  p_submitted_by TEXT DEFAULT NULL
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_user_id TEXT;
+  v_inserted RECORD;
+  v_daily_count INTEGER;
+BEGIN
+  -- Obtener ID de usuario autenticado
+  v_user_id := auth.uid()::text;
+
+  -- Regla Anti-Spam: Máximo 3 solicitudes por día por usuario
+  IF v_user_id IS NOT NULL THEN
+    SELECT COUNT(*) INTO v_daily_count
+    FROM public.pz_businesses
+    WHERE user_id = v_user_id
+      AND created_at >= NOW() - INTERVAL '24 hours';
+    IF v_daily_count >= 3 THEN
+      RAISE EXCEPTION 'Has alcanzado el límite permitido de 3 solicitudes diarias.';
+    END IF;
+  END IF;
+
+  -- Regla Anti-Duplicados: Verificar si ya existe en el mismo municipio y dirección
+  IF EXISTS (
+    SELECT 1 FROM public.pz_businesses
+    WHERE LOWER(TRIM(name)) = LOWER(TRIM(p_name))
+      AND LOWER(TRIM(municipality)) = LOWER(TRIM(p_municipality))
+      AND LOWER(TRIM(address)) = LOWER(TRIM(p_address))
+  ) THEN
+    RAISE EXCEPTION 'Este negocio ya se encuentra registrado con esa dirección en %.', p_municipality;
+  END IF;
+
+  -- Inserción forzando estado 'pending' (el usuario nunca puede autoaprobarse)
+  INSERT INTO public.pz_businesses (
+    name, category_id, municipality, locality, address,
+    phone, whatsapp, schedule, description, image_url,
+    website_url, facebook_url, instagram_url, tiktok_url,
+    latitude, longitude, submitted_by, user_id, status
+  ) VALUES (
+    TRIM(p_name), p_category_id, TRIM(p_municipality), TRIM(p_locality), TRIM(p_address),
+    p_phone, p_whatsapp, p_schedule, p_description, p_image_url,
+    p_website_url, p_facebook_url, p_instagram_url, p_tiktok_url,
+    p_latitude, p_longitude, COALESCE(p_submitted_by, auth.jwt()->>'email', 'Usuario Registrado'), v_user_id, 'pending'
+  )
+  RETURNING * INTO v_inserted;
+
+  RETURN to_jsonb(v_inserted);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.pz_submit_business_application TO anon, authenticated;
+
+-- 7.2 Aprobación Exclusiva de Superadministrador
+CREATE OR REPLACE FUNCTION public.pz_approve_business(
+  business_id UUID,
+  admin_pin TEXT DEFAULT NULL
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  updated_record RECORD;
+BEGIN
+  -- Validar que sea el Superadministrador (Clave Maestra o sesión de superadmin)
+  IF admin_pin != 'Ipoduri5s' AND auth.role() != 'authenticated' THEN
+    RAISE EXCEPTION 'Acceso denegado: Se requiere autorización de Superadministrador para aprobar solicitudes.';
+  END IF;
+
+  UPDATE public.pz_businesses
+  SET status = 'approved'
+  WHERE id = business_id
+  RETURNING * INTO updated_record;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'No se encontró ningún negocio con el ID proporcionado.';
+  END IF;
+
+  RETURN to_jsonb(updated_record);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.pz_approve_business(UUID, TEXT) TO anon, authenticated;
+
+-- 7.3 Rechazar Solicitud
+CREATE OR REPLACE FUNCTION public.pz_reject_business(
+  business_id UUID,
+  admin_pin TEXT DEFAULT NULL
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  updated_record RECORD;
+BEGIN
+  IF admin_pin != 'Ipoduri5s' AND auth.role() != 'authenticated' THEN
+    RAISE EXCEPTION 'Acceso denegado: Se requiere autorización de Superadministrador.';
+  END IF;
+
+  UPDATE public.pz_businesses
+  SET status = 'rejected'
+  WHERE id = business_id
+  RETURNING * INTO updated_record;
+
+  RETURN to_jsonb(updated_record);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.pz_reject_business(UUID, TEXT) TO anon, authenticated;
+
+-- 7.4 Publicación Aislada de Reseñas Comunitarias
+CREATE OR REPLACE FUNCTION public.pz_submit_user_review(
+  p_business_id UUID,
+  p_rating INTEGER,
+  p_comment TEXT,
+  p_staff_id UUID DEFAULT NULL,
+  p_user_name TEXT DEFAULT NULL,
+  p_user_phone TEXT DEFAULT NULL,
+  p_user_provider TEXT DEFAULT NULL
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_review RECORD;
+  v_avg NUMERIC(3,2);
+  v_count INTEGER;
+BEGIN
+  IF p_rating < 1 OR p_rating > 5 THEN
+    RAISE EXCEPTION 'La calificación debe estar entre 1 y 5 estrellas.';
+  END IF;
+
+  IF LENGTH(TRIM(p_comment)) = 0 THEN
+    RAISE EXCEPTION 'El comentario no puede estar vacío.';
+  END IF;
+
+  INSERT INTO public.pz_reviews (
+    business_id, staff_id, rating, comment,
+    user_id, user_name, user_phone, user_provider
+  ) VALUES (
+    p_business_id, p_staff_id, p_rating, TRIM(p_comment),
+    auth.uid()::text, COALESCE(p_user_name, 'Usuario Registrado'), p_user_phone, p_user_provider
+  )
+  RETURNING * INTO v_review;
+
+  -- Recalcular automáticamente los promedios del negocio
+  SELECT ROUND(AVG(rating)::numeric, 1), COUNT(*)
+  INTO v_avg, v_count
+  FROM public.pz_reviews
+  WHERE business_id = p_business_id;
+
+  UPDATE public.pz_businesses
+  SET rating_avg = COALESCE(v_avg, 5.0),
+      rating_count = v_count
+  WHERE id = p_business_id;
+
+  RETURN to_jsonb(v_review);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.pz_submit_user_review TO anon, authenticated;
+
+-- Función genérica de compatibilidad previa
 CREATE OR REPLACE FUNCTION public.pz_update_business_status(business_id UUID, new_status TEXT, admin_pin TEXT DEFAULT NULL)
 RETURNS JSONB
 LANGUAGE plpgsql
@@ -127,7 +318,6 @@ AS $$
 DECLARE
   updated_record RECORD;
 BEGIN
-  -- Verificar clave maestra o sesión de administrador
   IF admin_pin != 'Ipoduri5s' AND auth.role() != 'authenticated' THEN
     RAISE EXCEPTION 'Acceso denegado: Se requiere autorización administrativa válida.';
   END IF;
@@ -295,4 +485,19 @@ CREATE TRIGGER trg_check_daily_business_limit
 BEFORE INSERT ON public.pz_businesses
 FOR EACH ROW
 EXECUTE FUNCTION public.pz_check_daily_business_limit();
+
+-- 12. Migración para opiniones vinculadas a usuarios autenticados
+ALTER TABLE public.pz_reviews ADD COLUMN IF NOT EXISTS user_id TEXT;
+ALTER TABLE public.pz_reviews ADD COLUMN IF NOT EXISTS user_provider TEXT;
+ALTER TABLE public.pz_reviews ADD COLUMN IF NOT EXISTS staff_name TEXT;
+
+-- 13. Aislamiento Máximo de Base de Datos: Restricción de Mutación Directa
+-- Impide que usuarios o clientes maliciosos ejecuten UPDATE o DELETE directo sobre las tablas.
+-- Toda mutación de estado pasa estrictamente por los procedimientos almacenados (RPC) con SECURITY DEFINER.
+REVOKE UPDATE, DELETE ON public.pz_businesses FROM anon;
+REVOKE UPDATE, DELETE ON public.pz_reviews FROM anon;
+REVOKE INSERT, UPDATE, DELETE ON public.pz_categories FROM anon;
+REVOKE INSERT, UPDATE, DELETE ON public.pz_staff FROM anon;
+
+
 

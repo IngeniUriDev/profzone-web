@@ -56,9 +56,10 @@ export const authService = {
     }
 
     const demoUser: UserProfile = {
-      id: `google-${Date.now()}`,
+      id: 'google-demo-user',
       provider: 'google',
       full_name: 'Usuario Google',
+      email: 'urielrg@rolicode.com.mx',
       avatar_url: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80',
       role: 'user'
     };
@@ -147,9 +148,10 @@ export const authService = {
       throw new Error('Clave de administrador incorrecta');
     }
     const adminUser: UserProfile = {
-      id: `admin-master-${Date.now()}`,
+      id: 'superadmin-1',
       provider: 'phone',
-      full_name: adminName?.trim() || 'Superadministrador',
+      full_name: adminName?.trim() || 'Superadministrador Principal',
+      phone: '7141087330',
       role: 'admin'
     };
     localStorage.setItem(USER_SESSION_KEY, JSON.stringify(adminUser));

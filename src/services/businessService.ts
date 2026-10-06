@@ -168,6 +168,35 @@ export const businessService = {
         }
       }
 
+      // 1. Aislamiento de Base de Datos: Invocar procedimiento seguro pz_submit_business_application
+      try {
+        const { data: rpcData, error: rpcError } = await supabase.rpc('pz_submit_business_application', {
+          p_name: trimmedName,
+          p_category_id: business.category_id || null,
+          p_municipality: cleanMuni,
+          p_locality: business.locality || 'Centro',
+          p_address: cleanAddress,
+          p_phone: business.phone || null,
+          p_whatsapp: business.whatsapp || null,
+          p_schedule: business.schedule || null,
+          p_description: business.description || null,
+          p_image_url: business.image_url || null,
+          p_website_url: business.website_url || null,
+          p_facebook_url: business.facebook_url || null,
+          p_instagram_url: business.instagram_url || null,
+          p_tiktok_url: business.tiktok_url || null,
+          p_latitude: business.latitude || null,
+          p_longitude: business.longitude || null,
+          p_submitted_by: business.submitted_by || null
+        });
+
+        if (!rpcError && rpcData) {
+          return rpcData as Business;
+        }
+      } catch (err) {
+        console.warn('Procedimiento RPC pz_submit_business_application aún no migrado, continuando con inserción estándar...');
+      }
+
       const payload: any = {
         name: trimmedName,
         category_id: business.category_id,
@@ -187,6 +216,7 @@ export const businessService = {
         instagram_url: business.instagram_url,
         tiktok_url: business.tiktok_url,
         submitted_by: business.submitted_by,
+        user_id: business.user_id || undefined,
         status: 'pending'
       };
 

@@ -616,23 +616,73 @@ export const BusinessDetailModal: React.FC<BusinessDetailModalProps> = ({
 
         {/* Sección de Reseñas */}
         <div style={{ borderTop: '1px solid var(--border)', paddingTop: '20px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
             <h3 style={{ fontSize: '1.05rem', fontWeight: 800 }}>
               Opiniones de la Comunidad ({reviews.length})
             </h3>
-            <button
-              type="button"
-              className="btn btn-primary"
-              onClick={() => handleOpenReviewForm()}
-              style={{ fontSize: '0.8rem', padding: '6px 12px' }}
-            >
-              <MessageSquarePlus size={15} />
-              <span>{showAddReview ? 'Cancelar' : 'Dejar Reseña'}</span>
-            </button>
+            {currentUser && (
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => handleOpenReviewForm()}
+                style={{ fontSize: '0.8rem', padding: '6px 12px' }}
+              >
+                <MessageSquarePlus size={15} />
+                <span>{showAddReview ? 'Cancelar' : 'Dejar Reseña'}</span>
+              </button>
+            )}
           </div>
 
+          {/* Banner de acceso para usuarios no registrados */}
+          {!currentUser && (
+            <div style={{
+              background: 'var(--surface-secondary)',
+              border: '1px dashed var(--border)',
+              borderRadius: 'var(--radius-sm)',
+              padding: '16px 20px',
+              marginBottom: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '12px'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '50%',
+                  background: 'rgba(2, 132, 199, 0.1)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--primary)',
+                  flexShrink: 0
+                }}>
+                  <UserCheck size={20} />
+                </div>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-main)' }}>
+                    ¿Deseas calificar este negocio o compartir tu experiencia?
+                  </div>
+                  <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                    Para asegurar reseñas auténticas y confiables, debes iniciar sesión como usuario registrado.
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={onRequireAuth}
+                style={{ fontSize: '0.82rem', padding: '7px 14px', fontWeight: 700, whiteSpace: 'nowrap' }}
+              >
+                Iniciar Sesión para Calificar
+              </button>
+            </div>
+          )}
+
           {/* Formulario para agregar reseña */}
-          {showAddReview && (
+          {showAddReview && currentUser && (
             <form onSubmit={handleSubmitReview} style={{
               background: 'var(--surface-secondary)',
               padding: '16px',
@@ -700,16 +750,26 @@ export const BusinessDetailModal: React.FC<BusinessDetailModalProps> = ({
                 />
               </div>
 
-              {currentUser ? (
-                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <UserCheck size={14} color="#16a34a" />
-                  <span>Publicando como: <strong>{currentUser.full_name}</strong> ({currentUser.provider === 'google' ? 'Google' : 'Cuenta Verificada'})</span>
-                </div>
-              ) : (
-                <div style={{ fontSize: '0.8rem', color: 'var(--primary)' }}>
-                  * Inicia sesión con tu cuenta de Google para publicar tu reseña con tu nombre.
-                </div>
-              )}
+              <div style={{
+                fontSize: '0.82rem',
+                background: '#ecfdf5',
+                border: '1px solid #a7f3d0',
+                color: '#065f46',
+                padding: '8px 12px',
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                flexWrap: 'wrap'
+              }}>
+                <UserCheck size={16} color="#059669" />
+                <span>
+                  Calificando como: <strong>{currentUser.full_name}</strong> {currentUser.email ? `(${currentUser.email})` : ''}
+                </span>
+                <span style={{ marginLeft: 'auto', fontSize: '0.7rem', background: '#dcfce7', color: '#15803d', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>
+                  Usuario Verificado
+                </span>
+              </div>
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
                 <button
@@ -761,6 +821,16 @@ export const BusinessDetailModal: React.FC<BusinessDetailModalProps> = ({
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-main)' }}>
                         {rev.user_name}
+                      </span>
+                      <span style={{
+                        fontSize: '0.68rem',
+                        padding: '1px 6px',
+                        borderRadius: '4px',
+                        background: '#dcfce7',
+                        color: '#166534',
+                        fontWeight: 700
+                      }}>
+                        ✓ Verificado
                       </span>
                       {rev.user_provider && (
                         <span style={{

@@ -52,8 +52,13 @@ export const AdminModal: React.FC<AdminModalProps> = ({ currentUser, initialTab 
   const [savingCategory, setSavingCategory] = useState(false);
 
   // Privilegios del usuario actual
-  const isSuperAdmin = adminService.isSuperAdmin(currentUser?.phone, currentUser?.email);
-  const currentAdminUser = adminService.getAdminUser(currentUser?.phone, currentUser?.email);
+  const isSuperAdmin = Boolean(
+    currentUser && (
+      currentUser.role === 'admin' ||
+      adminService.isSuperAdmin(currentUser?.phone, currentUser?.email, currentUser?.id)
+    )
+  );
+  const currentAdminUser = adminService.getAdminUser(currentUser?.phone, currentUser?.email, currentUser?.id);
   const myRole: AdminRole = isSuperAdmin ? 'superadmin' : (currentAdminUser?.role || 'moderator');
 
   const loadAll = async () => {
@@ -83,15 +88,20 @@ export const AdminModal: React.FC<AdminModalProps> = ({ currentUser, initialTab 
   }, []);
 
   const handleAction = async (id: string, status: 'approved' | 'rejected') => {
+    if (status === 'approved' && !isSuperAdmin) {
+      alert('Acceso Restringido: Solo el Superadministrador Principal tiene autorización para aprobar solicitudes e incorporarlas al catálogo general.');
+      return;
+    }
+
     setProcessingId(id);
     try {
       await businessService.updateBusinessStatus(id, status);
       await loadAll();
       onUpdate();
       if (status === 'approved') {
-        alert('¡Servicio aprobado con éxito! Ya es visible públicamente en el directorio.');
+        alert('¡Negocio aprobado y publicado con éxito! Ya se encuentra visible para toda la comunidad en el contenedor del catálogo principal.');
       } else {
-        alert('El servicio ha sido pausado.');
+        alert('La solicitud ha sido rechazada/pausada.');
       }
     } catch (err: any) {
       console.error(err);
@@ -306,6 +316,15 @@ export const AdminModal: React.FC<AdminModalProps> = ({ currentUser, initialTab 
     if (!window.confirm(`¿Estás seguro de revocar el acceso a "${name}"? Perderá todos sus privilegios administrativos inmediatamente.`)) return;
     adminService.removeAdmin(id);
     setAdminsList(adminService.getAdmins());
+  };
+
+  const handlePurgeDuplicates = () => {
+    if (!isSuperAdmin) return;
+    if (!window.confirm('¿Deseas depurar las cuentas huérfanas o duplicadas sin correo electrónico registrado? Solo se conservará tu cuenta activa y el superadministrador principal.')) return;
+    const cleaned = adminService.purgeDuplicateAdmins(currentUser?.id, currentUser?.email);
+    setAdminsList(cleaned);
+    setAdminSuccessMsg('Se depuraron las cuentas huérfanas y duplicados con éxito.');
+    setTimeout(() => setAdminSuccessMsg(''), 4500);
   };
 
   const getRoleLabel = (role: AdminRole) => {
@@ -653,39 +672,88 @@ export const AdminModal: React.FC<AdminModalProps> = ({ currentUser, initialTab 
                       gap: '12px'
                     }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', flexWrap: 'wrap' }}>
-                        <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0f172a' }}>{b.name}</h4>
-                            <span className="badge badge-pending">Revisión Requerida</span>
+                        <div style={{ flex: 1, minWidth: '280px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                            <h4 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>{b.name}</h4>
+                            <span className="badge badge-pending">Pendiente de Aprobación</span>
+                            {b.category?.name && (
+                              <span style={{ fontSize: '0.72rem', background: '#e0f2fe', color: '#0369a1', padding: '2px 8px', borderRadius: '6px', fontWeight: 700 }}>
+                                {b.category.name}
+                              </span>
+                            )}
                           </div>
-                          <p style={{ fontSize: '0.86rem', color: '#475569', marginTop: '4px' }}>
-                            {b.description || 'Sin descripción ingresada'}
+                          <p style={{ fontSize: '0.86rem', color: '#475569', marginTop: '6px', marginBottom: '8px' }}>
+                            {b.description || 'Sin descripción ingresada por el propietario'}
                           </p>
+
+                          {/* Ficha Destacada del Solicitante Registrado y Verificado */}
+                          <div style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            background: '#ecfdf5',
+                            border: '1px solid #a7f3d0',
+                            color: '#065f46',
+                            padding: '6px 12px',
+                            borderRadius: '8px',
+                            fontSize: '0.8rem',
+                            fontWeight: 600,
+                            marginTop: '4px'
+                          }}>
+                            <CheckCircle2 size={15} color="#059669" />
+                            <span>
+                              Solicitante Registrado: <strong>{b.submitted_by || 'Usuario Autenticado'}</strong>
+                            </span>
+                            {b.created_at && (
+                              <span style={{ color: '#047857', fontSize: '0.74rem', borderLeft: '1px solid #a7f3d0', paddingLeft: '8px' }}>
+                                Enviado: {new Date(b.created_at).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })}
+                              </span>
+                            )}
+                          </div>
                         </div>
 
-                        <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
-                          <button
-                            type="button"
-                            className="btn btn-primary"
-                            disabled={processingId === b.id}
-                            onClick={() => handleAction(b.id, 'approved')}
-                            style={{
-                              background: '#16a34a',
-                              borderColor: '#16a34a',
-                              padding: '8px 14px',
-                              fontSize: '0.82rem',
-                              fontWeight: 700
-                            }}
-                          >
-                            <Check size={15} />
-                            <span>Aprobar Publicación</span>
-                          </button>
+                        <div style={{ display: 'flex', gap: '8px', flexShrink: 0, alignItems: 'center' }}>
+                          {isSuperAdmin ? (
+                            <button
+                              type="button"
+                              className="btn btn-primary"
+                              disabled={processingId === b.id}
+                              onClick={() => handleAction(b.id, 'approved')}
+                              style={{
+                                background: '#16a34a',
+                                borderColor: '#16a34a',
+                                padding: '9px 16px',
+                                fontSize: '0.84rem',
+                                fontWeight: 800,
+                                boxShadow: '0 2px 6px rgba(22, 163, 74, 0.25)'
+                              }}
+                              title="Aprobar solicitud y hacerla visible en el catálogo principal"
+                            >
+                              <Check size={16} />
+                              <span>✓ Aprobar y Publicar</span>
+                            </button>
+                          ) : (
+                            <span style={{
+                              fontSize: '0.75rem',
+                              color: '#64748b',
+                              background: '#f1f5f9',
+                              padding: '6px 10px',
+                              borderRadius: '6px',
+                              fontWeight: 600
+                            }}>
+                              Solo Superadmin puede aprobar
+                            </span>
+                          )}
 
                           <button
                             type="button"
                             className="btn btn-secondary"
                             disabled={processingId === b.id}
-                            onClick={() => handleAction(b.id, 'rejected')}
+                            onClick={() => {
+                              if (window.confirm(`¿Deseas rechazar la solicitud de "${b.name}"?`)) {
+                                handleAction(b.id, 'rejected');
+                              }
+                            }}
                             style={{
                               color: '#dc2626',
                               borderColor: '#fca5a5',
@@ -708,7 +776,8 @@ export const AdminModal: React.FC<AdminModalProps> = ({ currentUser, initialTab 
                         background: '#f8fafc',
                         padding: '10px 14px',
                         borderRadius: '8px',
-                        border: '1px solid #e2e8f0'
+                        border: '1px solid #e2e8f0',
+                        alignItems: 'center'
                       }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                           <MapPin size={14} color="#0284c7" />
@@ -719,6 +788,13 @@ export const AdminModal: React.FC<AdminModalProps> = ({ currentUser, initialTab 
                           <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                             <Phone size={14} color="#16a34a" />
                             <span>Tel: {b.phone}</span>
+                          </div>
+                        )}
+
+                        {b.whatsapp && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                            <MessageCircle size={14} color="#25D366" />
+                            <span>WhatsApp: {b.whatsapp}</span>
                           </div>
                         )}
 
@@ -1740,10 +1816,40 @@ export const AdminModal: React.FC<AdminModalProps> = ({ currentUser, initialTab 
               )}
 
               {/* Lista Interactiva de Administradores y Roles */}
-              <div style={{ marginBottom: '12px' }}>
-                <h4 style={{ fontSize: '0.98rem', fontWeight: 800, margin: '0 0 10px 0', color: '#0f172a' }}>
-                  Colaboradores y Administradores Autorizados ({adminsList.length})
-                </h4>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
+                <div>
+                  <h4 style={{ fontSize: '0.98rem', fontWeight: 800, margin: 0, color: '#0f172a' }}>
+                    Colaboradores y Administradores Autorizados ({adminsList.length})
+                  </h4>
+                  <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '2px' }}>
+                    Identifica las cuentas con acceso. Cada administrador debe contar con su correo verificado.
+                  </div>
+                </div>
+
+                {isSuperAdmin && adminsList.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={handlePurgeDuplicates}
+                    className="btn"
+                    style={{
+                      padding: '6px 12px',
+                      fontSize: '0.78rem',
+                      fontWeight: 700,
+                      background: '#fef2f2',
+                      border: '1px solid #fecaca',
+                      color: '#dc2626',
+                      borderRadius: '8px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      cursor: 'pointer'
+                    }}
+                    title="Elimina registros duplicados y accesos sin correo electrónico registrado"
+                  >
+                    <Trash2 size={13} />
+                    <span>Depurar Huérfanos / Duplicados</span>
+                  </button>
+                )}
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -1802,9 +1908,9 @@ export const AdminModal: React.FC<AdminModalProps> = ({ currentUser, initialTab 
                             </span>
                           ) : (
                             <span style={{
-                              background: adm.role === 'editor' ? '#ede9fe' : '#e0f2fe',
-                              color: adm.role === 'editor' ? '#5b21b6' : '#075985',
-                              border: `1px solid ${adm.role === 'editor' ? '#ddd6fe' : '#bae6fd'}`,
+                              background: adm.role === 'superadmin' ? '#fef3c7' : adm.role === 'editor' ? '#ede9fe' : '#e0f2fe',
+                              color: adm.role === 'superadmin' ? '#92400e' : adm.role === 'editor' ? '#5b21b6' : '#075985',
+                              border: `1px solid ${adm.role === 'superadmin' ? '#fde68a' : adm.role === 'editor' ? '#ddd6fe' : '#bae6fd'}`,
                               fontSize: '0.72rem',
                               fontWeight: 800,
                               padding: '2px 8px',
@@ -1813,24 +1919,66 @@ export const AdminModal: React.FC<AdminModalProps> = ({ currentUser, initialTab 
                               alignItems: 'center',
                               gap: '4px'
                             }}>
-                              {adm.role === 'editor' ? <Sparkles size={12} /> : <Shield size={12} />}
+                              {adm.role === 'superadmin' ? <Crown size={12} /> : adm.role === 'editor' ? <Sparkles size={12} /> : <Shield size={12} />}
                               {getRoleLabel(adm.role)}
                             </span>
                           )}
                         </div>
 
-                        <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '3px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                        {/* Correo e identificación destacada */}
+                        <div style={{ marginTop: '5px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                          {adm.email ? (
+                            <span style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '5px',
+                              padding: '2px 8px',
+                              borderRadius: '6px',
+                              background: '#f0f9ff',
+                              border: '1px solid #bae6fd',
+                              color: '#0284c7',
+                              fontSize: '0.8rem',
+                              fontWeight: 700
+                            }}>
+                              <Mail size={12} /> {adm.email}
+                            </span>
+                          ) : (
+                            <span style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '5px',
+                              padding: '2px 8px',
+                              borderRadius: '6px',
+                              background: '#fef2f2',
+                              border: '1px solid #fecaca',
+                              color: '#dc2626',
+                              fontSize: '0.76rem',
+                              fontWeight: 600
+                            }}>
+                              <AlertCircle size={12} /> Sin correo registrado (Acceso local Clave Maestra)
+                            </span>
+                          )}
+
                           {adm.phone && (
-                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <span style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              padding: '2px 8px',
+                              borderRadius: '6px',
+                              background: '#f8fafc',
+                              border: '1px solid #e2e8f0',
+                              color: '#475569',
+                              fontSize: '0.76rem',
+                              fontWeight: 600
+                            }}>
                               <Phone size={12} /> Celular: +52 {adm.phone}
                             </span>
                           )}
-                          {adm.email && (
-                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                              <Mail size={12} /> Correo: {adm.email}
-                            </span>
-                          )}
-                          <span>• Alta: {new Date(adm.added_at).toLocaleDateString()}</span>
+                        </div>
+
+                        <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '4px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                          <span>Alta: {new Date(adm.added_at).toLocaleDateString()}</span>
                           {adm.assigned_by && (
                             <span>• Por: <em>{adm.assigned_by}</em></span>
                           )}
@@ -1873,10 +2021,10 @@ export const AdminModal: React.FC<AdminModalProps> = ({ currentUser, initialTab 
                             background: '#fef2f2',
                             color: '#dc2626',
                             cursor: 'pointer',
-                            padding: '6px 10px',
+                            padding: '6px 12px',
                             borderRadius: '6px',
-                            fontSize: '0.78rem',
-                            fontWeight: 600,
+                            fontSize: '0.8rem',
+                            fontWeight: 700,
                             display: 'flex',
                             alignItems: 'center',
                             gap: '4px'

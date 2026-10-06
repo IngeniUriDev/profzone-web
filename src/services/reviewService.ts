@@ -50,21 +50,50 @@ export const reviewService = {
     };
 
     if (isSupabaseConfigured && supabase) {
-      const { data, error } = await supabase
+      // 1. Aislamiento Seguro: Invocar el procedimiento RPC pz_submit_user_review
+      try {
+        const { data: rpcData, error: rpcError } = await supabase.rpc('pz_submit_user_review', {
+          p_business_id: review.business_id,
+          p_rating: review.rating,
+          p_comment: review.comment,
+          p_staff_id: review.staff_id || null,
+          p_user_name: review.user_name || null,
+          p_user_phone: review.user_phone || null,
+          p_user_provider: review.user_provider || null
+        });
+        if (!rpcError && rpcData) {
+          return rpcData as Review;
+        }
+      } catch (err) {
+        console.warn('Procedimiento RPC pz_submit_user_review aún no migrado, continuando con inserción estándar...');
+      }
+
+      const payload: any = {
+        business_id: review.business_id,
+        staff_id: review.staff_id,
+        staff_name: review.staff_name,
+        user_id: review.user_id,
+        user_name: review.user_name,
+        user_phone: review.user_phone,
+        user_provider: review.user_provider,
+        rating: review.rating,
+        comment: review.comment
+      };
+
+      let { data, error } = await supabase
         .from('pz_reviews')
-        .insert([{
-          business_id: review.business_id,
-          staff_id: review.staff_id,
-          staff_name: review.staff_name,
-          user_id: review.user_id,
-          user_name: review.user_name,
-          user_phone: review.user_phone,
-          user_provider: review.user_provider,
-          rating: review.rating,
-          comment: review.comment
-        }])
+        .insert([payload])
         .select()
         .single();
+
+      if (error && (error.message?.includes('user_id') || error.message?.includes('user_provider') || error.message?.includes('staff_name'))) {
+        delete payload.user_id;
+        delete payload.user_provider;
+        delete payload.staff_name;
+        const retry = await supabase.from('pz_reviews').insert([payload]).select().single();
+        data = retry.data;
+        error = retry.error;
+      }
 
       if (error) {
         console.error('Error adding review in Supabase:', error);

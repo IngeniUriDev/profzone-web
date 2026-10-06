@@ -23,12 +23,14 @@ const INITIAL_SUPERADMIN_EMAIL = import.meta.env.VITE_SUPERADMIN_EMAIL || '';
 
 function getStoredAdmins(): AdminUser[] {
   const stored = localStorage.getItem(ADMIN_STORAGE_KEY);
+  const initialClean = INITIAL_SUPERADMIN_PHONE.replace(/\D/g, '');
+
   if (!stored) {
     const defaultList: AdminUser[] = [
       {
         id: 'superadmin-1',
         phone: INITIAL_SUPERADMIN_PHONE,
-        email: INITIAL_SUPERADMIN_EMAIL,
+        email: INITIAL_SUPERADMIN_EMAIL || undefined,
         name: 'Superadministrador Principal (RoliCode)',
         role: 'superadmin',
         added_at: new Date().toISOString(),
@@ -40,26 +42,37 @@ function getStoredAdmins(): AdminUser[] {
     return defaultList;
   }
   try {
-    const list: AdminUser[] = JSON.parse(stored);
+    let list: AdminUser[] = JSON.parse(stored);
+    if (!Array.isArray(list)) list = [];
+
+    // Sanitizar: SOLO el superadmin raíz superadmin-1 tiene is_superadmin = true
+    list = list.map(a => {
+      const isRoot = Boolean(a.id === 'superadmin-1' || (initialClean && a.phone && a.phone.replace(/\D/g, '') === initialClean));
+      return {
+        ...a,
+        is_superadmin: isRoot
+      };
+    });
+
     // Asegurar que el superadmin inicial siempre esté en la lista con rol superadmin
-    const initialClean = INITIAL_SUPERADMIN_PHONE.replace(/\D/g, '');
-    const found = list.find(a => a.phone && a.phone.replace(/\D/g, '') === initialClean);
-    if (!found) {
+    const foundRoot = list.find(a => a.id === 'superadmin-1' || (a.phone && a.phone.replace(/\D/g, '') === initialClean));
+    if (!foundRoot) {
       list.unshift({
         id: 'superadmin-1',
         phone: INITIAL_SUPERADMIN_PHONE,
-        email: INITIAL_SUPERADMIN_EMAIL,
+        email: INITIAL_SUPERADMIN_EMAIL || undefined,
         name: 'Superadministrador Principal (RoliCode)',
         role: 'superadmin',
         added_at: new Date().toISOString(),
         is_superadmin: true,
         assigned_by: 'Sistema'
       });
-      localStorage.setItem(ADMIN_STORAGE_KEY, JSON.stringify(list));
     } else {
-      found.is_superadmin = true;
-      found.role = 'superadmin';
+      foundRoot.is_superadmin = true;
+      foundRoot.role = 'superadmin';
     }
+
+    localStorage.setItem(ADMIN_STORAGE_KEY, JSON.stringify(list));
     return list;
   } catch {
     return [];
@@ -148,15 +161,19 @@ export const adminService = {
     const cleanEmail = params.email ? params.email.toLowerCase().trim() : '';
     const list = getStoredAdmins();
 
+    // Deduplicación inteligente: coincidencia por teléfono, correo, user_id o nombre idéntico
     const existing = list.find(a => 
       (clean && a.phone && a.phone.replace(/\D/g, '') === clean) ||
       (cleanEmail && a.email && a.email.toLowerCase().trim() === cleanEmail) ||
-      (params.user_id && a.user_id === params.user_id)
+      (params.user_id && a.user_id === params.user_id) ||
+      (!clean && !cleanEmail && a.name.trim().toLowerCase() === params.name.trim().toLowerCase())
     );
 
     if (existing) {
       if (params.role) existing.role = params.role;
       if (params.name) existing.name = params.name;
+      if (cleanEmail) existing.email = cleanEmail;
+      if (clean) existing.phone = clean;
       if (params.user_id) existing.user_id = params.user_id;
       saveAdmins(list);
       return existing;
@@ -170,7 +187,7 @@ export const adminService = {
       name: params.name.trim() || (clean ? `Admin (${clean.slice(-4)})` : cleanEmail || 'Admin'),
       role: params.role || 'moderator',
       added_at: new Date().toISOString(),
-      is_superadmin: params.role === 'superadmin',
+      is_superadmin: false, // Solo el superadmin-1 del sistema es inmutable
       assigned_by: params.assigned_by || 'Superadministrador Principal'
     };
     list.push(newAdmin);
@@ -183,15 +200,66 @@ export const adminService = {
     const admin = list.find(a => a.id === id);
     if (admin) {
       admin.role = newRole;
-      admin.is_superadmin = newRole === 'superadmin';
+      admin.is_superadmin = admin.id === 'superadmin-1';
       saveAdmins(list);
     }
   },
 
   removeAdmin(id: string): void {
     let list = getStoredAdmins();
-    // Protege al superadministrador principal de ser borrado
-    list = list.filter(a => a.id !== id || a.is_superadmin);
+    const initialClean = INITIAL_SUPERADMIN_PHONE.replace(/\D/g, '');
+    // Protege EXCLUSIVAMENTE al superadministrador raíz del sistema
+    list = list.filter(a => {
+      const isRoot = a.id === 'superadmin-1' || (a.phone && a.phone.replace(/\D/g, '') === initialClean);
+      if (isRoot) return true;
+      return a.id !== id;
+    });
     saveAdmins(list);
+  },
+
+  purgeDuplicateAdmins(currentUserId?: string, currentUserEmail?: string): AdminUser[] {
+    const list = getStoredAdmins();
+    const initialClean = INITIAL_SUPERADMIN_PHONE.replace(/\D/g, '');
+    const cleanCurrentEmail = currentUserEmail ? currentUserEmail.toLowerCase().trim() : '';
+
+    const cleaned: AdminUser[] = [];
+    const seenEmails = new Set<string>();
+
+    for (const a of list) {
+      // 1. Conservar siempre al superadmin raíz del sistema
+      const isRoot = a.id === 'superadmin-1' || (a.phone && a.phone.replace(/\D/g, '') === initialClean);
+      if (isRoot) {
+        cleaned.push(a);
+        continue;
+      }
+
+      // 2. Si es el usuario activo actual con sesión, conservarlo
+      if (
+        (currentUserId && a.user_id === currentUserId) ||
+        (cleanCurrentEmail && a.email && a.email.toLowerCase().trim() === cleanCurrentEmail)
+      ) {
+        if (cleanCurrentEmail) seenEmails.add(cleanCurrentEmail);
+        cleaned.push(a);
+        continue;
+      }
+
+      // 3. Descartar cuentas anónimas sin correo y sin teléfono (accesos fantasma / pruebas pasadas)
+      if (!a.email && !a.phone) {
+        continue;
+      }
+
+      // 4. Descartar duplicados por correo
+      const emailKey = a.email ? a.email.toLowerCase().trim() : undefined;
+      if (emailKey) {
+        if (seenEmails.has(emailKey)) continue;
+        seenEmails.add(emailKey);
+        cleaned.push(a);
+      } else if (a.phone) {
+        cleaned.push(a);
+      }
+    }
+
+    saveAdmins(cleaned);
+    return cleaned;
   }
 };

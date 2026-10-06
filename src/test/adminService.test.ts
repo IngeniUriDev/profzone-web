@@ -46,4 +46,34 @@ describe('Admin Service Tests', () => {
     adminService.removeAdmin(newAdmin.id);
     expect(adminService.isAdmin(undefined, 'editor@profzone.com')).toBe(false);
   });
+
+  it('should allow revoking a non-root superadmin', () => {
+    const superAdmin = adminService.addAdmin({
+      name: 'Admin Secundario',
+      email: 'secundario@profzone.com',
+      role: 'superadmin'
+    });
+
+    expect(adminService.isSuperAdmin(undefined, 'secundario@profzone.com')).toBe(true);
+    adminService.removeAdmin(superAdmin.id);
+    expect(adminService.isSuperAdmin(undefined, 'secundario@profzone.com')).toBe(false);
+  });
+
+  it('should purge duplicate or orphan admins without email or phone', () => {
+    adminService.addAdmin({
+      name: 'Usuario Google',
+      role: 'superadmin'
+    });
+    adminService.addAdmin({
+      name: 'Uriel Verificado',
+      email: 'uriel@profzone.com',
+      role: 'superadmin'
+    });
+
+    const purged = adminService.purgeDuplicateAdmins(undefined, 'uriel@profzone.com');
+    // Root superadmin + valid admin kept, orphan Usuario Google removed
+    expect(purged.some(a => a.name === 'Usuario Google')).toBe(false);
+    expect(purged.some(a => a.email === 'uriel@profzone.com')).toBe(true);
+    expect(purged.some(a => a.id === 'superadmin-1')).toBe(true);
+  });
 });
